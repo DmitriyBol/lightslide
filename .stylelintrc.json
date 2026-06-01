@@ -1,0 +1,22 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "selector-class-pattern": null,
+    "custom-property-empty-line-before": null,
+    "declaration-empty-line-before": null,
+    "comment-empty-line-before": null,
+    "alpha-value-notation": "number",
+    "color-function-notation": "legacy"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.scss"],
+      "customSyntax": "postcss-scss",
+      "extends": ["stylelint-config-standard-scss"],
+      "rules": {
+        "scss/dollar-variable-pattern": null,
+        "scss/at-mixin-pattern": null
+      }
+    }
+  ]
+}
