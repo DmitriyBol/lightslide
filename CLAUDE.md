@@ -40,6 +40,10 @@ src/
 ├── utils/
 │   ├── swipe.ts
 │   └── swipe.test.ts
+├── Navigation.tsx
+├── Navigation.test.tsx
+├── Pagination.tsx
+└── Pagination.test.tsx
 ```
 
 ---
@@ -51,6 +55,8 @@ src/
   - `analytics/analytics.ts` — primary logic for the `analytics` folder
   - `utils/swipe.ts` — utility named by what it does
   - `swiperContext.ts` — shared React context, named by its purpose
+  - `Navigation.tsx` — navigation buttons component
+  - `Pagination.tsx` — pagination dots component
 - No `index.ts` files inside sub-folders.
 
 ---
@@ -163,6 +169,29 @@ Using `width: calc(100% / N)` with CSS fails because `100%` on a flex child refe
 
 Solution: `ResizeObserver` on the outer container measures `offsetWidth`, divides by `slidesPerView`, and stores the result as React state. `SwiperContext` propagates it to every `OptiSlide`. `useMemo` ensures the context value object is stable between renders when the width hasn't changed.
 
+`SwiperContext` also exposes `currentIndex`, `maxIndex`, and `goToIndex` so that `Navigation` and `Pagination` can read reactive state and trigger navigation without prop drilling.
+
+### Dual currentIndex: ref + state
+
+`currentIndexRef` is the source of truth during drag math (read in pointer event handlers without causing re-renders).
+`currentIndex` state is updated after every committed navigation so that `Navigation` (button disabled state) and `Pagination` (active dot) re-render reactively.
+
+Rule: always update **both** in `navigateToIndex`:
+```ts
+currentIndexRef.current = next;
+setCurrentIndex(next);
+```
+
+### navigateToIndex — single navigation function
+
+All navigation types (drag, button, pagination, auto-scroll) call `navigateToIndex(index, source)`.
+The `source` parameter determines which additional analytics events to fire:
+
+- `"drag"` → only `onSlide`; also triggers snap-back if index unchanged
+- `"button"` → `onSlide` + `onNavButtonClick`
+- `"pagination"` → `onSlide` + `onPaginationClick`
+- `"auto"` → `onSlide` only; does NOT fire `onReachedEnd` on loop wrap-around
+
 ### maxIndex = slideCount − slidesPerView
 
 The user can scroll as far as index `maxIndex`, at which point the last `slidesPerView` slides are fully visible. Scrolling further would show empty space.
@@ -173,7 +202,7 @@ index 0: shows slides 0 1 2
 index 3: shows slides 3 4 5  ← last valid position
 ```
 
-`onReachedEnd` fires when `currentIndex === maxIndex`.
+`onReachedEnd` fires when `currentIndex === maxIndex` (except during auto-scroll, which loops).
 
 ### Pointer capture
 
