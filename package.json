@@ -18,7 +18,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
     "stylelint": "stylelint \"src/**/*.{css,scss}\"",
     "stylelint:fix": "stylelint \"src/**/*.{css,scss}\" --fix",
-    "size": "size-limit",
+    "size": "npm run build && size-limit",
     "playground": "npm install --prefix playground && npm run dev --prefix playground"
   },
   "size-limit": [
