@@ -23,11 +23,25 @@ class MockIntersectionObserver {
   disconnect() {}
 }
 
+// ── ResizeObserver mock ────────────────────────────────────────────────────
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+// ── Pointer-capture stubs (not implemented in jsdom) ──────────────────────
 beforeAll(() => {
   Object.defineProperty(global, "IntersectionObserver", {
     writable: true,
     value: MockIntersectionObserver,
   });
+  Object.defineProperty(global, "ResizeObserver", {
+    writable: true,
+    value: MockResizeObserver,
+  });
+  HTMLElement.prototype.setPointerCapture = jest.fn();
+  HTMLElement.prototype.releasePointerCapture = jest.fn();
 });
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -44,9 +58,14 @@ function makeHandlers(): jest.Mocked<Required<AnalyticsHandlers>> {
 function renderSwiper(
   handlers: Partial<AnalyticsHandlers>,
   viewedTimeout = 30,
+  slidesPerView = 1,
 ) {
   return render(
-    <OptiSwiper analytics={handlers} viewedTimeout={viewedTimeout}>
+    <OptiSwiper
+      analytics={handlers}
+      viewedTimeout={viewedTimeout}
+      slidesPerView={slidesPerView}
+    >
       <OptiSlide data={{ id: 1, name: "Slide 1" }}>
         <div>Slide 1</div>
       </OptiSlide>
@@ -145,5 +164,25 @@ describe("OptiSwiper", () => {
     const track = container.firstChild?.firstChild as HTMLElement;
     const slide = track?.firstChild as HTMLElement;
     expect(slide.style.padding).toBe("20px");
+  });
+
+  it("renders correct number of slides regardless of slidesPerView", () => {
+    renderSwiper({}, 30, 2);
+    expect(screen.getByText("Slide 1")).toBeInTheDocument();
+    expect(screen.getByText("Slide 2")).toBeInTheDocument();
+    expect(screen.getByText("Slide 3")).toBeInTheDocument();
+  });
+
+  it("track has grab cursor and pan-y touch-action", () => {
+    const { container } = render(
+      <OptiSwiper>
+        <OptiSlide>
+          <div>A</div>
+        </OptiSlide>
+      </OptiSwiper>,
+    );
+    const track = container.firstChild?.firstChild as HTMLElement;
+    expect(track.style.cursor).toBe("grab");
+    expect(track.style.touchAction).toBe("pan-y");
   });
 });
