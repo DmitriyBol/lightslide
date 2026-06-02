@@ -4,8 +4,9 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 
 ## Features
 
-- **Swipe & drag** — touch and mouse pointer support out of the box
-- **Responsive** — slides automatically fill the container width
+- **Swipe & drag** — real-time finger tracking via Pointer Events; slides follow the finger and snap on release
+- **slidesPerView** — show 1, 2, or 3 slides at once; each slide fills `1/n` of the container proportionally
+- **Responsive** — `ResizeObserver` keeps slide widths correct on any container resize
 - **Analytics ready** — viewport detection, slide navigation, end-of-carousel, and 30-second engagement events
 - **Mutually exclusive terminal events** — only one of `onReachedEnd` or `onViewedSlides` ever fires per session
 - **No unnecessary re-renders** — all callbacks are stable after mount via the "latest ref" pattern
@@ -38,7 +39,7 @@ import { OptiSlide, OptiSwiper } from "opti-swiper";
 
 function ProductCarousel() {
   return (
-    <OptiSwiper style={{ borderRadius: 12 }}>
+    <OptiSwiper slidesPerView={2} style={{ borderRadius: 12 }}>
       <OptiSlide data={{ id: 1, name: "Product A" }}>
         <ProductCard id={1} />
       </OptiSlide>
@@ -47,6 +48,9 @@ function ProductCarousel() {
       </OptiSlide>
       <OptiSlide data={{ id: 3, name: "Product C" }}>
         <ProductCard id={3} />
+      </OptiSlide>
+      <OptiSlide data={{ id: 4, name: "Product D" }}>
+        <ProductCard id={4} />
       </OptiSlide>
     </OptiSwiper>
   );
@@ -59,21 +63,22 @@ function ProductCarousel() {
 
 ### `<OptiSwiper>`
 
-The container component. Handles layout, swipe navigation, and all analytics.
+The container component. Handles layout, drag navigation, and all analytics.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `children` | `ReactNode` | required | One or more `<OptiSlide>` elements |
 | `style` | `CSSProperties` | — | Styles applied to the **outer wrapper** div |
 | `className` | `string` | — | Class name for the outer wrapper |
-| `trackStyle` | `CSSProperties` | — | Styles applied to the **inner scrollable track** div |
+| `trackStyle` | `CSSProperties` | — | Styles applied to the **inner draggable track** div |
 | `trackClassName` | `string` | — | Class name for the inner track |
 | `analytics` | `AnalyticsHandlers` | — | Custom event handlers (see [Analytics](#analytics)) |
+| `slidesPerView` | `number` | `1` | How many slides are visible at once. Each slide fills `1/n` of the container width. |
 | `viewedTimeout` | `number` | `30` | Seconds of ≥50% viewport visibility before `onViewedSlides` fires |
 
 ### `<OptiSlide>`
 
-A single slide. Automatically sizes to 100% of the container width.
+A single slide. Width is automatically computed as `containerWidth / slidesPerView`.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
@@ -81,6 +86,25 @@ A single slide. Automatically sizes to 100% of the container width.
 | `style` | `CSSProperties` | — | Additional styles for the slide div |
 | `className` | `string` | — | Class name for the slide div |
 | `data` | `any` | — | Arbitrary data attached to this slide — included in all analytics payloads |
+
+---
+
+## slidesPerView
+
+Control how many slides are visible at once. The carousel advances one slide at a time regardless of this value.
+
+```tsx
+{/* 1 slide — full width (default) */}
+<OptiSwiper slidesPerView={1}>…</OptiSwiper>
+
+{/* 2 slides — each 50% wide */}
+<OptiSwiper slidesPerView={2}>…</OptiSwiper>
+
+{/* 3 slides — each 33% wide */}
+<OptiSwiper slidesPerView={3}>…</OptiSwiper>
+```
+
+With 6 slides and `slidesPerView={3}`: the user can scroll from index 0 to index 3. At index 3, slides 3, 4, and 5 are shown — the last fully-visible group.
 
 ---
 
@@ -93,8 +117,8 @@ All events fire as `console.log` by default. Pass custom handlers via the `analy
 | Event | Handler | When it fires |
 |---|---|---|
 | `carousel_in_viewport` | `onInViewport` | First time the carousel becomes ≥50% visible. Fires only once. |
-| `carousel_slide` | `onSlide` | Every time the user swipes to a new slide. |
-| `carousel_reached_end` | `onReachedEnd` | When the user navigates to the **last slide**. Fires once. |
+| `carousel_slide` | `onSlide` | Every time the user drags to a new slide. |
+| `carousel_reached_end` | `onReachedEnd` | When the user reaches the last scrollable position. Fires once. |
 | `carousel_viewed_slides` | `onViewedSlides` | After `viewedTimeout` seconds of continuous visibility. Fires once. |
 
 > **Note:** `onReachedEnd` and `onViewedSlides` are **mutually exclusive** — whichever fires first prevents the other from ever firing. This ensures you don't double-count engagement.
@@ -134,7 +158,7 @@ const handlers: AnalyticsHandlers = {
 
 function ProductCarousel() {
   return (
-    <OptiSwiper analytics={handlers} viewedTimeout={30}>
+    <OptiSwiper analytics={handlers} slidesPerView={2} viewedTimeout={30}>
       <OptiSlide data={{ id: 1, name: "Product A", price: 99 }}>
         <ProductCard id={1} />
       </OptiSlide>
@@ -169,14 +193,16 @@ Both `<OptiSwiper>` and `<OptiSlide>` accept `style` and `className` props. The 
 
 ```tsx
 <OptiSwiper
+  slidesPerView={3}
   style={{ height: 320, borderRadius: 16, background: "#f5f5f5" }}
-  trackStyle={{ gap: 0 }}
 >
-  <OptiSlide style={{ padding: "0 16px" }}>
-    ...
+  <OptiSlide style={{ padding: "0 8px" }}>
+    <ProductCard />
   </OptiSlide>
 </OptiSwiper>
 ```
+
+Use `padding` on `<OptiSlide>` to create gutters between cards without affecting the snap positions.
 
 ---
 
@@ -185,22 +211,33 @@ Both `<OptiSwiper>` and `<OptiSlide>` accept `style` and `className` props. The 
 ### Layout
 
 ```
-┌─ OptiSwiper wrapper (overflow: hidden) ──────────────────┐
-│  ┌─ track (display: flex, scroll-snap: x mandatory) ────┐ │
-│  │  [Slide 0]  [Slide 1]  [Slide 2]                     │ │
-│  └───────────────────────────────────────────────────────┘ │
+┌─ OptiSwiper (overflow: hidden) ──────────────────────────┐
+│  ┌─ track (display: flex, transform: translateX) ────────┐ │
+│  │  [Slide 0][Slide 1][Slide 2][Slide 3][Slide 4]...     │ │
+│  └────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────┘
 ```
 
-Each slide is `flex-shrink: 0; width: 100%` so it fills exactly one "screen" of the track. The wrapper clips the overflow.
+Each slide width in pixels = `containerWidth / slidesPerView`. The track is positioned with `transform: translateX(-index × slideWidth)`. The outer wrapper clips everything outside with `overflow: hidden`.
 
-### Navigation
+### Drag & snap
 
-Swipe detection uses the pointer events API (`onPointerDown` / `onPointerUp`). A delta of more than 40px triggers a slide. Smooth scroll is handled natively via `scrollTo({ behavior: "smooth" })` combined with CSS `scroll-snap-type: x mandatory`.
+Navigation is fully pointer-based — no `scrollTo`, no CSS `scroll-snap`:
+
+1. **`onPointerDown`** — drag start; pointer is captured so events continue even outside the element
+2. **`onPointerMove`** — track moves live with the finger (`translateX` updated directly on the DOM, zero React re-renders)
+3. **Direction lock** — on the first 4px of movement: if vertical gesture is detected, drag is cancelled and the page scrolls normally
+4. **`onPointerUp`** — snap decision:
+   - If `|drag| > 50% of slide width` → snap to next/prev
+   - If velocity `> 0.3 px/ms` (quick flick) → snap to next/prev, even with small drag distance
+   - Otherwise → snap back to current slide
+5. **Rubber-banding** — at the first and last slide, drag resistance is applied (`delta / 3`)
+
+CSS `transition` is added only during the snap animation and removed via `transitionend` so it never interferes with live drag.
 
 ### Viewport detection
 
-An `IntersectionObserver` on the outer wrapper triggers at a 50% threshold. The first time the carousel enters the viewport, `onInViewport` fires. A 30-second timer also starts at that point.
+An `IntersectionObserver` on the outer wrapper triggers at a 50% threshold. The first time the carousel enters the viewport, `onInViewport` fires. A timer also starts at that point.
 
 ### Terminal event logic
 
@@ -208,12 +245,12 @@ An `IntersectionObserver` on the outer wrapper triggers at a 50% threshold. The 
 carousel enters viewport
         │
         ▼
-  timer starts (30s)
+  timer starts (viewedTimeout seconds)
         │
    ┌────┴────────────────────┐
    │                         │
 user reaches           timer elapses
-last slide             (30 seconds)
+last scroll position   (default: 30s)
    │                         │
    ▼                         ▼
 onReachedEnd           onViewedSlides
@@ -221,7 +258,7 @@ fires, timer           fires
 cancelled
 ```
 
-Once either fires, a flag ensures the other can never fire in the same session.
+Once either fires, a mutex flag ensures the other can never fire in the same session.
 
 ---
 
@@ -231,7 +268,7 @@ Once either fires, a flag ensures the other can never fire in the same session.
 # Install dependencies
 npm install
 
-# Run tests
+# Run tests (29 tests across 4 suites)
 npm test
 
 # Run tests in watch mode
@@ -250,6 +287,9 @@ npm run build
 
 # Check bundle size (requires a build first)
 npm run size
+
+# Run local playground (Vite dev server at localhost:5173)
+npm run playground
 ```
 
 ### Project structure
@@ -257,18 +297,20 @@ npm run size
 ```
 src/
 ├── analytics/
-│   ├── analytics.ts          # Payload builders and mergeHandlers
+│   ├── analytics.ts          # Payload builders + mergeHandlers (default console.log)
 │   └── analytics.test.ts
 ├── hooks/
-│   ├── useViewedSlides.ts    # Tracks which slides have been seen
+│   ├── useViewedSlides.ts    # Tracks unique viewed slide indices across the session
 │   └── useViewedSlides.test.ts
 ├── utils/
-│   └── swipe.ts              # Swipe direction detection
-├── OptiSwiper.tsx            # Main carousel component
+│   ├── swipe.ts              # getSnapIndex — snap threshold and velocity logic
+│   └── swipe.test.ts
+├── OptiSwiper.tsx            # Main carousel: drag, snap, analytics, ResizeObserver
 ├── OptiSwiper.test.tsx
 ├── OptiSlide.tsx             # Slide component (React.memo + forwardRef)
+├── swiperContext.ts          # React context passing slideWidth to OptiSlide
 ├── types.ts                  # All exported TypeScript types
-└── index.ts                  # Public API barrel
+└── index.ts                  # Public API barrel (one index in the project)
 ```
 
 ---

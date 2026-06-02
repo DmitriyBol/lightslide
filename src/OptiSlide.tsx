@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useSwiperContext } from "./swiperContext";
 import type { OptiSlideProps } from "./types";
 
 export const OptiSlide = React.memo(
@@ -7,13 +8,16 @@ export const OptiSlide = React.memo(
     { children, style, className },
     ref,
   ) {
+    const { slideWidth } = useSwiperContext();
+
     return (
       <div
         ref={ref}
         className={className}
         style={{
           flexShrink: 0,
-          width: "100%",
+          // Use measured px width when available; fall back to 100% for SSR / first paint.
+          width: slideWidth > 0 ? `${slideWidth}px` : "100%",
           boxSizing: "border-box",
           ...style,
         }}

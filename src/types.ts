@@ -13,7 +13,9 @@ export type OptiSwiperProps = {
   trackStyle?: CSSProperties;
   trackClassName?: string;
   analytics?: AnalyticsHandlers;
-  /** Seconds of in-viewport visibility before the viewed-slides event fires (default: 30) */
+  /** How many slides to show at once. Each slide fills 1/n of the container. Default: 1. */
+  slidesPerView?: number;
+  /** Seconds of ≥50% viewport visibility before the viewed-slides event fires. Default: 30. */
   viewedTimeout?: number;
 };
 
