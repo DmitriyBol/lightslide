@@ -84,6 +84,8 @@ src/
 
 ## Analytics Events
 
+**Events are completely silent by default.** There are zero `console.log` / `console.warn` / `console.error` calls in the library. Unhandled events invoke a no-op — no output, no side effects. A handler must be explicitly provided via the `analytics` prop to observe any event.
+
 When adding a new event:
 
 1. Add a payload `type` to `src/types.ts`.
@@ -209,6 +211,17 @@ index 3: shows slides 3 4 5  ← last valid position
 `e.currentTarget.setPointerCapture(e.pointerId)` in `onPointerDown` routes all subsequent pointer events to the track element — even when the pointer moves outside it. This prevents the drag from breaking when the user moves quickly to the edge.
 
 Direction lock: on the first 4px of movement, if `|deltaY| > |deltaX|` → vertical intent → drag is cancelled, page scroll proceeds normally.
+
+---
+
+## Playground
+
+The `playground/` directory is **intentionally excluded from version control** (`.gitignore`). It is a local dev tool — not part of the published package.
+
+- Start it with `npm run playground` (Vite dev server at `localhost:5173`)
+- It imports directly from `../src` — no build step needed
+- When updating the playground, run it locally to verify your changes
+- **All analytics handlers must be wired to visible event logs** — every event type must be observable in the UI without opening DevTools. Do not use `console.log` in playground examples
 
 ---
 
