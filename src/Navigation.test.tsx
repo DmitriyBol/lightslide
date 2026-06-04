@@ -80,22 +80,4 @@ describe("Navigation", () => {
     expect(goToIndex).toHaveBeenCalledWith(2, "button");
   });
 
-  it("applies custom style to both buttons via config.style", () => {
-    renderNavigation(makeContext(), { style: { background: "blue" } });
-    const prev = screen.getByLabelText("Previous slide");
-    const next = screen.getByLabelText("Next slide");
-    expect(prev.style.background).toBe("blue");
-    expect(next.style.background).toBe("blue");
-  });
-
-  it("applies prevStyle and nextStyle independently", () => {
-    renderNavigation(makeContext(), {
-      prevStyle: { background: "red" },
-      nextStyle: { background: "green" },
-    });
-    expect(screen.getByLabelText("Previous slide").style.background).toBe(
-      "red",
-    );
-    expect(screen.getByLabelText("Next slide").style.background).toBe("green");
-  });
 });

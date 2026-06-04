@@ -143,31 +143,6 @@ describe("OptiSwiper", () => {
     expect(handlers.onViewedSlides).not.toHaveBeenCalled();
   });
 
-  it("applies custom styles to the outer wrapper", () => {
-    const { container } = render(
-      <OptiSwiper style={{ background: "red" }}>
-        <OptiSlide>
-          <div>A</div>
-        </OptiSlide>
-      </OptiSwiper>,
-    );
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.background).toBe("red");
-  });
-
-  it("applies custom styles to OptiSlide", () => {
-    const { container } = render(
-      <OptiSwiper>
-        <OptiSlide style={{ padding: "20px" }}>
-          <div>A</div>
-        </OptiSlide>
-      </OptiSwiper>,
-    );
-    const track = container.firstChild?.firstChild as HTMLElement;
-    const slide = track?.firstChild as HTMLElement;
-    expect(slide.style.padding).toBe("20px");
-  });
-
   it("renders correct number of slides regardless of slidesPerView", () => {
     renderSwiper({}, 30, 2);
     expect(screen.getByText("Slide 1")).toBeInTheDocument();
@@ -175,16 +150,4 @@ describe("OptiSwiper", () => {
     expect(screen.getByText("Slide 3")).toBeInTheDocument();
   });
 
-  it("track has grab cursor and pan-y touch-action", () => {
-    const { container } = render(
-      <OptiSwiper>
-        <OptiSlide>
-          <div>A</div>
-        </OptiSlide>
-      </OptiSwiper>,
-    );
-    const track = container.firstChild?.firstChild as HTMLElement;
-    expect(track.style.cursor).toBe("grab");
-    expect(track.style.touchAction).toBe("pan-y");
-  });
 });

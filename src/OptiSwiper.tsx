@@ -55,7 +55,7 @@ export function OptiSwiper({
   const slideCountRef = useRef(slideCount);
   slideCountRef.current = slideCount;
 
-  const maxIndex = Math.max(0, slideCount - slidesPerView);
+  const maxIndex = Math.max(0, Math.floor(slideCount - slidesPerView));
   const maxIndexRef = useRef(maxIndex);
   maxIndexRef.current = maxIndex;
 
@@ -178,7 +178,7 @@ export function OptiSwiper({
     measureSlideWidth();
     const newMax = Math.max(
       0,
-      slideCountRef.current - slidesPerViewRef.current,
+      Math.floor(slideCountRef.current - slidesPerViewRef.current),
     );
     maxIndexRef.current = newMax;
     const corrected = Math.min(currentIndexRef.current, newMax);

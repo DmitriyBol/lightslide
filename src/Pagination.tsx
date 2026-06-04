@@ -24,6 +24,7 @@ const DEFAULT_DOT_STYLE: React.CSSProperties = {
   cursor: "pointer",
   background: "rgba(0, 0, 0, 0.25)",
   flexShrink: 0,
+  transition: "transform 200ms ease, background 200ms ease",
 };
 
 const DEFAULT_ACTIVE_DOT_STYLE: React.CSSProperties = {

@@ -155,7 +155,7 @@ Buttons are absolutely positioned inside the carousel, vertically centered. They
 }}>
 ```
 
-Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates reactively on every navigation type.
+Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates reactively on every navigation type. The active state change is animated with a smooth `200ms ease` transition on both `transform` (scale) and `background` (color).
 
 **`PaginationConfig`** options:
 
@@ -192,11 +192,14 @@ Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates 
 
 ## slidesPerView
 
+`slidesPerView` accepts any positive number, including floats. A value like `1.5` shows one full slide plus a preview of the next — a "peek" effect that communicates scrollability.
+
 ```tsx
-<OptiSwiper slidesPerView={3}>  {/* 6 slides → scrolls to index 0–3 */}
+<OptiSwiper slidesPerView={1.5}>  {/* 1 full slide + peek of the next */}
+<OptiSwiper slidesPerView={3}>    {/* 6 slides → scrolls to index 0–3 */}
 ```
 
-Each slide fills `containerWidth / slidesPerView` px. `maxIndex = slideCount − slidesPerView` — the last position where the final group fills the viewport completely.
+Each slide fills `containerWidth / slidesPerView` px. `maxIndex = ⌊slideCount − slidesPerView⌋` — the last scroll position where the visible window does not exceed the track.
 
 ---
 
@@ -344,7 +347,7 @@ cancelled
 
 ```bash
 npm install          # install dependencies
-npm test             # 50 tests across 6 suites
+npm test             # 43 tests across 6 suites
 npm run test:watch   # watch mode
 npm run lint         # ESLint
 npm run lint:fix     # auto-fix

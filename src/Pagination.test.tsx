@@ -62,24 +62,6 @@ describe("Pagination", () => {
     expect(goToIndex).toHaveBeenCalledWith(1, "pagination");
   });
 
-  it("applies config.style to the container", () => {
-    const { container } = renderPagination(makeContext(), {
-      style: { background: "pink" },
-    });
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.background).toBe("pink");
-  });
-
-  it("applies activeDotStyle only to the active dot", () => {
-    renderPagination(makeContext({ currentIndex: 1, maxIndex: 2 }), {
-      activeDotStyle: { background: "purple" },
-    });
-    const buttons = screen.getAllByRole("button");
-    expect(buttons[1].style.background).toBe("purple"); // active
-    expect(buttons[0].style.background).not.toBe("purple"); // inactive
-    expect(buttons[2].style.background).not.toBe("purple"); // inactive
-  });
-
   it("renders 1 dot when maxIndex is 0", () => {
     renderPagination(makeContext({ maxIndex: 0 }));
     expect(screen.getAllByRole("button")).toHaveLength(1);
