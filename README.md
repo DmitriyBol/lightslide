@@ -202,7 +202,7 @@ Each slide fills `containerWidth / slidesPerView` px. `maxIndex = slideCount −
 
 ## Analytics
 
-All events fire as `console.log` by default. Override via the `analytics` prop.
+Events are **silent by default** — nothing happens unless you provide a handler. Pass custom handlers via the `analytics` prop.
 
 ### Events
 
@@ -218,6 +218,8 @@ All events fire as `console.log` by default. Override via the `analytics` prop.
 > `onReachedEnd` and `onViewedSlides` are **mutually exclusive** — whichever fires first suppresses the other for the session lifetime.
 
 ### Custom handlers
+
+Provide only the events you care about — unhandled events fire silently with no side effects.
 
 ```tsx
 import { OptiSlide, OptiSwiper } from "opti-swiper";

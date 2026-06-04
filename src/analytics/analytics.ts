@@ -11,37 +11,17 @@ import type {
 
 type ResolvedHandlers = Required<AnalyticsHandlers>;
 
-const defaultHandlers: ResolvedHandlers = {
-  onInViewport(payload: InViewportPayload) {
-    console.log("[OptiSwiper] carousel_in_viewport", payload);
-  },
-  onSlide(payload: SlidePayload) {
-    console.log("[OptiSwiper] carousel_slide", payload);
-  },
-  onReachedEnd(payload: ReachedEndPayload) {
-    console.log("[OptiSwiper] carousel_reached_end", payload);
-  },
-  onViewedSlides(payload: ViewedSlidesPayload) {
-    console.log("[OptiSwiper] carousel_viewed_slides", payload);
-  },
-  onNavButtonClick(payload: NavigationButtonPayload) {
-    console.log("[OptiSwiper] carousel_nav_button", payload);
-  },
-  onPaginationClick(payload: PaginationClickPayload) {
-    console.log("[OptiSwiper] carousel_pagination_click", payload);
-  },
-};
+// Events are silent by default — they only fire when a handler is provided.
+const noop = () => {};
 
 export function mergeHandlers(custom?: AnalyticsHandlers): ResolvedHandlers {
   return {
-    onInViewport: custom?.onInViewport ?? defaultHandlers.onInViewport,
-    onSlide: custom?.onSlide ?? defaultHandlers.onSlide,
-    onReachedEnd: custom?.onReachedEnd ?? defaultHandlers.onReachedEnd,
-    onViewedSlides: custom?.onViewedSlides ?? defaultHandlers.onViewedSlides,
-    onNavButtonClick:
-      custom?.onNavButtonClick ?? defaultHandlers.onNavButtonClick,
-    onPaginationClick:
-      custom?.onPaginationClick ?? defaultHandlers.onPaginationClick,
+    onInViewport: custom?.onInViewport ?? noop,
+    onSlide: custom?.onSlide ?? noop,
+    onReachedEnd: custom?.onReachedEnd ?? noop,
+    onViewedSlides: custom?.onViewedSlides ?? noop,
+    onNavButtonClick: custom?.onNavButtonClick ?? noop,
+    onPaginationClick: custom?.onPaginationClick ?? noop,
   };
 }
 

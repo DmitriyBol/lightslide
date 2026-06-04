@@ -68,76 +68,63 @@ describe("payload builders", () => {
 });
 
 describe("mergeHandlers", () => {
-  it("falls back to default console handlers when none provided", () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
+  it("is silent by default — does not log to console when no handler provided", () => {
+    const spy = jest.spyOn(console, "log");
     const handlers = mergeHandlers();
     handlers.onInViewport(buildInViewportPayload());
-    expect(spy).toHaveBeenCalledWith(
-      "[OptiSwiper] carousel_in_viewport",
-      expect.any(Object),
-    );
-    spy.mockRestore();
-  });
-
-  it("uses custom onSlide handler and skips default", () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
-    const customFn = jest.fn();
-    const handlers = mergeHandlers({ onSlide: customFn });
-    handlers.onSlide(buildSlidePayload("left", 1, 0));
-    expect(customFn).toHaveBeenCalledTimes(1);
-    expect(customFn.mock.calls[0][0].direction).toBe("left");
+    handlers.onSlide(buildSlidePayload("right", 0, 1));
+    handlers.onReachedEnd(buildReachedEndPayload([]));
+    handlers.onViewedSlides(buildViewedSlidesPayload([], 30));
+    handlers.onNavButtonClick(buildNavButtonPayload("left", 1, 0));
+    handlers.onPaginationClick(buildPaginationClickPayload(0, 2));
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
   });
 
-  it("merges partial handlers — provided ones override, rest stay default", () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
+  it("calls onSlide handler when provided", () => {
+    const onSlide = jest.fn();
+    mergeHandlers({ onSlide }).onSlide(buildSlidePayload("left", 1, 0));
+    expect(onSlide).toHaveBeenCalledTimes(1);
+    expect(onSlide.mock.calls[0][0].direction).toBe("left");
+  });
+
+  it("calls onInViewport handler when provided", () => {
+    const onInViewport = jest.fn();
+    mergeHandlers({ onInViewport }).onInViewport(buildInViewportPayload());
+    expect(onInViewport).toHaveBeenCalledTimes(1);
+    expect(onInViewport.mock.calls[0][0].event).toBe("carousel_in_viewport");
+  });
+
+  it("calls onNavButtonClick handler when provided", () => {
+    const onNavButtonClick = jest.fn();
+    mergeHandlers({ onNavButtonClick }).onNavButtonClick(
+      buildNavButtonPayload("right", 0, 1),
+    );
+    expect(onNavButtonClick).toHaveBeenCalledTimes(1);
+    expect(onNavButtonClick.mock.calls[0][0].event).toBe("carousel_nav_button");
+  });
+
+  it("calls onPaginationClick handler when provided", () => {
+    const onPaginationClick = jest.fn();
+    mergeHandlers({ onPaginationClick }).onPaginationClick(
+      buildPaginationClickPayload(0, 3),
+    );
+    expect(onPaginationClick).toHaveBeenCalledTimes(1);
+    expect(onPaginationClick.mock.calls[0][0].event).toBe(
+      "carousel_pagination_click",
+    );
+  });
+
+  it("provided handlers fire, omitted ones stay silent", () => {
+    const spy = jest.spyOn(console, "log");
     const onSlide = jest.fn();
     const handlers = mergeHandlers({ onSlide });
-    handlers.onInViewport(buildInViewportPayload());
+    // onSlide provided → fires
     handlers.onSlide(buildSlidePayload("right", 0, 1));
-    expect(spy).toHaveBeenCalledTimes(1); // only onInViewport used default
     expect(onSlide).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
-  });
-
-  it("uses custom onNavButtonClick handler", () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
-    const onNavButtonClick = jest.fn();
-    const handlers = mergeHandlers({ onNavButtonClick });
-    handlers.onNavButtonClick(buildNavButtonPayload("right", 0, 1));
-    expect(onNavButtonClick).toHaveBeenCalledTimes(1);
+    // onInViewport not provided → silent
+    handlers.onInViewport(buildInViewportPayload());
     expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
-  });
-
-  it("uses custom onPaginationClick handler", () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
-    const onPaginationClick = jest.fn();
-    const handlers = mergeHandlers({ onPaginationClick });
-    handlers.onPaginationClick(buildPaginationClickPayload(0, 3));
-    expect(onPaginationClick).toHaveBeenCalledTimes(1);
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
-  });
-
-  it("default onNavButtonClick logs to console", () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
-    mergeHandlers().onNavButtonClick(buildNavButtonPayload("left", 2, 1));
-    expect(spy).toHaveBeenCalledWith(
-      "[OptiSwiper] carousel_nav_button",
-      expect.objectContaining({ event: "carousel_nav_button" }),
-    );
-    spy.mockRestore();
-  });
-
-  it("default onPaginationClick logs to console", () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
-    mergeHandlers().onPaginationClick(buildPaginationClickPayload(1, 4));
-    expect(spy).toHaveBeenCalledWith(
-      "[OptiSwiper] carousel_pagination_click",
-      expect.objectContaining({ event: "carousel_pagination_click" }),
-    );
     spy.mockRestore();
   });
 });

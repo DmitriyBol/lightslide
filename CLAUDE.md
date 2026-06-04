@@ -88,7 +88,7 @@ When adding a new event:
 
 1. Add a payload `type` to `src/types.ts`.
 2. Add a `build*Payload` function to `src/analytics/analytics.ts`.
-3. Add a handler to `mergeHandlers` with a default `console.log`.
+3. Add a no-op fallback to `mergeHandlers` — events are silent when no handler is provided.
 4. Write a test in `src/analytics/analytics.test.ts`.
 5. Run `npm test`.
 6. Update `README.md` — analytics events section.
