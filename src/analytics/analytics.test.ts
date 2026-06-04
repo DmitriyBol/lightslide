@@ -68,8 +68,10 @@ describe("payload builders", () => {
 });
 
 describe("mergeHandlers", () => {
-  it("is silent by default — does not log to console when no handler provided", () => {
-    const spy = jest.spyOn(console, "log");
+  it("is silent by default — no console output when no handler provided", () => {
+    const spyLog = jest.spyOn(console, "log");
+    const spyWarn = jest.spyOn(console, "warn");
+    const spyError = jest.spyOn(console, "error");
     const handlers = mergeHandlers();
     handlers.onInViewport(buildInViewportPayload());
     handlers.onSlide(buildSlidePayload("right", 0, 1));
@@ -77,8 +79,12 @@ describe("mergeHandlers", () => {
     handlers.onViewedSlides(buildViewedSlidesPayload([], 30));
     handlers.onNavButtonClick(buildNavButtonPayload("left", 1, 0));
     handlers.onPaginationClick(buildPaginationClickPayload(0, 2));
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
+    expect(spyLog).not.toHaveBeenCalled();
+    expect(spyWarn).not.toHaveBeenCalled();
+    expect(spyError).not.toHaveBeenCalled();
+    spyLog.mockRestore();
+    spyWarn.mockRestore();
+    spyError.mockRestore();
   });
 
   it("calls onSlide handler when provided", () => {
@@ -116,15 +122,18 @@ describe("mergeHandlers", () => {
   });
 
   it("provided handlers fire, omitted ones stay silent", () => {
-    const spy = jest.spyOn(console, "log");
+    const spyLog = jest.spyOn(console, "log");
+    const spyWarn = jest.spyOn(console, "warn");
     const onSlide = jest.fn();
     const handlers = mergeHandlers({ onSlide });
     // onSlide provided → fires
     handlers.onSlide(buildSlidePayload("right", 0, 1));
     expect(onSlide).toHaveBeenCalledTimes(1);
-    // onInViewport not provided → silent
+    // onInViewport not provided → completely silent
     handlers.onInViewport(buildInViewportPayload());
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
+    expect(spyLog).not.toHaveBeenCalled();
+    expect(spyWarn).not.toHaveBeenCalled();
+    spyLog.mockRestore();
+    spyWarn.mockRestore();
   });
 });

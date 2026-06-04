@@ -202,7 +202,7 @@ Each slide fills `containerWidth / slidesPerView` px. `maxIndex = slideCount −
 
 ## Analytics
 
-Events are **silent by default** — nothing happens unless you provide a handler. Pass custom handlers via the `analytics` prop.
+Events are **silent by default** — no console output, no errors, nothing. They only execute when you provide a handler. Pass only the events you care about via the `analytics` prop.
 
 ### Events
 
@@ -219,7 +219,7 @@ Events are **silent by default** — nothing happens unless you provide a handle
 
 ### Custom handlers
 
-Provide only the events you care about — unhandled events fire silently with no side effects.
+Provide only the events you care about — unhandled events produce no output and have no side effects.
 
 ```tsx
 import { OptiSlide, OptiSwiper } from "opti-swiper";
@@ -344,7 +344,7 @@ cancelled
 
 ```bash
 npm install          # install dependencies
-npm test             # 51 tests across 6 suites
+npm test             # 50 tests across 6 suites
 npm run test:watch   # watch mode
 npm run lint         # ESLint
 npm run lint:fix     # auto-fix
@@ -354,6 +354,10 @@ npm run build        # Rollup CJS + ESM
 npm run size         # bundle size check (after build)
 npm run playground   # Vite dev server at localhost:5173
 ```
+
+> **Playground** lives in `playground/` and is excluded from version control (`.gitignore`). It imports directly from `../src` — no build step needed. Run `npm run playground` to start the dev server and interact with all examples live.
+
+> All analytics handlers in the playground are wired to visible event logs — every event type can be observed in the UI without opening DevTools.
 
 ### Project structure
 
