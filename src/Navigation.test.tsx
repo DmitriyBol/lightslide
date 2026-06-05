@@ -16,6 +16,7 @@ function makeContext(
     slideWidth: 300,
     currentIndex: 1,
     maxIndex: 3,
+    isLoop: false,
     goToIndex: jest.fn(),
     ...overrides,
   };
@@ -80,4 +81,13 @@ describe("Navigation", () => {
     expect(goToIndex).toHaveBeenCalledWith(2, "button");
   });
 
+  it("does not disable any button when isLoop is true, even at boundary indices", () => {
+    renderNavigation(makeContext({ currentIndex: 0, maxIndex: 3, isLoop: true }));
+    expect(screen.getByLabelText("Previous slide")).not.toBeDisabled();
+    expect(screen.getByLabelText("Next slide")).not.toBeDisabled();
+
+    renderNavigation(makeContext({ currentIndex: 3, maxIndex: 3, isLoop: true }));
+    expect(screen.getAllByLabelText("Previous slide")[1]).not.toBeDisabled();
+    expect(screen.getAllByLabelText("Next slide")[1]).not.toBeDisabled();
+  });
 });

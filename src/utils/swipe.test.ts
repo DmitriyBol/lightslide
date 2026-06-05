@@ -46,4 +46,18 @@ describe("getSnapIndex", () => {
   it("returns currentIndex when slideWidth is 0 (not yet measured)", () => {
     expect(getSnapIndex(2, 4, -500, 0, 1)).toBe(2);
   });
+
+  describe("isLoop", () => {
+    it("returns -1 at index 0 when swiped right past threshold (signals backward wrap)", () => {
+      expect(getSnapIndex(0, 4, threshold + 1, slideWidth, 0, true)).toBe(-1);
+    });
+
+    it("returns maxIndex+1 at maxIndex when swiped left past threshold (signals forward wrap)", () => {
+      expect(getSnapIndex(4, 4, -(threshold + 1), slideWidth, 0, true)).toBe(5);
+    });
+
+    it("advances normally when not at a boundary", () => {
+      expect(getSnapIndex(2, 4, -(threshold + 1), slideWidth, 0, true)).toBe(3);
+    });
+  });
 });

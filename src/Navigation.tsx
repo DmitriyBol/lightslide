@@ -29,7 +29,7 @@ const DEFAULT_BUTTON_STYLE: React.CSSProperties = {
 };
 
 export function Navigation({ config }: NavigationProps) {
-  const { currentIndex, maxIndex, goToIndex } = useSwiperContext();
+  const { currentIndex, maxIndex, isLoop, goToIndex } = useSwiperContext();
 
   const handlePrev = useCallback(() => {
     goToIndex(currentIndex - 1, "button");
@@ -44,8 +44,8 @@ export function Navigation({ config }: NavigationProps) {
     ...config.style,
   };
 
-  const prevDisabled = currentIndex <= 0;
-  const nextDisabled = currentIndex >= maxIndex;
+  const prevDisabled = !isLoop && currentIndex <= 0;
+  const nextDisabled = !isLoop && currentIndex >= maxIndex;
 
   return (
     <>

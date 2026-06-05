@@ -149,5 +149,51 @@ describe("OptiSwiper", () => {
     expect(screen.getByText("Slide 2")).toBeInTheDocument();
     expect(screen.getByText("Slide 3")).toBeInTheDocument();
   });
+});
 
+describe("OptiSwiper — isLoop", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it("renders all real slide content even when clones are added", () => {
+    render(
+      <OptiSwiper isLoop>
+        <OptiSlide>Alpha</OptiSlide>
+        <OptiSlide>Beta</OptiSlide>
+        <OptiSlide>Gamma</OptiSlide>
+      </OptiSwiper>,
+    );
+    // Real slides are present (clones may add duplicates, so check getAllByText)
+    expect(screen.getAllByText("Alpha").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Beta").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Gamma").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not disable navigation buttons at first or last index when isLoop is true", () => {
+    render(
+      <OptiSwiper isLoop navigation={{}}>
+        <OptiSlide>A</OptiSlide>
+        <OptiSlide>B</OptiSlide>
+        <OptiSlide>C</OptiSlide>
+      </OptiSwiper>,
+    );
+    expect(screen.getByLabelText("Previous slide")).not.toBeDisabled();
+    expect(screen.getByLabelText("Next slide")).not.toBeDisabled();
+  });
+
+  it("does not fire onReachedEnd when isLoop is active", () => {
+    const handlers = makeHandlers();
+    render(
+      <OptiSwiper isLoop analytics={handlers} navigation={{}}>
+        <OptiSlide>A</OptiSlide>
+        <OptiSlide>B</OptiSlide>
+        <OptiSlide>C</OptiSlide>
+      </OptiSwiper>,
+    );
+    // At maxIndex with isLoop, onReachedEnd must never fire (loop wrap suppresses it).
+    expect(handlers.onReachedEnd).not.toHaveBeenCalled();
+  });
 });

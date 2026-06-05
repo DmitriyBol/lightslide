@@ -11,7 +11,6 @@ import type {
 
 type ResolvedHandlers = Required<AnalyticsHandlers>;
 
-// Events are silent by default — they only fire when a handler is provided.
 const noop = () => {};
 
 export function mergeHandlers(custom?: AnalyticsHandlers): ResolvedHandlers {

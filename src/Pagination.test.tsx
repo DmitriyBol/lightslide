@@ -16,6 +16,7 @@ function makeContext(
     slideWidth: 300,
     currentIndex: 0,
     maxIndex: 4,
+    isLoop: false,
     goToIndex: jest.fn(),
     ...overrides,
   };

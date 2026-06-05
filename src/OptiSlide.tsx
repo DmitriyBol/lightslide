@@ -16,7 +16,6 @@ export const OptiSlide = React.memo(
         className={className}
         style={{
           flexShrink: 0,
-          // Use measured px width when available; fall back to 100% for SSR / first paint.
           width: slideWidth > 0 ? `${slideWidth}px` : "100%",
           boxSizing: "border-box",
           ...style,

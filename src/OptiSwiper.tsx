@@ -42,16 +42,17 @@ export function OptiSwiper({
   autoScroll,
   navigation,
   pagination,
+  isLoop = false,
 }: OptiSwiperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const currentIndexRef = useRef(0);
 
-  // ── Latest-value refs (written during render, read in callbacks) ──────────
   const handlersRef = useRef(mergeHandlers(analytics));
   handlersRef.current = mergeHandlers(analytics);
 
-  const slideCount = Children.count(children);
+  const childArray = Children.toArray(children);
+  const slideCount = childArray.length;
   const slideCountRef = useRef(slideCount);
   slideCountRef.current = slideCount;
 
@@ -65,16 +66,22 @@ export function OptiSwiper({
   const viewedTimeoutRef = useRef(viewedTimeout);
   viewedTimeoutRef.current = viewedTimeout;
 
-  // ── Slide data (for analytics payloads) ──────────────────────────────────
+  const effectiveLoop = isLoop && maxIndex > 0;
+  const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
+  const isLoopRef = useRef(effectiveLoop);
+  isLoopRef.current = effectiveLoop;
+  const loopOffsetRef = useRef(loopOffset);
+  loopOffsetRef.current = loopOffset;
+
   const slideDataRef = useRef<unknown[]>([]);
   const nextSlideData: unknown[] = [];
-  Children.forEach(children, (child) => {
+  for (const child of childArray) {
     if (isValidElement(child) && child.type === OptiSlide) {
       nextSlideData.push((child.props as { data?: unknown }).data);
     } else {
       nextSlideData.push(undefined);
     }
-  });
+  }
   slideDataRef.current = nextSlideData;
 
   const getSlideData = useCallback(
@@ -83,7 +90,6 @@ export function OptiSwiper({
   );
   const { markViewed, getViewedSlides } = useViewedSlides(getSlideData);
 
-  // ── Terminal-event mutex ──────────────────────────────────────────────────
   const terminalFiredRef = useRef(false);
   const inViewportFiredRef = useRef(false);
   const viewedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -117,7 +123,6 @@ export function OptiSwiper({
     [getSlideData, getViewedSlides],
   );
 
-  // ── Slide width — measured from container, passed to slides via context ───
   const [slideWidth, setSlideWidth] = useState(0);
   const slideWidthRef = useRef(0);
 
@@ -139,10 +144,8 @@ export function OptiSwiper({
     return () => ro.disconnect();
   }, [measureSlideWidth]);
 
-  // ── Reactive currentIndex state — for Navigation and Pagination UI ────────
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // ── Transform-based positioning ───────────────────────────────────────────
   const getComputedSlideWidth = useCallback(
     () =>
       containerRef.current
@@ -151,29 +154,42 @@ export function OptiSwiper({
     [],
   );
 
-  const snapTrack = useCallback(
-    (index: number, animate: boolean) => {
+  // Snaps the track to an absolute visual index (where visual = logical + loopOffset for loop mode).
+  // onComplete fires after the transition ends, or immediately when animate is false.
+  const snapToVisual = useCallback(
+    (visualIndex: number, animate: boolean, onComplete?: () => void) => {
       const track = trackRef.current;
       if (!track) return;
       const sw = getComputedSlideWidth();
 
       if (animate) {
         track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
-        track.style.transform = `translateX(${-index * sw}px)`;
+        track.style.transform = `translateX(${-visualIndex * sw}px)`;
         const onEnd = () => {
           track.style.transition = "";
           track.removeEventListener("transitionend", onEnd);
+          onComplete?.();
         };
         track.addEventListener("transitionend", onEnd, { once: true });
       } else {
         track.style.transition = "";
-        track.style.transform = `translateX(${-index * sw}px)`;
+        track.style.transform = `translateX(${-visualIndex * sw}px)`;
+        onComplete?.();
       }
     },
     [getComputedSlideWidth],
   );
 
-  // Re-measure and re-position when slidesPerView prop changes
+  const snapTrack = useCallback(
+    (logicalIndex: number, animate: boolean) => {
+      const visualIndex = isLoopRef.current
+        ? logicalIndex + loopOffsetRef.current
+        : logicalIndex;
+      snapToVisual(visualIndex, animate);
+    },
+    [snapToVisual],
+  );
+
   useEffect(() => {
     measureSlideWidth();
     const newMax = Math.max(
@@ -186,28 +202,39 @@ export function OptiSwiper({
     setCurrentIndex(corrected);
     snapTrack(corrected, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slidesPerView]);
+  }, [slidesPerView, isLoop]);
 
-  // ── Central navigation function — single source of truth ─────────────────
   const navigateToIndex = useCallback(
     (nextIndex: number, source: "drag" | "button" | "pagination" | "auto") => {
-      const clamped = Math.max(0, Math.min(maxIndexRef.current, nextIndex));
+      const maxIdx = maxIndexRef.current;
+      const loopMode = isLoopRef.current;
+      const offset = loopOffsetRef.current;
+      const count = slideCountRef.current;
+
+      const isBackwardWrap = loopMode && nextIndex < 0;
+      const isForwardWrap = loopMode && nextIndex > maxIdx;
+
+      let clamped: number;
+      if (isBackwardWrap) clamped = maxIdx;
+      else if (isForwardWrap) clamped = 0;
+      else clamped = Math.max(0, Math.min(maxIdx, nextIndex));
+
       const from = currentIndexRef.current;
 
-      if (clamped === from) {
-        if (source === "drag") snapTrack(clamped, true); // snap back
+      if (clamped === from && !isBackwardWrap && !isForwardWrap) {
+        if (source === "drag") snapToVisual(from + (loopMode ? offset : 0), true);
         return;
       }
 
-      const direction = clamped > from ? "right" : "left";
+      const direction: "left" | "right" =
+        isForwardWrap || clamped > from ? "right" : "left";
+
       currentIndexRef.current = clamped;
       setCurrentIndex(clamped);
       markViewed(clamped);
 
-      // onSlide fires for every navigation type
       handlersRef.current.onSlide(buildSlidePayload(direction, from, clamped));
 
-      // Source-specific events
       if (source === "button") {
         handlersRef.current.onNavButtonClick(
           buildNavButtonPayload(direction, from, clamped),
@@ -219,18 +246,22 @@ export function OptiSwiper({
         );
       }
 
-      // Auto-scroll loops — don't fire terminal events on wrap-around
-      if (source !== "auto" && clamped === maxIndexRef.current) {
+      const isLoopWrap = isBackwardWrap || isForwardWrap;
+      if (source !== "auto" && !isLoopWrap && clamped === maxIdx) {
         fireTerminalIfNeeded("reachedEnd");
       }
 
-      snapTrack(clamped, true);
+      if (isBackwardWrap) {
+        snapToVisual(0, true, () => snapToVisual(maxIdx + offset, false));
+      } else if (isForwardWrap) {
+        snapToVisual(count + offset, true, () => snapToVisual(offset, false));
+      } else {
+        snapToVisual(clamped + (loopMode ? offset : 0), true);
+      }
     },
-    [markViewed, fireTerminalIfNeeded, snapTrack],
+    [markViewed, fireTerminalIfNeeded, snapToVisual],
   );
 
-  // ── Context value ─────────────────────────────────────────────────────────
-  // goToIndex is the narrow public surface exposed to Navigation / Pagination
   const goToIndex = useCallback(
     (index: number, source: "button" | "pagination") => {
       navigateToIndex(index, source);
@@ -239,13 +270,13 @@ export function OptiSwiper({
   );
 
   const contextValue = useMemo(
-    () => ({ slideWidth, currentIndex, maxIndex, goToIndex }),
-    [slideWidth, currentIndex, maxIndex, goToIndex],
+    () => ({ slideWidth, currentIndex, maxIndex, isLoop: effectiveLoop, goToIndex }),
+    [slideWidth, currentIndex, maxIndex, effectiveLoop, goToIndex],
   );
 
-  // ── Auto-scroll ───────────────────────────────────────────────────────────
-  // Paused during pointer drag so gestures don't fight auto-scroll
   const autoScrollPausedRef = useRef(false);
+  const navigateToIndexRef = useRef(navigateToIndex);
+  navigateToIndexRef.current = navigateToIndex;
 
   useEffect(() => {
     if (!autoScroll?.enabled) return;
@@ -253,21 +284,15 @@ export function OptiSwiper({
     const tick = () => {
       if (autoScrollPausedRef.current) return;
       const from = currentIndexRef.current;
-      const next = from >= maxIndexRef.current ? 0 : from + 1; // loop
-      const direction: "left" | "right" = next > from ? "right" : "left";
-
-      currentIndexRef.current = next;
-      setCurrentIndex(next);
-      markViewed(next);
-      handlersRef.current.onSlide(buildSlidePayload(direction, from, next));
-      snapTrack(next, true);
+      const maxIdx = maxIndexRef.current;
+      const next = isLoopRef.current ? from + 1 : from >= maxIdx ? 0 : from + 1;
+      navigateToIndexRef.current(next, "auto");
     };
 
     const timer = setInterval(tick, autoScroll.interval);
     return () => clearInterval(timer);
-  }, [autoScroll?.enabled, autoScroll?.interval, markViewed, snapTrack]);
+  }, [autoScroll?.enabled, autoScroll?.interval]);
 
-  // ── Drag state (refs only — zero React re-renders during gesture) ─────────
   const dragStartX = useRef<number | null>(null);
   const dragStartY = useRef<number | null>(null);
   const isDraggingRef = useRef(false);
@@ -311,13 +336,20 @@ export function OptiSwiper({
       lastPointerTime.current = now;
       lastPointerX.current = e.clientX;
 
-      const atStart = currentIndexRef.current <= 0 && dx > 0;
-      const atEnd = currentIndexRef.current >= maxIndexRef.current && dx < 0;
+      const atStart =
+        !isLoopRef.current && currentIndexRef.current <= 0 && dx > 0;
+      const atEnd =
+        !isLoopRef.current &&
+        currentIndexRef.current >= maxIndexRef.current &&
+        dx < 0;
       const delta = atStart || atEnd ? dx / 3 : dx;
 
       if (trackRef.current) {
         const sw = getComputedSlideWidth();
-        trackRef.current.style.transform = `translateX(${-currentIndexRef.current * sw + delta}px)`;
+        const visualIndex = isLoopRef.current
+          ? currentIndexRef.current + loopOffsetRef.current
+          : currentIndexRef.current;
+        trackRef.current.style.transform = `translateX(${-visualIndex * sw + delta}px)`;
       }
     },
     [getComputedSlideWidth],
@@ -344,6 +376,7 @@ export function OptiSwiper({
         deltaX,
         sw,
         dragVelocityX.current,
+        isLoopRef.current,
       );
 
       navigateToIndex(nextIndex, "drag");
@@ -363,7 +396,6 @@ export function OptiSwiper({
     snapTrack(currentIndexRef.current, true);
   }, [snapTrack]);
 
-  // ── Viewport detection (IntersectionObserver) ─────────────────────────────
   useEffect(() => {
     const wrapper = containerRef.current;
     if (!wrapper) return;
@@ -400,6 +432,27 @@ export function OptiSwiper({
     };
   }, [markViewed, fireTerminalIfNeeded]);
 
+  let displayChildren: React.ReactNode[] = childArray;
+  if (effectiveLoop && slideCount > 0 && loopOffset > 0) {
+    const prependClones = childArray
+      .slice(slideCount - loopOffset)
+      .map((child, i) =>
+        isValidElement(child)
+          ? React.cloneElement(child as React.ReactElement, {
+              key: `__loop_pre_${i}`,
+            })
+          : child,
+      );
+    const appendClones = childArray.slice(0, loopOffset).map((child, i) =>
+      isValidElement(child)
+        ? React.cloneElement(child as React.ReactElement, {
+            key: `__loop_post_${i}`,
+          })
+        : child,
+    );
+    displayChildren = [...prependClones, ...childArray, ...appendClones];
+  }
+
   return (
     <SwiperContext.Provider value={contextValue}>
       <div
@@ -428,7 +481,7 @@ export function OptiSwiper({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerCancel}
         >
-          {children}
+          {displayChildren}
         </div>
 
         {navigation && <Navigation config={navigation} />}

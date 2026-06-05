@@ -6,6 +6,7 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 
 - **Swipe & drag** — real-time finger tracking via Pointer Events; slides follow the finger and snap on release
 - **slidesPerView** — show 1, 2, or 3 slides at once; each slide fills `1/n` of the container proportionally
+- **isLoop** — seamless infinite loop; edge slides are cloned so wrap-around looks continuous
 - **Navigation buttons** — optional prev/next buttons with full style control
 - **Pagination dots** — optional dot indicators with active-state styling
 - **Auto-scroll** — optional automatic cycling with configurable interval; pauses during drag
@@ -86,6 +87,7 @@ The container component. Handles layout, all navigation types, and analytics.
 | `autoScroll` | `AutoScrollConfig` | — | Enable automatic slide cycling |
 | `navigation` | `NavigationConfig` | — | Show prev/next buttons. Pass `{}` for defaults |
 | `pagination` | `PaginationConfig` | — | Show pagination dots. Pass `{}` for defaults |
+| `isLoop` | `boolean` | `false` | Seamless infinite loop (see [Loop](#loop)) |
 
 ### `<OptiSlide>`
 
@@ -124,7 +126,7 @@ Built-in and always active. Drag horizontally to navigate — the slide follows 
 }}>
 ```
 
-Buttons are absolutely positioned inside the carousel, vertically centered. They disable and dim at the first/last slide.
+Buttons are absolutely positioned inside the carousel, vertically centered. They disable and dim at the first/last slide unless `isLoop` is active.
 
 **`NavigationConfig`** options:
 
@@ -190,6 +192,26 @@ Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates 
 
 ---
 
+## Loop
+
+```tsx
+<OptiSwiper isLoop>
+  ...
+</OptiSwiper>
+```
+
+When `isLoop` is true, the carousel wraps around seamlessly — dragging past the last slide flows directly into the first, and vice versa, without any visible jump.
+
+**How it works:** `Math.ceil(slidesPerView)` slides are cloned from each end of the track. When the snap animation lands on a clone, the track silently repositions to the matching real slide before the next interaction. From the user's perspective the scroll is continuous.
+
+**Effect on navigation buttons:** prev/next buttons are never disabled when `isLoop` is active — they remain enabled at all positions.
+
+**Effect on analytics:** `onReachedEnd` is not fired on loop wrap-around (the carousel has no logical end). All other events — `onSlide`, `onNavButtonClick`, `onPaginationClick` — fire normally.
+
+**No-op condition:** if `maxIndex === 0` (only one scroll position), `isLoop` has no effect.
+
+---
+
 ## slidesPerView
 
 `slidesPerView` accepts any positive number, including floats. A value like `1.5` shows one full slide plus a preview of the next — a "peek" effect that communicates scrollability.
@@ -213,7 +235,7 @@ Events are **silent by default** — no console output, no errors, nothing. They
 |---|---|---|
 | `carousel_in_viewport` | `onInViewport` | First time carousel becomes ≥50% visible. Once. |
 | `carousel_slide` | `onSlide` | On **every** navigation (drag, button, pagination, auto-scroll). |
-| `carousel_reached_end` | `onReachedEnd` | User reaches the last scroll position. Once. Not fired by auto-scroll loops. |
+| `carousel_reached_end` | `onReachedEnd` | User reaches maxIndex. Once. Not fired by auto-scroll or `isLoop` wrap-around. |
 | `carousel_viewed_slides` | `onViewedSlides` | After `viewedTimeout` seconds of visibility. Once. |
 | `carousel_nav_button` | `onNavButtonClick` | Prev/next button clicked. Fires in addition to `onSlide`. |
 | `carousel_pagination_click` | `onPaginationClick` | Pagination dot clicked. Fires in addition to `onSlide`. |
@@ -311,17 +333,29 @@ import type {
 └──────────────────────────────────────────────────────────┘
 ```
 
+With `isLoop`, the rendered track has additional clone slides at both ends:
+
+```
+[clone(last N)][Slide 0]...[Slide n][clone(first N)]
+```
+
+where N = `Math.ceil(slidesPerView)`.
+
 ### Drag & snap
 
 1. **`onPointerDown`** — drag start; pointer is captured so events continue outside the element
 2. **`onPointerMove`** — `translateX` updated directly on the DOM (zero React re-renders during drag)
 3. **Direction lock** — first 4px decides horizontal vs vertical; vertical cancels drag and lets page scroll
 4. **`onPointerUp`** — snap decision: `|drag| > 50% slide width` OR `velocity > 0.3 px/ms` → next/prev; otherwise snap back
-5. **Rubber-banding** — `delta / 3` resistance at first and last slide
+5. **Rubber-banding** — `delta / 3` resistance at first and last slide (disabled in loop mode)
+
+### Loop wrap animation
+
+When a drag or button press crosses a boundary in loop mode, the track animates into the clone zone, then silently jumps to the matching real position — all within a single `transitionend` callback. The result is continuous motion with no visible jump.
 
 ### Central navigation
 
-All navigation types call `navigateToIndex(index, source)`. The `source` parameter controls which analytics events fire beyond the base `onSlide`.
+All navigation types call `navigateToIndex(index, source)`. The `source` parameter controls which analytics events fire beyond the base `onSlide`. Loop wrap-around is detected inside this function from the raw `nextIndex` value before clamping.
 
 ### Terminal event logic
 
@@ -347,7 +381,7 @@ cancelled
 
 ```bash
 npm install          # install dependencies
-npm test             # 43 tests across 6 suites
+npm test             # 50 tests across 6 suites
 npm run test:watch   # watch mode
 npm run lint         # ESLint
 npm run lint:fix     # auto-fix
@@ -382,7 +416,7 @@ src/
 ├── OptiSwiper.tsx            # Main carousel
 ├── OptiSwiper.test.tsx
 ├── OptiSlide.tsx             # Slide (React.memo + forwardRef)
-├── swiperContext.ts          # Context: slideWidth, currentIndex, maxIndex, goToIndex
+├── swiperContext.ts          # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
 ├── types.ts                  # All exported TypeScript types
 └── index.ts                  # Public API barrel
 ```

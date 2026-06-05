@@ -1,47 +1,42 @@
 import type { CSSProperties, ReactNode } from "react";
 
+// Slide index + arbitrary data attached to a slide, included in analytics payloads.
 export type SlideData = {
   index: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
+  data?: unknown;
 };
 
+// Automatic slide cycling. Set enabled: false to pause without removing the prop.
 export type AutoScrollConfig = {
-  /** Enable automatic slide cycling. */
   enabled: boolean;
-  /** Milliseconds between automatic slide changes. */
   interval: number;
 };
 
+// Prev/next navigation buttons.
+// style/className apply to both buttons; prevStyle/nextStyle/prevClassName/nextClassName merge on top.
 export type NavigationConfig = {
-  /** Content for the previous button. Default: "‹" */
   prevLabel?: ReactNode;
-  /** Content for the next button. Default: "›" */
   nextLabel?: ReactNode;
-  /** Base style applied to both buttons. */
   style?: CSSProperties;
-  /** Base class applied to both buttons. */
   className?: string;
-  /** Style applied only to the previous button (merges with style). */
   prevStyle?: CSSProperties;
-  /** Style applied only to the next button (merges with style). */
   nextStyle?: CSSProperties;
   prevClassName?: string;
   nextClassName?: string;
 };
 
+// Pagination dots.
+// dotStyle/dotClassName apply to every dot; activeDotStyle/activeDotClassName merge on top for the active dot.
 export type PaginationConfig = {
-  /** Style for the dots container. */
   style?: CSSProperties;
   className?: string;
-  /** Style applied to every dot. */
   dotStyle?: CSSProperties;
   dotClassName?: string;
-  /** Additional style applied to the active dot (merged on top of dotStyle). */
   activeDotStyle?: CSSProperties;
   activeDotClassName?: string;
 };
 
+// Main carousel props.
 export type OptiSwiperProps = {
   children: ReactNode;
   style?: CSSProperties;
@@ -49,26 +44,23 @@ export type OptiSwiperProps = {
   trackStyle?: CSSProperties;
   trackClassName?: string;
   analytics?: AnalyticsHandlers;
-  /** How many slides to show at once. Each slide fills 1/n of the container. Default: 1. */
   slidesPerView?: number;
-  /** Seconds of ≥50% viewport visibility before the viewed-slides event fires. Default: 30. */
   viewedTimeout?: number;
-  /** Enable automatic slide cycling. */
   autoScroll?: AutoScrollConfig;
-  /** Show prev/next navigation buttons. Pass an empty object `{}` for defaults. */
   navigation?: NavigationConfig;
-  /** Show pagination dots below the track. Pass an empty object `{}` for defaults. */
   pagination?: PaginationConfig;
+  isLoop?: boolean;
 };
 
+// Individual slide props.
 export type OptiSlideProps = {
   children: ReactNode;
   style?: CSSProperties;
   className?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
+  data?: unknown;
 };
 
+// Analytics event handlers. All fields are optional; unhandled events are completely silent.
 export type AnalyticsHandlers = {
   onInViewport?: (payload: InViewportPayload) => void;
   onSlide?: (payload: SlidePayload) => void;
@@ -78,11 +70,13 @@ export type AnalyticsHandlers = {
   onPaginationClick?: (payload: PaginationClickPayload) => void;
 };
 
+// Fired once the first time the carousel enters ≥50% of the viewport.
 export type InViewportPayload = {
   event: "carousel_in_viewport";
   timestamp: number;
 };
 
+// Fired on every navigation — drag, button, pagination, or auto-scroll.
 export type SlidePayload = {
   event: "carousel_slide";
   direction: "left" | "right";
@@ -91,12 +85,15 @@ export type SlidePayload = {
   timestamp: number;
 };
 
+// Fired when the user reaches maxIndex. Mutually exclusive with ViewedSlidesPayload.
+// Not fired by auto-scroll loops or isLoop wrap-around.
 export type ReachedEndPayload = {
   event: "carousel_reached_end";
   slides: SlideData[];
   timestamp: number;
 };
 
+// Fired after viewedTimeout seconds of visibility. Mutually exclusive with ReachedEndPayload.
 export type ViewedSlidesPayload = {
   event: "carousel_viewed_slides";
   slides: SlideData[];
@@ -104,6 +101,7 @@ export type ViewedSlidesPayload = {
   timestamp: number;
 };
 
+// Fired when a prev/next button is clicked, in addition to onSlide.
 export type NavigationButtonPayload = {
   event: "carousel_nav_button";
   direction: "left" | "right";
@@ -112,6 +110,7 @@ export type NavigationButtonPayload = {
   timestamp: number;
 };
 
+// Fired when a pagination dot is clicked, in addition to onSlide.
 export type PaginationClickPayload = {
   event: "carousel_pagination_click";
   fromIndex: number;
