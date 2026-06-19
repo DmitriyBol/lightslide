@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 
 // Context consumed by Navigation and Pagination.
-export type SwiperContextType = {
+export type LightSlideContextType = {
   slideWidth: number;
   currentIndex: number;
   maxIndex: number;
@@ -9,7 +9,7 @@ export type SwiperContextType = {
   goToIndex: (index: number, source: "button" | "pagination") => void;
 };
 
-export const SwiperContext = createContext<SwiperContextType>({
+export const LightSlideContext = createContext<LightSlideContextType>({
   slideWidth: 0,
   currentIndex: 0,
   maxIndex: 0,
@@ -17,4 +17,4 @@ export const SwiperContext = createContext<SwiperContextType>({
   goToIndex: () => {},
 });
 
-export const useSwiperContext = () => useContext(SwiperContext);
+export const useLightSlideContext = () => useContext(LightSlideContext);

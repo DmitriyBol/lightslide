@@ -1,16 +1,16 @@
 import React from "react";
 
-import { useSwiperContext } from "../swiperContext";
-import type { OptiSlideProps } from "../types";
+import { useLightSlideContext } from "../lightSlideContext";
+import type { SlideProps } from "../types";
 import { cx } from "../utils/cx";
-import styles from "./OptiSlide.module.scss";
+import styles from "./Slide.module.scss";
 
-export const OptiSlide = React.memo(
-  React.forwardRef<HTMLDivElement, OptiSlideProps>(function OptiSlide(
+export const Slide = React.memo(
+  React.forwardRef<HTMLDivElement, SlideProps>(function Slide(
     { children, style, className },
     ref,
   ) {
-    const { slideWidth } = useSwiperContext();
+    const { slideWidth } = useLightSlideContext();
 
     return (
       <div
@@ -27,4 +27,4 @@ export const OptiSlide = React.memo(
   }),
 );
 
-OptiSlide.displayName = "OptiSlide";
+Slide.displayName = "Slide";

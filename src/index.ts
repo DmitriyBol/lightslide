@@ -1,19 +1,19 @@
-export { OptiSlide } from "./OptiSlide/OptiSlide";
-export { OptiSwiper } from "./OptiSwiper/OptiSwiper";
+export { LightSlide } from "./LightSlide/LightSlide";
+export { Slide } from "./Slide/Slide";
 export type {
   AnalyticsHandlers,
   AutoScrollConfig,
+  FlowConfig,
   InViewportPayload,
-  MarqueeConfig,
+  LightSlideProps,
   NavButtonRenderProps,
   NavigationButtonPayload,
   NavigationConfig,
-  OptiSlideProps,
-  OptiSwiperProps,
   PaginationClickPayload,
   PaginationConfig,
   ReachedEndPayload,
   SlideData,
   SlidePayload,
+  SlideProps,
   ViewedSlidesPayload,
 } from "./types";

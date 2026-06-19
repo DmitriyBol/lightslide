@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { useSwiperContext } from "../swiperContext";
+import { useLightSlideContext } from "../lightSlideContext";
 import { cx } from "../utils/cx";
 import styles from "./Pagination.module.scss";
 import type { PaginationConfig } from "./Pagination.types";
@@ -10,7 +10,7 @@ type PaginationProps = {
 };
 
 export function Pagination({ config }: PaginationProps) {
-  const { currentIndex, maxIndex, goToIndex } = useSwiperContext();
+  const { currentIndex, maxIndex, goToIndex } = useLightSlideContext();
 
   // Number of dots = number of scrollable positions
   const dotCount = maxIndex + 1;

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { useSwiperContext } from "../swiperContext";
+import { useLightSlideContext } from "../lightSlideContext";
 import { cx } from "../utils/cx";
 import styles from "./Navigation.module.scss";
 import type { NavigationConfig } from "./Navigation.types";
@@ -10,7 +10,7 @@ type NavigationProps = {
 };
 
 export function Navigation({ config }: NavigationProps) {
-  const { currentIndex, maxIndex, isLoop, goToIndex } = useSwiperContext();
+  const { currentIndex, maxIndex, isLoop, goToIndex } = useLightSlideContext();
 
   const handlePrev = useCallback(() => {
     goToIndex(currentIndex - 1, "button");

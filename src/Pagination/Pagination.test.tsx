@@ -3,15 +3,15 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import type { SwiperContextType } from "../swiperContext";
-import { SwiperContext } from "../swiperContext";
+import type { LightSlideContextType } from "../lightSlideContext";
+import { LightSlideContext } from "../lightSlideContext";
 import { Pagination } from "./Pagination";
 
 import "@testing-library/jest-dom";
 
 function makeContext(
-  overrides?: Partial<SwiperContextType>,
-): SwiperContextType {
+  overrides?: Partial<LightSlideContextType>,
+): LightSlideContextType {
   return {
     slideWidth: 300,
     currentIndex: 0,
@@ -23,13 +23,13 @@ function makeContext(
 }
 
 function renderPagination(
-  ctx: SwiperContextType,
+  ctx: LightSlideContextType,
   config: React.ComponentProps<typeof Pagination>["config"] = {},
 ) {
   return render(
-    <SwiperContext.Provider value={ctx}>
+    <LightSlideContext.Provider value={ctx}>
       <Pagination config={config} />
-    </SwiperContext.Provider>,
+    </LightSlideContext.Provider>,
   );
 }
 

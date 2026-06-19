@@ -1,4 +1,4 @@
-# OptiSwiper — Development Guide
+# LightSlide — Development Guide
 
 This file is a living instruction set for Claude and everyone committing to this repository.
 Rules are mandatory. If a rule gets in the way — update it, don't work around it.
@@ -34,11 +34,11 @@ component-specific types together:
 
 ```
 src/
-├── OptiSwiper/
-│   ├── OptiSwiper.tsx              ← orchestrator: refs, navigateToIndex, wiring
-│   ├── OptiSwiper.test.tsx
-│   ├── OptiSwiper.module.scss
-│   └── helpers/                    ← OptiSwiper-internal helpers & hooks
+├── LightSlide/
+│   ├── LightSlide.tsx              ← orchestrator: refs, navigateToIndex, wiring
+│   ├── LightSlide.test.tsx
+│   ├── LightSlide.module.scss
+│   └── helpers/                    ← LightSlide-internal helpers & hooks
 │       ├── constants.ts            ·  tuning constants
 │       ├── navigation.ts           ·  NavigateSource / NavigateFn types
 │       ├── slideData.ts (+test)    ·  collectSlideData (pure)
@@ -47,11 +47,11 @@ src/
 │       ├── useTrackSnap.ts         ·  transform/translateX snap
 │       ├── useAutoScroll.ts (+test)·  interval cycling (step)
 │       ├── useDragGesture.ts (+test)· pointer handlers + drag refs
-│       ├── useMarquee.ts (+test)    ·  continuous ticker scroll (rAF)
+│       ├── useFlow.ts (+test)    ·  continuous ticker scroll (rAF)
 │       └── useViewportEngagement.ts·  IntersectionObserver + terminal events
-├── OptiSlide/
-│   ├── OptiSlide.tsx
-│   └── OptiSlide.module.scss
+├── Slide/
+│   ├── Slide.tsx
+│   └── Slide.module.scss
 ├── Navigation/
 │   ├── Navigation.tsx
 │   ├── Navigation.test.tsx
@@ -71,7 +71,7 @@ src/
 ├── utils/
 │   ├── swipe.ts
 │   └── swipe.test.ts
-├── swiperContext.ts               ← shared context
+├── lightSlideContext.ts               ← shared context
 ├── types.ts                       ← shared/public types + re-exports
 ├── styles.d.ts                    ← ambient *.module.scss declaration
 └── index.ts                       ← the only index.ts (public API barrel)
@@ -82,7 +82,7 @@ src/
 ## File and Folder Naming
 
 - **One `index.ts` in the entire project** — that is `src/index.ts` (the public API barrel).
-- **Each component is its own feature folder** named after the component (`Navigation/`, `Pagination/`, `OptiSlide/`, `OptiSwiper/`). The folder holds everything that belongs to that feature: component, test, styles, and types.
+- **Each component is its own feature folder** named after the component (`Navigation/`, `Pagination/`, `Slide/`, `LightSlide/`). The folder holds everything that belongs to that feature: component, test, styles, and types.
 - Files inside a feature folder are named after the folder plus a role suffix:
   - `Navigation/Navigation.tsx` — the component
   - `Navigation/Navigation.test.tsx` — its test
@@ -91,10 +91,10 @@ src/
 - Non-component modules are named after their folder or function:
   - `analytics/analytics.ts` — primary logic for the `analytics` folder
   - `utils/swipe.ts` — utility named by what it does
-  - `swiperContext.ts` — shared React context (lives at `src/` root — cross-cutting)
-  - `types.ts` — shared/public types (analytics payloads, `SlideData`, `OptiSwiperProps`); re-exports the per-feature config types so `index.ts` has one place to pull from
+  - `lightSlideContext.ts` — shared React context (lives at `src/` root — cross-cutting)
+  - `types.ts` — shared/public types (analytics payloads, `SlideData`, `LightSlideProps`); re-exports the per-feature config types so `index.ts` has one place to pull from
 - No `index.ts` files inside sub-folders.
-- **A component folder may have a `helpers/` sub-folder** for component-internal pure functions and hooks (see `OptiSwiper/helpers/`). Keep the component file an orchestrator; push self-contained concerns (gesture, metrics, auto-scroll, viewport observer, clone/data builders) into `helpers/`. Hooks there are named `useThing.ts`; pure helpers are named by what they do.
+- **A component folder may have a `helpers/` sub-folder** for component-internal pure functions and hooks (see `LightSlide/helpers/`). Keep the component file an orchestrator; push self-contained concerns (gesture, metrics, auto-scroll, viewport observer, clone/data builders) into `helpers/`. Hooks there are named `useThing.ts`; pure helpers are named by what they do.
 
 ---
 
@@ -123,7 +123,7 @@ src/
 
 - **Static, presentational styling lives in `*.module.scss`** next to the component (CSS Modules → scoped class names). The component imports `styles from "./X.module.scss"` and applies `styles.<class>`.
 - **Dynamic values stay inline** as a `style={{…}}` object — anything computed at runtime cannot be a static class:
-  - `OptiSlide` width (`containerWidth / slidesPerView` px)
+  - `Slide` width (`containerWidth / slidesPerView` px)
   - track `transform: translateX(…px)` and the snap `transition`
 - **User overrides:** `className`/`*ClassName` props are appended after the module class; `style`/`*Style` props are inline and therefore always win. Never drop the user's override props.
 - **Compose class names with `cx()` from `src/utils/cx.ts`** — never hand-roll `[a, b].filter(Boolean).join(" ")`. `cx` is a tiny zero-dependency clsx-style helper (no `classnames`/`clsx` npm package — that would break the "zero runtime dependencies" promise).
@@ -179,7 +179,7 @@ const fooRef = useRef(foo);
 fooRef.current = foo; // write during render, read inside callback
 ```
 
-- `OptiSlide` is wrapped in `React.memo` — do not pass frequently-changing values as its props unless necessary.
+- `Slide` is wrapped in `React.memo` — do not pass frequently-changing values as its props unless necessary.
 - All drag state lives in refs (`dragStartX`, `isDraggingRef`, `dragVelocityX`, etc.) — the DOM is updated directly during gesture to avoid React re-renders on every `pointermove`.
 
 ---
@@ -217,14 +217,14 @@ Two conditions trigger a snap to the next/prev slide (either is sufficient):
 
 Both constants live in `src/utils/swipe.ts` (`SNAP_THRESHOLD_RATIO`, `VELOCITY_THRESHOLD`). Change them there — they are tested in `swipe.test.ts`.
 
-### SwiperContext + ResizeObserver for slide width
+### LightSlideContext + ResizeObserver for slide width
 
 Each slide needs a concrete px width = `containerWidth / slidesPerView`.
 Using `width: calc(100% / N)` with CSS fails because `100%` on a flex child refers to the flex container (track), whose width is determined by its content — a circular dependency.
 
-Solution: `ResizeObserver` on the outer container measures `offsetWidth`, divides by `slidesPerView`, and stores the result as React state. `SwiperContext` propagates it to every `OptiSlide`. `useMemo` ensures the context value object is stable between renders when the width hasn't changed.
+Solution: `ResizeObserver` on the outer container measures `offsetWidth`, divides by `slidesPerView`, and stores the result as React state. `LightSlideContext` propagates it to every `Slide`. `useMemo` ensures the context value object is stable between renders when the width hasn't changed.
 
-`SwiperContext` also exposes `currentIndex`, `maxIndex`, and `goToIndex` so that `Navigation` and `Pagination` can read reactive state and trigger navigation without prop drilling.
+`LightSlideContext` also exposes `currentIndex`, `maxIndex`, and `goToIndex` so that `Navigation` and `Pagination` can read reactive state and trigger navigation without prop drilling.
 
 ### Dual currentIndex: ref + state
 
@@ -267,7 +267,7 @@ Direction lock: on the first 4px of movement, if `|deltaY| > |deltaX|` → verti
 
 ### Pixel-aligned track: floor everywhere
 
-`measureSlideWidth` and `getComputedSlideWidth` both `Math.floor(offsetWidth / slidesPerView)`, and `OptiSlide` renders at that same floored px width. If the transform used the unfloored width while slides used the floored width, the track would drift by up to ~1px × index. **Keep both width sources floored and identical.**
+`measureSlideWidth` and `getComputedSlideWidth` both `Math.floor(offsetWidth / slidesPerView)`, and `Slide` renders at that same floored px width. If the transform used the unfloored width while slides used the floored width, the track would drift by up to ~1px × index. **Keep both width sources floored and identical.**
 
 ### Custom navigation buttons: render-prop
 
@@ -277,15 +277,15 @@ Direction lock: on the first 4px of movement, if `|deltaY| > |deltaX|` → verti
 - `disabled` reflects boundary state (always `false` under `isLoop`).
 - The library does not wrap the returned node — the consumer owns markup, styling, and which props they attach.
 
-### Marquee: continuous rAF scroll, not step navigation
+### Flow: continuous rAF scroll, not step navigation
 
-`marquee` (`useMarquee`) is a **continuous** ticker — distinct from `autoScroll`'s discrete stepping. Key decisions:
+`flow` (`useFlow`) is a **continuous** ticker — distinct from `autoScroll`'s discrete stepping. Key decisions:
 
 - **rAF drives the transform directly, with no CSS transition.** Per-frame `translateX` updates *are* the animation → smooth at frame rate. A CSS transition would fight the per-frame writes and cause lag/jank. (Same "transform, not scrollTo" philosophy as drag.)
-- **It forces the loop-clone structure** (`effectiveMarquee` ⊂ `effectiveLoop`) so the wrap is seamless: the offset is taken `% (slideCount × slideWidth)`, which lands on a clone that is pixel-identical to the start — no jump.
-- **Supersedes `autoScroll`** when both are set (`useAutoScroll(effectiveMarquee ? undefined : autoScroll, …)`). They are both "auto motion".
-- **In marquee mode the marquee owns the track and the pointer handlers** (`pointerHandlers = effectiveMarquee ? marqueeHandlers : dragHandlers`). The discrete drag-gesture is not attached; the reflow effect skips `snapTrack` (guarded by `effectiveMarqueeRef`) so nothing fights the rAF.
-- **No-jank invariants:** start at the home offset via a `useLayoutEffect` (before paint, no clone flash); interaction pauses by gating `advance` on `interactingRef` while the rAF keeps `lastTs` fresh (no dt spike on resume); a drag drifts from the *current* offset (continuous, no grab-jump); resume continues from the stopped offset after `resumeDelay`. `currentIndex` is intentionally **not** updated during a marquee (continuous motion has no discrete index), so pagination's active dot is not synced then.
+- **It forces the loop-clone structure** (`effectiveFlow` ⊂ `effectiveLoop`) so the wrap is seamless: the offset is taken `% (slideCount × slideWidth)`, which lands on a clone that is pixel-identical to the start — no jump.
+- **Supersedes `autoScroll`** when both are set (`useAutoScroll(effectiveFlow ? undefined : autoScroll, …)`). They are both "auto motion".
+- **In flow mode the flow owns the track and the pointer handlers** (`pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers`). The discrete drag-gesture is not attached; the reflow effect skips `snapTrack` (guarded by `effectiveFlowRef`) so nothing fights the rAF.
+- **No-jank invariants:** start at the home offset via a `useLayoutEffect` (before paint, no clone flash); interaction pauses by gating `advance` on `interactingRef` while the rAF keeps `lastTs` fresh (no dt spike on resume); a drag drifts from the *current* offset (continuous, no grab-jump); resume continues from the stopped offset after `resumeDelay`. `currentIndex` is intentionally **not** updated during a flow (continuous motion has no discrete index), so pagination's active dot is not synced then.
 
 ---
 

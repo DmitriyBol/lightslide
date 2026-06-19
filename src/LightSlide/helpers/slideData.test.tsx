@@ -1,26 +1,26 @@
-import { OptiSlide } from "../../OptiSlide/OptiSlide";
+import { Slide } from "../../Slide/Slide";
 import { collectSlideData } from "./slideData";
 
 describe("collectSlideData", () => {
-  it("extracts the data prop from OptiSlide children, preserving order", () => {
+  it("extracts the data prop from Slide children, preserving order", () => {
     const children = [
-      <OptiSlide key="a" data={{ id: 1 }}>
+      <Slide key="a" data={{ id: 1 }}>
         A
-      </OptiSlide>,
-      <OptiSlide key="b" data={{ id: 2 }}>
+      </Slide>,
+      <Slide key="b" data={{ id: 2 }}>
         B
-      </OptiSlide>,
+      </Slide>,
     ];
     expect(collectSlideData(children)).toEqual([{ id: 1 }, { id: 2 }]);
   });
 
-  it("yields undefined for non-OptiSlide children and missing data", () => {
+  it("yields undefined for non-Slide children and missing data", () => {
     const children = [
       <div key="x">x</div>,
-      <OptiSlide key="b" data={5}>
+      <Slide key="b" data={5}>
         B
-      </OptiSlide>,
-      <OptiSlide key="c">C</OptiSlide>,
+      </Slide>,
+      <Slide key="c">C</Slide>,
       "plain text",
     ];
     expect(collectSlideData(children)).toEqual([

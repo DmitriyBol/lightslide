@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import type { PointerEvent } from "react";
 
-import { useMarquee } from "./useMarquee";
+import { useFlow } from "./useFlow";
 
 // Manual rAF control: capture the scheduled callback and drive it with explicit
 // timestamps so per-frame motion is deterministic. setTimeout (resume) is faked.
@@ -31,7 +31,7 @@ function setup(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
   const { result } = renderHook(() =>
-    useMarquee(params as Parameters<typeof useMarquee>[0]),
+    useFlow(params as Parameters<typeof useFlow>[0]),
   );
   return { result, track };
 }
@@ -42,7 +42,7 @@ function frame(ts: number) {
   if (cb) cb(ts);
 }
 
-describe("useMarquee", () => {
+describe("useFlow", () => {
   beforeEach(() => {
     jest.useFakeTimers();
     frameCb = null;

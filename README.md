@@ -1,4 +1,4 @@
-# OptiSwiper
+# LightSlide
 
 A lightweight, fully-typed React carousel with built-in analytics events. Zero runtime dependencies beyond React.
 
@@ -11,7 +11,7 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 - **Pagination dots** — optional dot indicators with active-state styling
 - **Scoped SCSS styling** — base look ships as CSS-module classes, auto-injected at import; override via `className`/`style` props
 - **Auto-scroll** — optional automatic cycling with configurable interval; pauses during drag
-- **Marquee** — optional continuous ticker scroll at a configurable speed; seamless with looping; pauses on interaction and resumes after a delay
+- **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping; pauses on interaction and resumes after a delay
 - **Responsive** — `ResizeObserver` keeps slide widths correct on any container resize
 - **Analytics ready** — 6 events covering viewport, slide, navigation, pagination, and engagement
 - **Mutually exclusive terminal events** — only one of `onReachedEnd` or `onViewedSlides` ever fires per session
@@ -23,9 +23,9 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 ## Installation
 
 ```bash
-npm install opti-swiper
+npm install lightslide
 # or
-yarn add opti-swiper
+yarn add lightslide
 ```
 
 ### Peer dependencies
@@ -41,29 +41,29 @@ Requires React ≥ 17.
 ## Quick Start
 
 ```tsx
-import { OptiSlide, OptiSwiper } from "opti-swiper";
+import { Slide, LightSlide } from "lightslide";
 
 function ProductCarousel() {
   return (
-    <OptiSwiper
+    <LightSlide
       slidesPerView={2}
       navigation={{}}
       pagination={{}}
       style={{ borderRadius: 12 }}
     >
-      <OptiSlide data={{ id: 1, name: "Product A" }}>
+      <Slide data={{ id: 1, name: "Product A" }}>
         <ProductCard id={1} />
-      </OptiSlide>
-      <OptiSlide data={{ id: 2, name: "Product B" }}>
+      </Slide>
+      <Slide data={{ id: 2, name: "Product B" }}>
         <ProductCard id={2} />
-      </OptiSlide>
-      <OptiSlide data={{ id: 3, name: "Product C" }}>
+      </Slide>
+      <Slide data={{ id: 3, name: "Product C" }}>
         <ProductCard id={3} />
-      </OptiSlide>
-      <OptiSlide data={{ id: 4, name: "Product D" }}>
+      </Slide>
+      <Slide data={{ id: 4, name: "Product D" }}>
         <ProductCard id={4} />
-      </OptiSlide>
-    </OptiSwiper>
+      </Slide>
+    </LightSlide>
   );
 }
 ```
@@ -72,13 +72,13 @@ function ProductCarousel() {
 
 ## Components
 
-### `<OptiSwiper>`
+### `<LightSlide>`
 
 The container component. Handles layout, all navigation types, and analytics.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `ReactNode` | required | One or more `<OptiSlide>` elements |
+| `children` | `ReactNode` | required | One or more `<Slide>` elements |
 | `style` | `CSSProperties` | — | Styles for the outer wrapper div |
 | `className` | `string` | — | Class name for the outer wrapper |
 | `trackStyle` | `CSSProperties` | — | Styles for the inner draggable track div |
@@ -87,12 +87,12 @@ The container component. Handles layout, all navigation types, and analytics.
 | `slidesPerView` | `number` | `1` | How many slides are visible at once |
 | `viewedTimeout` | `number` | `30` | Seconds of ≥50% viewport visibility before `onViewedSlides` fires |
 | `autoScroll` | `AutoScrollConfig` | — | Enable automatic slide cycling |
-| `marquee` | `MarqueeConfig` | — | Enable continuous ticker scrolling (supersedes `autoScroll`) |
+| `flow` | `FlowConfig` | — | Enable continuous ticker scrolling (supersedes `autoScroll`) |
 | `navigation` | `NavigationConfig` | — | Show prev/next buttons. Pass `{}` for defaults |
 | `pagination` | `PaginationConfig` | — | Show pagination dots. Pass `{}` for defaults |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop (see [Loop](#loop)) |
 
-### `<OptiSlide>`
+### `<Slide>`
 
 A single slide. Width is automatically computed as `containerWidth / slidesPerView`.
 
@@ -114,11 +114,11 @@ Built-in and always active. Drag horizontally to navigate — the slide follows 
 ### Navigation buttons
 
 ```tsx
-<OptiSwiper navigation={{}}>  {/* default arrows ‹ › */}
+<LightSlide navigation={{}}>  {/* default arrows ‹ › */}
   ...
-</OptiSwiper>
+</LightSlide>
 
-<OptiSwiper navigation={{
+<LightSlide navigation={{
   prevLabel: "←",
   nextLabel: "→",
   style: { background: "white", color: "black" },   // both buttons
@@ -151,7 +151,7 @@ Buttons are absolutely positioned inside the carousel, vertically centered. They
 Pass your own JSX for either button via `renderPrev` / `renderNext`. The library hands you the wiring; you own the markup.
 
 ```tsx
-<OptiSwiper
+<LightSlide
   navigation={{
     renderPrev: ({ onClick, disabled }) => (
       <MyIconButton icon="chevron-left" onClick={onClick} disabled={disabled} />
@@ -162,7 +162,7 @@ Pass your own JSX for either button via `renderPrev` / `renderNext`. The library
   }}
 >
   ...
-</OptiSwiper>
+</LightSlide>
 ```
 
 When provided, your element **fully replaces** the default `<button>`. Attach the `onClick` you receive — it is the exact handler the built-in button uses, so navigation and the `onSlide` + `onNavButtonClick` analytics events fire identically.
@@ -178,11 +178,11 @@ When provided, your element **fully replaces** the default `<button>`. Attach th
 ### Pagination dots
 
 ```tsx
-<OptiSwiper pagination={{}}>  {/* default dots */}
+<LightSlide pagination={{}}>  {/* default dots */}
   ...
-</OptiSwiper>
+</LightSlide>
 
-<OptiSwiper pagination={{
+<LightSlide pagination={{
   style: { padding: "12px 0" },
   dotStyle: { width: 10, height: 4, borderRadius: 2 },
   activeDotStyle: { width: 24, background: "#4f46e5" },
@@ -207,9 +207,9 @@ Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates 
 ### Auto-scroll
 
 ```tsx
-<OptiSwiper autoScroll={{ enabled: true, interval: 3000 }}>
+<LightSlide autoScroll={{ enabled: true, interval: 3000 }}>
   ...
-</OptiSwiper>
+</LightSlide>
 ```
 
 - Loops back to index 0 after the last slide
@@ -224,31 +224,31 @@ Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates 
 | `enabled` | `boolean` | Toggle auto-scroll on/off without removing the prop |
 | `interval` | `number` | Milliseconds between slide changes |
 
-### Marquee (continuous ticker)
+### Flow (continuous ticker)
 
 ```tsx
-<OptiSwiper marquee={{ enabled: true }}>
+<LightSlide flow={{ enabled: true }}>
   ...
-</OptiSwiper>
+</LightSlide>
 
-<OptiSwiper marquee={{ enabled: true, speed: 80, resumeDelay: 3000 }}>
+<LightSlide flow={{ enabled: true, speed: 80, resumeDelay: 3000 }}>
   ...
-</OptiSwiper>
+</LightSlide>
 ```
 
-Unlike auto-scroll (which steps slide-by-slide), the marquee scrolls the track **continuously** at `speed` pixels per second — a smooth ticker. It:
+Unlike auto-scroll (which steps slide-by-slide), the flow scrolls the track **continuously** at `speed` pixels per second — a smooth ticker. It:
 
 - **Loops seamlessly** — clones are added automatically, so it wraps with no visible jump (works whether or not you also set `isLoop`).
 - **Pauses on interaction** — tapping or dragging the carousel stops the motion. A drag follows your finger from the current position (no snapping). Motion resumes `resumeDelay` ms after you let go, continuing from exactly where it stopped — no jank.
-- **Supersedes `autoScroll`** — if both are set, the marquee wins.
+- **Supersedes `autoScroll`** — if both are set, the flow wins.
 
-> The marquee drives the track directly via `requestAnimationFrame` (no CSS transition), so animation is smooth at frame rate. During a marquee the active pagination dot is not tracked (continuous motion has no discrete index).
+> The flow drives the track directly via `requestAnimationFrame` (no CSS transition), so animation is smooth at frame rate. During a flow the active pagination dot is not tracked (continuous motion has no discrete index).
 
-**`MarqueeConfig`**:
+**`FlowConfig`**:
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `enabled` | `boolean` | required | Toggle the marquee on/off |
+| `enabled` | `boolean` | required | Toggle the flow on/off |
 | `speed` | `number` | `40` | Scroll speed in **pixels per second** |
 | `resumeDelay` | `number` | `2000` | Milliseconds to stay paused after an interaction before resuming |
 
@@ -257,9 +257,9 @@ Unlike auto-scroll (which steps slide-by-slide), the marquee scrolls the track *
 ## Loop
 
 ```tsx
-<OptiSwiper isLoop>
+<LightSlide isLoop>
   ...
-</OptiSwiper>
+</LightSlide>
 ```
 
 When `isLoop` is true, the carousel wraps around seamlessly — dragging past the last slide flows directly into the first, and vice versa, without any visible jump.
@@ -279,8 +279,8 @@ When `isLoop` is true, the carousel wraps around seamlessly — dragging past th
 `slidesPerView` accepts any positive number, including floats. A value like `1.5` shows one full slide plus a preview of the next — a "peek" effect that communicates scrollability.
 
 ```tsx
-<OptiSwiper slidesPerView={1.5}>  {/* 1 full slide + peek of the next */}
-<OptiSwiper slidesPerView={3}>    {/* 6 slides → scrolls to index 0–3 */}
+<LightSlide slidesPerView={1.5}>  {/* 1 full slide + peek of the next */}
+<LightSlide slidesPerView={3}>    {/* 6 slides → scrolls to index 0–3 */}
 ```
 
 Each slide fills `containerWidth / slidesPerView` px. `maxIndex = ⌊slideCount − slidesPerView⌋` — the last scroll position where the visible window does not exceed the track.
@@ -309,8 +309,8 @@ Events are **silent by default** — no console output, no errors, nothing. They
 Provide only the events you care about — unhandled events produce no output and have no side effects.
 
 ```tsx
-import { OptiSlide, OptiSwiper } from "opti-swiper";
-import type { AnalyticsHandlers } from "opti-swiper";
+import { Slide, LightSlide } from "lightslide";
+import type { AnalyticsHandlers } from "lightslide";
 
 const analytics: AnalyticsHandlers = {
   onInViewport(payload) {
@@ -347,19 +347,19 @@ import type {
   AnalyticsHandlers,
   AutoScrollConfig,
   InViewportPayload,
-  MarqueeConfig,
+  FlowConfig,
   NavButtonRenderProps,
   NavigationButtonPayload,
   NavigationConfig,
   PaginationClickPayload,
   PaginationConfig,
-  OptiSlideProps,
-  OptiSwiperProps,
+  SlideProps,
+  LightSlideProps,
   ReachedEndPayload,
   SlideData,
   SlidePayload,
   ViewedSlidesPayload,
-} from "opti-swiper";
+} from "lightslide";
 ```
 
 ---
@@ -375,19 +375,19 @@ Override at two levels:
 
 Dynamic geometry (slide width, track transform) is always applied inline and is not meant to be overridden.
 
-`<OptiSwiper>` has `overflow: hidden` and `width: 100%` by default. Use `padding` on `<OptiSlide>` for gutters between cards.
+`<LightSlide>` has `overflow: hidden` and `width: 100%` by default. Use `padding` on `<Slide>` for gutters between cards.
 
 ```tsx
-<OptiSwiper
+<LightSlide
   slidesPerView={3}
   style={{ borderRadius: 16, background: "#f5f5f5" }}
   navigation={{ style: { background: "white" } }}
   pagination={{ activeDotStyle: { background: "#111" } }}
 >
-  <OptiSlide style={{ padding: "0 8px" }}>
+  <Slide style={{ padding: "0 8px" }}>
     <ProductCard />
-  </OptiSlide>
-</OptiSwiper>
+  </Slide>
+</LightSlide>
 ```
 
 ---
@@ -397,7 +397,7 @@ Dynamic geometry (slide width, track transform) is always applied inline and is 
 ### Layout
 
 ```
-┌─ OptiSwiper (overflow: hidden, position: relative) ──────┐
+┌─ LightSlide (overflow: hidden, position: relative) ──────┐
 │  [Prev btn]                                  [Next btn]   │
 │  ┌─ track (display: flex, transform: translateX) ───────┐ │
 │  │  [Slide 0][Slide 1][Slide 2][Slide 3]...             │ │
@@ -475,10 +475,10 @@ Each component is a self-contained feature folder (component + test + styles + t
 
 ```
 src/
-├── OptiSwiper/
-│   ├── OptiSwiper.tsx            # Main carousel (orchestrator)
-│   ├── OptiSwiper.test.tsx
-│   ├── OptiSwiper.module.scss    # Container + track base styles
+├── LightSlide/
+│   ├── LightSlide.tsx            # Main carousel (orchestrator)
+│   ├── LightSlide.test.tsx
+│   ├── LightSlide.module.scss    # Container + track base styles
 │   └── helpers/                  # Internal hooks & pure helpers
 │       ├── constants.ts          #   tuning constants
 │       ├── navigation.ts         #   navigation source/fn types
@@ -488,11 +488,11 @@ src/
 │       ├── useTrackSnap.ts       #   transform/translateX snapping
 │       ├── useAutoScroll.ts      #   interval cycling (+ test)
 │       ├── useDragGesture.ts     #   pointer/drag handlers (+ test)
-│       ├── useMarquee.ts         #   continuous ticker scroll (+ test)
+│       ├── useFlow.ts         #   continuous ticker scroll (+ test)
 │       └── useViewportEngagement.ts  # IntersectionObserver + terminal events
-├── OptiSlide/
-│   ├── OptiSlide.tsx             # Slide (React.memo + forwardRef)
-│   └── OptiSlide.module.scss
+├── Slide/
+│   ├── Slide.tsx             # Slide (React.memo + forwardRef)
+│   └── Slide.module.scss
 ├── Navigation/
 │   ├── Navigation.tsx            # Prev/next button component
 │   ├── Navigation.test.tsx
@@ -512,7 +512,7 @@ src/
 ├── utils/
 │   ├── swipe.ts                  # getSnapIndex — threshold + velocity logic
 │   └── swipe.test.ts
-├── swiperContext.ts              # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
+├── lightSlideContext.ts              # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
 ├── types.ts                      # Shared + public types (re-exports feature config types)
 ├── styles.d.ts                   # Ambient declaration for *.module.scss imports
 └── index.ts                      # Public API barrel (the only index.ts)

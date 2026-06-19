@@ -21,17 +21,17 @@ export type AutoScrollConfig = {
   interval: number;
 };
 
-// Continuous "marquee"/ticker scrolling. Supersedes autoScroll when enabled and
+// Continuous "flow"/ticker scrolling. Supersedes autoScroll when enabled and
 // works seamlessly with looping (clones are added automatically). Interacting with
 // the carousel pauses it; it resumes resumeDelay ms after the interaction ends.
-export type MarqueeConfig = {
+export type FlowConfig = {
   enabled: boolean;
   speed?: number; // px per second; default 40
   resumeDelay?: number; // ms paused after an interaction; default 2000
 };
 
 // Main carousel props.
-export type OptiSwiperProps = {
+export type LightSlideProps = {
   children: ReactNode;
   style?: CSSProperties;
   className?: string;
@@ -41,14 +41,14 @@ export type OptiSwiperProps = {
   slidesPerView?: number;
   viewedTimeout?: number;
   autoScroll?: AutoScrollConfig;
-  marquee?: MarqueeConfig;
+  flow?: FlowConfig;
   navigation?: NavigationConfig;
   pagination?: PaginationConfig;
   isLoop?: boolean;
 };
 
 // Individual slide props.
-export type OptiSlideProps = {
+export type SlideProps = {
   children: ReactNode;
   style?: CSSProperties;
   className?: string;

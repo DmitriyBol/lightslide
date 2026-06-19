@@ -1,7 +1,7 @@
 {
-  "name": "opti-swiper",
+  "name": "lightslide",
   "version": "0.5.0",
-  "description": "Lightweight React carousel/swiper with built-in analytics events",
+  "description": "Lightweight, fully-typed React carousel & slider with built-in analytics, infinite loop, and a continuous flow (ticker) mode. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -38,11 +38,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DmitriyBol/optiSwiper.git"
+    "url": "git+https://github.com/DmitriyBol/lightslide.git"
   },
-  "homepage": "https://github.com/DmitriyBol/optiSwiper#readme",
+  "homepage": "https://github.com/DmitriyBol/lightslide#readme",
   "bugs": {
-    "url": "https://github.com/DmitriyBol/optiSwiper/issues"
+    "url": "https://github.com/DmitriyBol/lightslide/issues"
   },
   "engines": {
     "node": ">=18"
@@ -88,6 +88,15 @@
     "tslib": "^2.6.3",
     "typescript": "^5.5.3"
   },
-  "keywords": ["react", "swiper", "carousel", "slider", "analytics"],
+  "keywords": [
+    "react",
+    "carousel",
+    "slider",
+    "swiper",
+    "ticker",
+    "marquee",
+    "analytics",
+    "loop"
+  ],
   "license": "MIT"
 }

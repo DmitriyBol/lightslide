@@ -4,7 +4,7 @@ import type { MutableRefObject, PointerEvent, RefObject } from "react";
 
 import { DRAG_DIRECTION_LOCK_PX } from "./constants";
 
-type MarqueeParams = {
+type FlowParams = {
   enabled: boolean;
   speed: number; // resolved px per second
   resumeDelay: number; // resolved ms
@@ -14,7 +14,7 @@ type MarqueeParams = {
   getComputedSlideWidth: () => number;
 };
 
-type MarqueeHandlers = {
+type FlowHandlers = {
   onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (e: PointerEvent<HTMLDivElement>) => void;
   onPointerUp: (e: PointerEvent<HTMLDivElement>) => void;
@@ -31,7 +31,7 @@ const wrap = (value: number, span: number) =>
 // to the start, so there is no visible jump. Interaction pauses the motion and a
 // drag drifts the strip from its current position; motion resumes resumeDelay ms
 // after the interaction ends, continuing from wherever it stopped (no snap, no jank).
-export function useMarquee({
+export function useFlow({
   enabled,
   speed,
   resumeDelay,
@@ -39,7 +39,7 @@ export function useMarquee({
   slideCountRef,
   loopOffsetRef,
   getComputedSlideWidth,
-}: MarqueeParams): MarqueeHandlers {
+}: FlowParams): FlowHandlers {
   const offsetRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
@@ -154,7 +154,7 @@ export function useMarquee({
         )
           return;
         if (Math.abs(dy) > Math.abs(dx)) {
-          // Vertical intent → release for page scroll and let the marquee resume.
+          // Vertical intent → release for page scroll and let the flow resume.
           dragStartXRef.current = null;
           scheduleResume();
           return;

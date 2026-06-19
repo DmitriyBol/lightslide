@@ -14,14 +14,14 @@ import {
   mergeHandlers,
 } from "../analytics/analytics";
 import { useViewedSlides } from "../hooks/useViewedSlides";
+import { LightSlideContext } from "../lightSlideContext";
 import { Navigation } from "../Navigation/Navigation";
 import { Pagination } from "../Pagination/Pagination";
-import { SwiperContext } from "../swiperContext";
-import type { OptiSwiperProps } from "../types";
+import type { LightSlideProps } from "../types";
 import { cx } from "../utils/cx";
 import {
-  DEFAULT_MARQUEE_RESUME_DELAY,
-  DEFAULT_MARQUEE_SPEED,
+  DEFAULT_FLOW_RESUME_DELAY,
+  DEFAULT_FLOW_SPEED,
   DEFAULT_VIEWED_TIMEOUT,
 } from "./helpers/constants";
 import { buildLoopChildren } from "./helpers/loopClones";
@@ -29,13 +29,13 @@ import type { NavigateSource } from "./helpers/navigation";
 import { collectSlideData } from "./helpers/slideData";
 import { useAutoScroll } from "./helpers/useAutoScroll";
 import { useDragGesture } from "./helpers/useDragGesture";
-import { useMarquee } from "./helpers/useMarquee";
+import { useFlow } from "./helpers/useFlow";
 import { useSlideMetrics } from "./helpers/useSlideMetrics";
 import { useTrackSnap } from "./helpers/useTrackSnap";
 import { useViewportEngagement } from "./helpers/useViewportEngagement";
-import styles from "./OptiSwiper.module.scss";
+import styles from "./LightSlide.module.scss";
 
-export function OptiSwiper({
+export function LightSlide({
   children,
   style,
   className,
@@ -45,11 +45,11 @@ export function OptiSwiper({
   slidesPerView = 1,
   viewedTimeout = DEFAULT_VIEWED_TIMEOUT,
   autoScroll,
-  marquee,
+  flow,
   navigation,
   pagination,
   isLoop = false,
-}: OptiSwiperProps) {
+}: LightSlideProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const currentIndexRef = useRef(0);
@@ -72,13 +72,13 @@ export function OptiSwiper({
   const viewedTimeoutRef = useRef(viewedTimeout);
   viewedTimeoutRef.current = viewedTimeout;
 
-  // The marquee needs the loop-clone structure to wrap seamlessly, so it also
+  // The flow needs the loop-clone structure to wrap seamlessly, so it also
   // turns on effectiveLoop (whether or not the consumer set isLoop).
-  const effectiveMarquee = !!marquee?.enabled && maxIndex > 0;
-  const effectiveMarqueeRef = useRef(effectiveMarquee);
-  effectiveMarqueeRef.current = effectiveMarquee;
+  const effectiveFlow = !!flow?.enabled && maxIndex > 0;
+  const effectiveFlowRef = useRef(effectiveFlow);
+  effectiveFlowRef.current = effectiveFlow;
 
-  const effectiveLoop = (isLoop || effectiveMarquee) && maxIndex > 0;
+  const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
   const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
   const isLoopRef = useRef(effectiveLoop);
   isLoopRef.current = effectiveLoop;
@@ -129,11 +129,11 @@ export function OptiSwiper({
     const corrected = Math.min(currentIndexRef.current, newMax);
     currentIndexRef.current = corrected;
     setCurrentIndex(corrected);
-    // While the marquee runs it owns the transform (its rAF/layout effect positions
+    // While the flow runs it owns the transform (its rAF/layout effect positions
     // the track); snapping here would fight it. Restore discrete position otherwise.
-    if (!effectiveMarqueeRef.current) snapTrack(corrected, false);
+    if (!effectiveFlowRef.current) snapTrack(corrected, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slidesPerView, isLoop, marquee?.enabled]);
+  }, [slidesPerView, isLoop, flow?.enabled]);
 
   // Single navigation path. `source` decides which extra analytics events fire and
   // whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
@@ -218,8 +218,8 @@ export function OptiSwiper({
   const navigateToIndexRef = useRef(navigateToIndex);
   navigateToIndexRef.current = navigateToIndex;
 
-  // Marquee supersedes step auto-scroll — they are both "auto motion".
-  useAutoScroll(effectiveMarquee ? undefined : autoScroll, {
+  // Flow supersedes step auto-scroll — they are both "auto motion".
+  useAutoScroll(effectiveFlow ? undefined : autoScroll, {
     currentIndexRef,
     maxIndexRef,
     isLoopRef,
@@ -239,24 +239,24 @@ export function OptiSwiper({
     navigateToIndex,
   });
 
-  const marqueeHandlers = useMarquee({
-    enabled: effectiveMarquee,
-    speed: marquee?.speed ?? DEFAULT_MARQUEE_SPEED,
-    resumeDelay: marquee?.resumeDelay ?? DEFAULT_MARQUEE_RESUME_DELAY,
+  const flowHandlers = useFlow({
+    enabled: effectiveFlow,
+    speed: flow?.speed ?? DEFAULT_FLOW_SPEED,
+    resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
     trackRef,
     slideCountRef,
     loopOffsetRef,
     getComputedSlideWidth,
   });
 
-  // In marquee mode the marquee owns the track (continuous drift + auto-resume);
+  // In flow mode the flow owns the track (continuous drift + auto-resume);
   // otherwise the discrete drag-to-snap gesture is active.
-  const pointerHandlers = effectiveMarquee ? marqueeHandlers : dragHandlers;
+  const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
 
   const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
 
   return (
-    <SwiperContext.Provider value={contextValue}>
+    <LightSlideContext.Provider value={contextValue}>
       <div
         ref={containerRef}
         className={cx(styles.container, className)}
@@ -274,6 +274,6 @@ export function OptiSwiper({
         {navigation && <Navigation config={navigation} />}
         {pagination && <Pagination config={pagination} />}
       </div>
-    </SwiperContext.Provider>
+    </LightSlideContext.Provider>
   );
 }
