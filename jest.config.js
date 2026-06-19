@@ -5,5 +5,8 @@ module.exports = {
   transform: {
     "^.+\\.tsx?$": ["ts-jest", { tsconfig: { jsx: "react-jsx" } }],
   },
-  moduleNameMapper: { "^(\\.{1,2}/.*)\\.js$": "$1" },
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+    "\\.(scss|css)$": "identity-obj-proxy",
+  },
 };

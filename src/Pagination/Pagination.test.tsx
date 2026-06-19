@@ -3,9 +3,9 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import type { SwiperContextType } from "../swiperContext";
+import { SwiperContext } from "../swiperContext";
 import { Pagination } from "./Pagination";
-import type { SwiperContextType } from "./swiperContext";
-import { SwiperContext } from "./swiperContext";
 
 import "@testing-library/jest-dom";
 

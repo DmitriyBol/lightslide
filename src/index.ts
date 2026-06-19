@@ -1,9 +1,10 @@
-export { OptiSlide } from "./OptiSlide";
-export { OptiSwiper } from "./OptiSwiper";
+export { OptiSlide } from "./OptiSlide/OptiSlide";
+export { OptiSwiper } from "./OptiSwiper/OptiSwiper";
 export type {
   AnalyticsHandlers,
   AutoScrollConfig,
   InViewportPayload,
+  NavButtonRenderProps,
   NavigationButtonPayload,
   NavigationConfig,
   OptiSlideProps,

@@ -1,7 +1,9 @@
 import React from "react";
 
-import { useSwiperContext } from "./swiperContext";
-import type { OptiSlideProps } from "./types";
+import { useSwiperContext } from "../swiperContext";
+import type { OptiSlideProps } from "../types";
+import { cx } from "../utils/cx";
+import styles from "./OptiSlide.module.scss";
 
 export const OptiSlide = React.memo(
   React.forwardRef<HTMLDivElement, OptiSlideProps>(function OptiSlide(
@@ -13,11 +15,9 @@ export const OptiSlide = React.memo(
     return (
       <div
         ref={ref}
-        className={className}
+        className={cx(styles.slide, className)}
         style={{
-          flexShrink: 0,
           width: slideWidth > 0 ? `${slideWidth}px` : "100%",
-          boxSizing: "border-box",
           ...style,
         }}
       >

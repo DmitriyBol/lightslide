@@ -7,8 +7,9 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 - **Swipe & drag** — real-time finger tracking via Pointer Events; slides follow the finger and snap on release
 - **slidesPerView** — show 1, 2, or 3 slides at once; each slide fills `1/n` of the container proportionally
 - **isLoop** — seamless infinite loop; edge slides are cloned so wrap-around looks continuous
-- **Navigation buttons** — optional prev/next buttons with full style control
+- **Navigation buttons** — optional prev/next buttons with full style control, or bring your own JSX via `renderPrev`/`renderNext`
 - **Pagination dots** — optional dot indicators with active-state styling
+- **Scoped SCSS styling** — base look ships as CSS-module classes, auto-injected at import; override via `className`/`style` props
 - **Auto-scroll** — optional automatic cycling with configurable interval; pauses during drag
 - **Responsive** — `ResizeObserver` keeps slide widths correct on any container resize
 - **Analytics ready** — 6 events covering viewport, slide, navigation, pagination, and engagement
@@ -98,7 +99,7 @@ A single slide. Width is automatically computed as `containerWidth / slidesPerVi
 | `children` | `ReactNode` | required | Slide content |
 | `style` | `CSSProperties` | — | Additional styles for the slide div |
 | `className` | `string` | — | Class name for the slide div |
-| `data` | `any` | — | Arbitrary data attached to this slide — included in analytics payloads |
+| `data` | `unknown` | — | Arbitrary data attached to this slide — included in analytics payloads |
 
 ---
 
@@ -140,6 +141,37 @@ Buttons are absolutely positioned inside the carousel, vertically centered. They
 | `nextStyle` | `CSSProperties` | Overrides for the next button |
 | `prevClassName` | `string` | Extra class for the prev button |
 | `nextClassName` | `string` | Extra class for the next button |
+| `renderPrev` | `(props: NavButtonRenderProps) => ReactNode` | Render your own prev element — replaces the default button |
+| `renderNext` | `(props: NavButtonRenderProps) => ReactNode` | Render your own next element — replaces the default button |
+
+### Custom button elements (render-prop)
+
+Pass your own JSX for either button via `renderPrev` / `renderNext`. The library hands you the wiring; you own the markup.
+
+```tsx
+<OptiSwiper
+  navigation={{
+    renderPrev: ({ onClick, disabled }) => (
+      <MyIconButton icon="chevron-left" onClick={onClick} disabled={disabled} />
+    ),
+    renderNext: ({ onClick, disabled }) => (
+      <MyIconButton icon="chevron-right" onClick={onClick} disabled={disabled} />
+    ),
+  }}
+>
+  ...
+</OptiSwiper>
+```
+
+When provided, your element **fully replaces** the default `<button>`. Attach the `onClick` you receive — it is the exact handler the built-in button uses, so navigation and the `onSlide` + `onNavButtonClick` analytics events fire identically.
+
+**`NavButtonRenderProps`** (passed to your render function):
+
+| Key | Type | Description |
+|---|---|---|
+| `onClick` | `() => void` | Triggers navigation (and `onSlide` + `onNavButtonClick`). Attach to your element |
+| `disabled` | `boolean` | Boundary state. Always `false` when `isLoop` is active |
+| `direction` | `"left" \| "right"` | Which button this is |
 
 ### Pagination dots
 
@@ -285,6 +317,7 @@ import type {
   AnalyticsHandlers,
   AutoScrollConfig,
   InViewportPayload,
+  NavButtonRenderProps,
   NavigationButtonPayload,
   NavigationConfig,
   PaginationClickPayload,
@@ -301,6 +334,15 @@ import type {
 ---
 
 ## Styling
+
+The base look ships as **scoped CSS-module (SCSS) classes** that are injected automatically when you import the component — there is no separate CSS file to import, and no runtime dependency beyond React.
+
+Override at two levels:
+
+- **`className` / `*ClassName` props** — appended after the built-in class, so your CSS can restyle the element.
+- **`style` / `*Style` props** — inline, so they always win regardless of stylesheet order.
+
+Dynamic geometry (slide width, track transform) is always applied inline and is not meant to be overridden.
 
 `<OptiSwiper>` has `overflow: hidden` and `width: 100%` by default. Use `padding` on `<OptiSlide>` for gutters between cards.
 
@@ -381,7 +423,7 @@ cancelled
 
 ```bash
 npm install          # install dependencies
-npm test             # 50 tests across 6 suites
+npm test             # 79 tests across 11 suites
 npm run test:watch   # watch mode
 npm run lint         # ESLint
 npm run lint:fix     # auto-fix
@@ -398,27 +440,50 @@ npm run playground   # Vite dev server at localhost:5173
 
 ### Project structure
 
+Each component is a self-contained feature folder (component + test + styles + types):
+
 ```
 src/
+├── OptiSwiper/
+│   ├── OptiSwiper.tsx            # Main carousel (orchestrator)
+│   ├── OptiSwiper.test.tsx
+│   ├── OptiSwiper.module.scss    # Container + track base styles
+│   └── helpers/                  # Internal hooks & pure helpers
+│       ├── constants.ts          #   tuning constants
+│       ├── navigation.ts         #   navigation source/fn types
+│       ├── slideData.ts          #   collectSlideData (+ test)
+│       ├── loopClones.ts         #   buildLoopChildren (+ test)
+│       ├── useSlideMetrics.ts    #   measure container → slide px width
+│       ├── useTrackSnap.ts       #   transform/translateX snapping
+│       ├── useAutoScroll.ts      #   interval cycling (+ test)
+│       ├── useDragGesture.ts     #   pointer/drag handlers (+ test)
+│       └── useViewportEngagement.ts  # IntersectionObserver + terminal events
+├── OptiSlide/
+│   ├── OptiSlide.tsx             # Slide (React.memo + forwardRef)
+│   └── OptiSlide.module.scss
+├── Navigation/
+│   ├── Navigation.tsx            # Prev/next button component
+│   ├── Navigation.test.tsx
+│   ├── Navigation.types.ts       # NavigationConfig, NavButtonRenderProps
+│   └── Navigation.module.scss
+├── Pagination/
+│   ├── Pagination.tsx            # Pagination dots component
+│   ├── Pagination.test.tsx
+│   ├── Pagination.types.ts       # PaginationConfig
+│   └── Pagination.module.scss
 ├── analytics/
-│   ├── analytics.ts          # Payload builders + mergeHandlers
+│   ├── analytics.ts              # Payload builders + mergeHandlers
 │   └── analytics.test.ts
 ├── hooks/
-│   ├── useViewedSlides.ts    # Tracks unique viewed slide indices
+│   ├── useViewedSlides.ts        # Tracks unique viewed slide indices
 │   └── useViewedSlides.test.ts
 ├── utils/
-│   ├── swipe.ts              # getSnapIndex — threshold + velocity logic
+│   ├── swipe.ts                  # getSnapIndex — threshold + velocity logic
 │   └── swipe.test.ts
-├── Navigation.tsx            # Prev/next button component
-├── Navigation.test.tsx
-├── Pagination.tsx            # Pagination dots component
-├── Pagination.test.tsx
-├── OptiSwiper.tsx            # Main carousel
-├── OptiSwiper.test.tsx
-├── OptiSlide.tsx             # Slide (React.memo + forwardRef)
-├── swiperContext.ts          # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
-├── types.ts                  # All exported TypeScript types
-└── index.ts                  # Public API barrel
+├── swiperContext.ts              # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
+├── types.ts                      # Shared + public types (re-exports feature config types)
+├── styles.d.ts                   # Ambient declaration for *.module.scss imports
+└── index.ts                      # Public API barrel (the only index.ts)
 ```
 
 ---

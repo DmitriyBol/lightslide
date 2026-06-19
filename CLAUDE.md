@@ -23,27 +23,57 @@ type SlideData = { index: number; };
 
 ## Tests
 
-- **Test files live next to the files they test**, in the same directory.
+- **Test files live next to the files they test**, in the same feature folder.
 - Naming: `fileName.test.ts(x)`. Example: `analytics.ts` → `analytics.test.ts`.
 - **Every new unit of logic requires at least one test case.**
 - **After writing or changing any test, run the full suite: `npm test`.**
 - Tests are written at the same time as the implementation — never deferred.
 
+Each component is a **feature folder** holding its component, test, styles, and
+component-specific types together:
+
 ```
 src/
+├── OptiSwiper/
+│   ├── OptiSwiper.tsx              ← orchestrator: refs, navigateToIndex, wiring
+│   ├── OptiSwiper.test.tsx
+│   ├── OptiSwiper.module.scss
+│   └── helpers/                    ← OptiSwiper-internal helpers & hooks
+│       ├── constants.ts            ·  tuning constants
+│       ├── navigation.ts           ·  NavigateSource / NavigateFn types
+│       ├── slideData.ts (+test)    ·  collectSlideData (pure)
+│       ├── loopClones.ts (+test)   ·  buildLoopChildren (pure)
+│       ├── useSlideMetrics.ts      ·  container measure + per-slide px width
+│       ├── useTrackSnap.ts         ·  transform/translateX snap
+│       ├── useAutoScroll.ts (+test)·  interval cycling
+│       ├── useDragGesture.ts (+test)· pointer handlers + drag refs
+│       └── useViewportEngagement.ts·  IntersectionObserver + terminal events
+├── OptiSlide/
+│   ├── OptiSlide.tsx
+│   └── OptiSlide.module.scss
+├── Navigation/
+│   ├── Navigation.tsx
+│   ├── Navigation.test.tsx
+│   ├── Navigation.types.ts        ← NavigationConfig, NavButtonRenderProps
+│   └── Navigation.module.scss
+├── Pagination/
+│   ├── Pagination.tsx
+│   ├── Pagination.test.tsx
+│   ├── Pagination.types.ts        ← PaginationConfig
+│   └── Pagination.module.scss
 ├── analytics/
 │   ├── analytics.ts
-│   └── analytics.test.ts    ← co-located, not in __tests__/
+│   └── analytics.test.ts          ← co-located, not in __tests__/
 ├── hooks/
 │   ├── useViewedSlides.ts
 │   └── useViewedSlides.test.ts
 ├── utils/
 │   ├── swipe.ts
 │   └── swipe.test.ts
-├── Navigation.tsx
-├── Navigation.test.tsx
-├── Pagination.tsx
-└── Pagination.test.tsx
+├── swiperContext.ts               ← shared context
+├── types.ts                       ← shared/public types + re-exports
+├── styles.d.ts                    ← ambient *.module.scss declaration
+└── index.ts                       ← the only index.ts (public API barrel)
 ```
 
 ---
@@ -51,13 +81,19 @@ src/
 ## File and Folder Naming
 
 - **One `index.ts` in the entire project** — that is `src/index.ts` (the public API barrel).
-- All other files are named after their folder or their function:
+- **Each component is its own feature folder** named after the component (`Navigation/`, `Pagination/`, `OptiSlide/`, `OptiSwiper/`). The folder holds everything that belongs to that feature: component, test, styles, and types.
+- Files inside a feature folder are named after the folder plus a role suffix:
+  - `Navigation/Navigation.tsx` — the component
+  - `Navigation/Navigation.test.tsx` — its test
+  - `Navigation/Navigation.types.ts` — component-specific types (e.g. `NavigationConfig`)
+  - `Navigation/Navigation.module.scss` — its scoped styles
+- Non-component modules are named after their folder or function:
   - `analytics/analytics.ts` — primary logic for the `analytics` folder
   - `utils/swipe.ts` — utility named by what it does
-  - `swiperContext.ts` — shared React context, named by its purpose
-  - `Navigation.tsx` — navigation buttons component
-  - `Pagination.tsx` — pagination dots component
+  - `swiperContext.ts` — shared React context (lives at `src/` root — cross-cutting)
+  - `types.ts` — shared/public types (analytics payloads, `SlideData`, `OptiSwiperProps`); re-exports the per-feature config types so `index.ts` has one place to pull from
 - No `index.ts` files inside sub-folders.
+- **A component folder may have a `helpers/` sub-folder** for component-internal pure functions and hooks (see `OptiSwiper/helpers/`). Keep the component file an orchestrator; push self-contained concerns (gesture, metrics, auto-scroll, viewport observer, clone/data builders) into `helpers/`. Hooks there are named `useThing.ts`; pure helpers are named by what they do.
 
 ---
 
@@ -79,6 +115,22 @@ src/
 - Check without writing: `npm run format:check`
 - ESLint checks code quality (not formatting): `npm run lint`
 - Before every commit: `npm run lint && npm test`
+
+---
+
+## Styling (SCSS modules)
+
+- **Static, presentational styling lives in `*.module.scss`** next to the component (CSS Modules → scoped class names). The component imports `styles from "./X.module.scss"` and applies `styles.<class>`.
+- **Dynamic values stay inline** as a `style={{…}}` object — anything computed at runtime cannot be a static class:
+  - `OptiSlide` width (`containerWidth / slidesPerView` px)
+  - track `transform: translateX(…px)` and the snap `transition`
+- **User overrides:** `className`/`*ClassName` props are appended after the module class; `style`/`*Style` props are inline and therefore always win. Never drop the user's override props.
+- **Compose class names with `cx()` from `src/utils/cx.ts`** — never hand-roll `[a, b].filter(Boolean).join(" ")`. `cx` is a tiny zero-dependency clsx-style helper (no `classnames`/`clsx` npm package — that would break the "zero runtime dependencies" promise).
+- The SCSS is compiled and **injected at runtime** by `rollup-plugin-postcss` (`inject: true`) — consumers do **not** import a separate CSS file. There are no runtime npm dependencies beyond React.
+- Stylelint guards the SCSS: `npm run stylelint`. Lint is `rgba()` legacy notation with number alpha (see `.stylelintrc.json`).
+- Jest maps `*.scss` to `identity-obj-proxy`, so `styles.foo === "foo"` in tests — query by role/label/text, not by class.
+
+When adding styles: put the static look in the feature's `.module.scss`, keep computed values inline, and run `npm run stylelint`.
 
 ---
 
@@ -211,6 +263,18 @@ index 3: shows slides 3 4 5  ← last valid position
 `e.currentTarget.setPointerCapture(e.pointerId)` in `onPointerDown` routes all subsequent pointer events to the track element — even when the pointer moves outside it. This prevents the drag from breaking when the user moves quickly to the edge.
 
 Direction lock: on the first 4px of movement, if `|deltaY| > |deltaX|` → vertical intent → drag is cancelled, page scroll proceeds normally.
+
+### Pixel-aligned track: floor everywhere
+
+`measureSlideWidth` and `getComputedSlideWidth` both `Math.floor(offsetWidth / slidesPerView)`, and `OptiSlide` renders at that same floored px width. If the transform used the unfloored width while slides used the floored width, the track would drift by up to ~1px × index. **Keep both width sources floored and identical.**
+
+### Custom navigation buttons: render-prop
+
+`NavigationConfig` accepts `renderPrev` / `renderNext` `(props: NavButtonRenderProps) => ReactNode`. When provided, the default `<button>` is replaced entirely by the returned JSX. The render fn receives `{ direction, onClick, disabled }`:
+
+- `onClick` is the **same handler** the default button uses → it calls `goToIndex(…, "button")`, so `onSlide` + `onNavButtonClick` fire identically. The consumer just attaches it.
+- `disabled` reflects boundary state (always `false` under `isLoop`).
+- The library does not wrap the returned node — the consumer owns markup, styling, and which props they attach.
 
 ---
 

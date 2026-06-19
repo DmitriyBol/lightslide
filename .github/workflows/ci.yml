@@ -24,6 +24,9 @@ jobs:
       - name: ESLint — code quality check
         run: npm run lint
 
+      - name: Stylelint — SCSS check
+        run: npm run stylelint
+
       - name: Integration tests — Jest
         run: npm test
 

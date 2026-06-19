@@ -3,9 +3,9 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import type { SwiperContextType } from "../swiperContext";
+import { SwiperContext } from "../swiperContext";
 import { Navigation } from "./Navigation";
-import type { SwiperContextType } from "./swiperContext";
-import { SwiperContext } from "./swiperContext";
 
 import "@testing-library/jest-dom";
 
@@ -82,12 +82,91 @@ describe("Navigation", () => {
   });
 
   it("does not disable any button when isLoop is true, even at boundary indices", () => {
-    renderNavigation(makeContext({ currentIndex: 0, maxIndex: 3, isLoop: true }));
+    renderNavigation(
+      makeContext({ currentIndex: 0, maxIndex: 3, isLoop: true }),
+    );
     expect(screen.getByLabelText("Previous slide")).not.toBeDisabled();
     expect(screen.getByLabelText("Next slide")).not.toBeDisabled();
 
-    renderNavigation(makeContext({ currentIndex: 3, maxIndex: 3, isLoop: true }));
+    renderNavigation(
+      makeContext({ currentIndex: 3, maxIndex: 3, isLoop: true }),
+    );
     expect(screen.getAllByLabelText("Previous slide")[1]).not.toBeDisabled();
     expect(screen.getAllByLabelText("Next slide")[1]).not.toBeDisabled();
+  });
+});
+
+describe("Navigation — render props", () => {
+  it("renders custom elements via renderPrev/renderNext and hides the defaults", () => {
+    renderNavigation(makeContext(), {
+      renderPrev: ({ onClick }) => (
+        <button data-testid="custom-prev" onClick={onClick}>
+          PREV
+        </button>
+      ),
+      renderNext: ({ onClick }) => (
+        <button data-testid="custom-next" onClick={onClick}>
+          NEXT
+        </button>
+      ),
+    });
+    expect(screen.getByTestId("custom-prev")).toBeInTheDocument();
+    expect(screen.getByTestId("custom-next")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Previous slide")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Next slide")).not.toBeInTheDocument();
+  });
+
+  it("wires the passed onClick to goToIndex(currentIndex - 1, 'button') for prev", async () => {
+    const goToIndex = jest.fn();
+    renderNavigation(makeContext({ currentIndex: 2, goToIndex }), {
+      renderPrev: ({ onClick }) => (
+        <button data-testid="custom-prev" onClick={onClick}>
+          PREV
+        </button>
+      ),
+    });
+    await userEvent.click(screen.getByTestId("custom-prev"));
+    expect(goToIndex).toHaveBeenCalledWith(1, "button");
+  });
+
+  it("wires the passed onClick to goToIndex(currentIndex + 1, 'button') for next", async () => {
+    const goToIndex = jest.fn();
+    renderNavigation(makeContext({ currentIndex: 1, goToIndex }), {
+      renderNext: ({ onClick }) => (
+        <button data-testid="custom-next" onClick={onClick}>
+          NEXT
+        </button>
+      ),
+    });
+    await userEvent.click(screen.getByTestId("custom-next"));
+    expect(goToIndex).toHaveBeenCalledWith(2, "button");
+  });
+
+  it("passes direction and disabled to the render functions", () => {
+    const renderPrev = jest.fn(() => <span />);
+    const renderNext = jest.fn(() => <span />);
+    renderNavigation(makeContext({ currentIndex: 0, maxIndex: 3 }), {
+      renderPrev,
+      renderNext,
+    });
+    expect(renderPrev).toHaveBeenCalledWith(
+      expect.objectContaining({ direction: "left", disabled: true }),
+    );
+    expect(renderNext).toHaveBeenCalledWith(
+      expect.objectContaining({ direction: "right", disabled: false }),
+    );
+  });
+
+  it("reports disabled=false at boundary indices when isLoop is true", () => {
+    const renderPrev = jest.fn(() => <span />);
+    renderNavigation(
+      makeContext({ currentIndex: 0, maxIndex: 3, isLoop: true }),
+      {
+        renderPrev,
+      },
+    );
+    expect(renderPrev).toHaveBeenCalledWith(
+      expect.objectContaining({ disabled: false }),
+    );
   });
 });

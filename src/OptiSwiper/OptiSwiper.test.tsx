@@ -2,9 +2,9 @@ import React from "react";
 
 import { act, render, screen } from "@testing-library/react";
 
-import { OptiSlide } from "./OptiSlide";
+import { OptiSlide } from "../OptiSlide/OptiSlide";
+import type { AnalyticsHandlers } from "../types";
 import { OptiSwiper } from "./OptiSwiper";
-import type { AnalyticsHandlers } from "./types";
 
 import "@testing-library/jest-dom";
 
