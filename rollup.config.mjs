@@ -22,7 +22,13 @@ export default [
         inject: true,
         minimize: true,
       }),
-      typescript({ tsconfig: "./tsconfig.json" }),
+      // Per-file .d.ts emit is off here — the public type surface ships as the
+      // single bundled dist/index.d.ts produced by rollup-plugin-dts below.
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: false,
+        declarationDir: undefined,
+      }),
     ],
   },
   {
