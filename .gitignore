@@ -37,3 +37,7 @@ Thumbs.db
 
 # Local playground (not tracked — run: npm run playground)
 playground/
+
+# Local-only docs/context for Claude (kept out of the published repo)
+.context/
+CLAUDE.md

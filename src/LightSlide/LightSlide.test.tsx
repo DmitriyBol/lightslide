@@ -2,9 +2,9 @@ import React from "react";
 
 import { act, render, screen } from "@testing-library/react";
 
-import { OptiSlide } from "./OptiSlide";
-import { OptiSwiper } from "./OptiSwiper";
-import type { AnalyticsHandlers } from "./types";
+import { Slide } from "../Slide/Slide";
+import type { AnalyticsHandlers } from "../types";
+import { LightSlide } from "./LightSlide";
 
 import "@testing-library/jest-dom";
 
@@ -57,31 +57,31 @@ function makeHandlers(): jest.Mocked<Required<AnalyticsHandlers>> {
   };
 }
 
-function renderSwiper(
+function renderLightSlide(
   handlers: Partial<AnalyticsHandlers>,
   viewedTimeout = 30,
   slidesPerView = 1,
 ) {
   return render(
-    <OptiSwiper
+    <LightSlide
       analytics={handlers}
       viewedTimeout={viewedTimeout}
       slidesPerView={slidesPerView}
     >
-      <OptiSlide data={{ id: 1, name: "Slide 1" }}>
+      <Slide data={{ id: 1, name: "Slide 1" }}>
         <div>Slide 1</div>
-      </OptiSlide>
-      <OptiSlide data={{ id: 2, name: "Slide 2" }}>
+      </Slide>
+      <Slide data={{ id: 2, name: "Slide 2" }}>
         <div>Slide 2</div>
-      </OptiSlide>
-      <OptiSlide data={{ id: 3, name: "Slide 3" }}>
+      </Slide>
+      <Slide data={{ id: 3, name: "Slide 3" }}>
         <div>Slide 3</div>
-      </OptiSlide>
-    </OptiSwiper>,
+      </Slide>
+    </LightSlide>,
   );
 }
 
-describe("OptiSwiper", () => {
+describe("LightSlide", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => {
     jest.useRealTimers();
@@ -89,7 +89,7 @@ describe("OptiSwiper", () => {
   });
 
   it("renders all slides", () => {
-    renderSwiper({});
+    renderLightSlide({});
     expect(screen.getByText("Slide 1")).toBeInTheDocument();
     expect(screen.getByText("Slide 2")).toBeInTheDocument();
     expect(screen.getByText("Slide 3")).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe("OptiSwiper", () => {
 
   it("fires onInViewport once when carousel enters viewport", () => {
     const handlers = makeHandlers();
-    renderSwiper(handlers);
+    renderLightSlide(handlers);
 
     act(() => triggerIO(true));
 
@@ -109,7 +109,7 @@ describe("OptiSwiper", () => {
 
   it("fires onInViewport only once even on repeated IO triggers", () => {
     const handlers = makeHandlers();
-    renderSwiper(handlers);
+    renderLightSlide(handlers);
 
     act(() => triggerIO(true));
     act(() => triggerIO(false));
@@ -120,7 +120,7 @@ describe("OptiSwiper", () => {
 
   it("fires onViewedSlides after timeout and not onReachedEnd", () => {
     const handlers = makeHandlers();
-    renderSwiper(handlers, 30);
+    renderLightSlide(handlers, 30);
 
     act(() => triggerIO(true));
     act(() => jest.advanceTimersByTime(30_000));
@@ -135,7 +135,7 @@ describe("OptiSwiper", () => {
 
   it("does not fire onViewedSlides before timeout elapses", () => {
     const handlers = makeHandlers();
-    renderSwiper(handlers, 30);
+    renderLightSlide(handlers, 30);
 
     act(() => triggerIO(true));
     act(() => jest.advanceTimersByTime(10_000));
@@ -144,14 +144,14 @@ describe("OptiSwiper", () => {
   });
 
   it("renders correct number of slides regardless of slidesPerView", () => {
-    renderSwiper({}, 30, 2);
+    renderLightSlide({}, 30, 2);
     expect(screen.getByText("Slide 1")).toBeInTheDocument();
     expect(screen.getByText("Slide 2")).toBeInTheDocument();
     expect(screen.getByText("Slide 3")).toBeInTheDocument();
   });
 });
 
-describe("OptiSwiper — isLoop", () => {
+describe("LightSlide — isLoop", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => {
     jest.useRealTimers();
@@ -160,11 +160,11 @@ describe("OptiSwiper — isLoop", () => {
 
   it("renders all real slide content even when clones are added", () => {
     render(
-      <OptiSwiper isLoop>
-        <OptiSlide>Alpha</OptiSlide>
-        <OptiSlide>Beta</OptiSlide>
-        <OptiSlide>Gamma</OptiSlide>
-      </OptiSwiper>,
+      <LightSlide isLoop>
+        <Slide>Alpha</Slide>
+        <Slide>Beta</Slide>
+        <Slide>Gamma</Slide>
+      </LightSlide>,
     );
     // Real slides are present (clones may add duplicates, so check getAllByText)
     expect(screen.getAllByText("Alpha").length).toBeGreaterThanOrEqual(1);
@@ -174,11 +174,11 @@ describe("OptiSwiper — isLoop", () => {
 
   it("does not disable navigation buttons at first or last index when isLoop is true", () => {
     render(
-      <OptiSwiper isLoop navigation={{}}>
-        <OptiSlide>A</OptiSlide>
-        <OptiSlide>B</OptiSlide>
-        <OptiSlide>C</OptiSlide>
-      </OptiSwiper>,
+      <LightSlide isLoop navigation={{}}>
+        <Slide>A</Slide>
+        <Slide>B</Slide>
+        <Slide>C</Slide>
+      </LightSlide>,
     );
     expect(screen.getByLabelText("Previous slide")).not.toBeDisabled();
     expect(screen.getByLabelText("Next slide")).not.toBeDisabled();
@@ -187,13 +187,46 @@ describe("OptiSwiper — isLoop", () => {
   it("does not fire onReachedEnd when isLoop is active", () => {
     const handlers = makeHandlers();
     render(
-      <OptiSwiper isLoop analytics={handlers} navigation={{}}>
-        <OptiSlide>A</OptiSlide>
-        <OptiSlide>B</OptiSlide>
-        <OptiSlide>C</OptiSlide>
-      </OptiSwiper>,
+      <LightSlide isLoop analytics={handlers} navigation={{}}>
+        <Slide>A</Slide>
+        <Slide>B</Slide>
+        <Slide>C</Slide>
+      </LightSlide>,
     );
     // At maxIndex with isLoop, onReachedEnd must never fire (loop wrap suppresses it).
+    expect(handlers.onReachedEnd).not.toHaveBeenCalled();
+  });
+});
+
+describe("LightSlide — flow", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it("enables loop clones automatically when flow is on (without isLoop)", () => {
+    render(
+      <LightSlide flow={{ enabled: true }}>
+        <Slide>Alpha</Slide>
+        <Slide>Beta</Slide>
+        <Slide>Gamma</Slide>
+      </LightSlide>,
+    );
+    expect(screen.getAllByText("Alpha").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Beta").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Gamma").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not fire onReachedEnd while the flow is running", () => {
+    const handlers = makeHandlers();
+    render(
+      <LightSlide flow={{ enabled: true }} analytics={handlers}>
+        <Slide>A</Slide>
+        <Slide>B</Slide>
+        <Slide>C</Slide>
+      </LightSlide>,
+    );
     expect(handlers.onReachedEnd).not.toHaveBeenCalled();
   });
 });

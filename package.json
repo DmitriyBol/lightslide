@@ -1,12 +1,21 @@
 {
-  "name": "opti-swiper",
-  "version": "1.0.0",
-  "description": "Lightweight React carousel/swiper with built-in analytics events",
+  "name": "lightslide",
+  "version": "0.5.0",
+  "description": "Lightweight, fully-typed React carousel & slider with built-in analytics, infinite loop, and a continuous flow (ticker) mode. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": ["dist"],
   "scripts": {
+    "prebuild": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "test": "jest --config jest.config.js",
@@ -19,7 +28,8 @@
     "stylelint": "stylelint \"src/**/*.{css,scss}\"",
     "stylelint:fix": "stylelint \"src/**/*.{css,scss}\" --fix",
     "size": "npm run build && size-limit",
-    "playground": "npm install --prefix playground && npm run dev --prefix playground"
+    "playground": "npm install --prefix playground && npm run dev --prefix playground",
+    "prepublishOnly": "npm run lint && npm run stylelint && npm test && npm run build"
   },
   "size-limit": [
     {
@@ -27,6 +37,17 @@
       "limit": "5 kB"
     }
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DmitriyBol/lightslide.git"
+  },
+  "homepage": "https://github.com/DmitriyBol/lightslide#readme",
+  "bugs": {
+    "url": "https://github.com/DmitriyBol/lightslide/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "peerDependencies": {
     "react": ">=17.0.0",
     "react-dom": ">=17.0.0"
@@ -44,19 +65,22 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.7.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "globals": "^15.8.0",
-    "prettier": "^3.3.3",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss-scss": "^4.0.9",
+    "prettier": "^3.3.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "rollup": "^4.18.0",
     "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-postcss": "^4.0.2",
+    "sass": "^1.77.8",
     "size-limit": "^11.1.4",
     "stylelint": "^16.7.0",
     "stylelint-config-standard": "^36.0.1",
@@ -65,6 +89,15 @@
     "tslib": "^2.6.3",
     "typescript": "^5.5.3"
   },
-  "keywords": ["react", "swiper", "carousel", "slider", "analytics"],
+  "keywords": [
+    "react",
+    "carousel",
+    "slider",
+    "swiper",
+    "ticker",
+    "marquee",
+    "analytics",
+    "loop"
+  ],
   "license": "MIT"
 }

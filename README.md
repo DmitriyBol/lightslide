@@ -1,4 +1,4 @@
-# OptiSwiper
+# LightSlide
 
 A lightweight, fully-typed React carousel with built-in analytics events. Zero runtime dependencies beyond React.
 
@@ -7,9 +7,11 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 - **Swipe & drag** — real-time finger tracking via Pointer Events; slides follow the finger and snap on release
 - **slidesPerView** — show 1, 2, or 3 slides at once; each slide fills `1/n` of the container proportionally
 - **isLoop** — seamless infinite loop; edge slides are cloned so wrap-around looks continuous
-- **Navigation buttons** — optional prev/next buttons with full style control
+- **Navigation buttons** — optional prev/next buttons with full style control, or bring your own JSX via `renderPrev`/`renderNext`
 - **Pagination dots** — optional dot indicators with active-state styling
+- **Scoped SCSS styling** — base look ships as CSS-module classes, auto-injected at import; override via `className`/`style` props
 - **Auto-scroll** — optional automatic cycling with configurable interval; pauses during drag
+- **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping; pauses on interaction and resumes after a delay
 - **Responsive** — `ResizeObserver` keeps slide widths correct on any container resize
 - **Analytics ready** — 6 events covering viewport, slide, navigation, pagination, and engagement
 - **Mutually exclusive terminal events** — only one of `onReachedEnd` or `onViewedSlides` ever fires per session
@@ -21,9 +23,9 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 ## Installation
 
 ```bash
-npm install opti-swiper
+npm install lightslide
 # or
-yarn add opti-swiper
+yarn add lightslide
 ```
 
 ### Peer dependencies
@@ -39,29 +41,29 @@ Requires React ≥ 17.
 ## Quick Start
 
 ```tsx
-import { OptiSlide, OptiSwiper } from "opti-swiper";
+import { Slide, LightSlide } from "lightslide";
 
 function ProductCarousel() {
   return (
-    <OptiSwiper
+    <LightSlide
       slidesPerView={2}
       navigation={{}}
       pagination={{}}
       style={{ borderRadius: 12 }}
     >
-      <OptiSlide data={{ id: 1, name: "Product A" }}>
+      <Slide data={{ id: 1, name: "Product A" }}>
         <ProductCard id={1} />
-      </OptiSlide>
-      <OptiSlide data={{ id: 2, name: "Product B" }}>
+      </Slide>
+      <Slide data={{ id: 2, name: "Product B" }}>
         <ProductCard id={2} />
-      </OptiSlide>
-      <OptiSlide data={{ id: 3, name: "Product C" }}>
+      </Slide>
+      <Slide data={{ id: 3, name: "Product C" }}>
         <ProductCard id={3} />
-      </OptiSlide>
-      <OptiSlide data={{ id: 4, name: "Product D" }}>
+      </Slide>
+      <Slide data={{ id: 4, name: "Product D" }}>
         <ProductCard id={4} />
-      </OptiSlide>
-    </OptiSwiper>
+      </Slide>
+    </LightSlide>
   );
 }
 ```
@@ -70,13 +72,13 @@ function ProductCarousel() {
 
 ## Components
 
-### `<OptiSwiper>`
+### `<LightSlide>`
 
 The container component. Handles layout, all navigation types, and analytics.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `ReactNode` | required | One or more `<OptiSlide>` elements |
+| `children` | `ReactNode` | required | One or more `<Slide>` elements |
 | `style` | `CSSProperties` | — | Styles for the outer wrapper div |
 | `className` | `string` | — | Class name for the outer wrapper |
 | `trackStyle` | `CSSProperties` | — | Styles for the inner draggable track div |
@@ -85,11 +87,12 @@ The container component. Handles layout, all navigation types, and analytics.
 | `slidesPerView` | `number` | `1` | How many slides are visible at once |
 | `viewedTimeout` | `number` | `30` | Seconds of ≥50% viewport visibility before `onViewedSlides` fires |
 | `autoScroll` | `AutoScrollConfig` | — | Enable automatic slide cycling |
+| `flow` | `FlowConfig` | — | Enable continuous ticker scrolling (supersedes `autoScroll`) |
 | `navigation` | `NavigationConfig` | — | Show prev/next buttons. Pass `{}` for defaults |
 | `pagination` | `PaginationConfig` | — | Show pagination dots. Pass `{}` for defaults |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop (see [Loop](#loop)) |
 
-### `<OptiSlide>`
+### `<Slide>`
 
 A single slide. Width is automatically computed as `containerWidth / slidesPerView`.
 
@@ -98,7 +101,7 @@ A single slide. Width is automatically computed as `containerWidth / slidesPerVi
 | `children` | `ReactNode` | required | Slide content |
 | `style` | `CSSProperties` | — | Additional styles for the slide div |
 | `className` | `string` | — | Class name for the slide div |
-| `data` | `any` | — | Arbitrary data attached to this slide — included in analytics payloads |
+| `data` | `unknown` | — | Arbitrary data attached to this slide — included in analytics payloads |
 
 ---
 
@@ -111,11 +114,11 @@ Built-in and always active. Drag horizontally to navigate — the slide follows 
 ### Navigation buttons
 
 ```tsx
-<OptiSwiper navigation={{}}>  {/* default arrows ‹ › */}
+<LightSlide navigation={{}}>  {/* default arrows ‹ › */}
   ...
-</OptiSwiper>
+</LightSlide>
 
-<OptiSwiper navigation={{
+<LightSlide navigation={{
   prevLabel: "←",
   nextLabel: "→",
   style: { background: "white", color: "black" },   // both buttons
@@ -140,15 +143,46 @@ Buttons are absolutely positioned inside the carousel, vertically centered. They
 | `nextStyle` | `CSSProperties` | Overrides for the next button |
 | `prevClassName` | `string` | Extra class for the prev button |
 | `nextClassName` | `string` | Extra class for the next button |
+| `renderPrev` | `(props: NavButtonRenderProps) => ReactNode` | Render your own prev element — replaces the default button |
+| `renderNext` | `(props: NavButtonRenderProps) => ReactNode` | Render your own next element — replaces the default button |
+
+### Custom button elements (render-prop)
+
+Pass your own JSX for either button via `renderPrev` / `renderNext`. The library hands you the wiring; you own the markup.
+
+```tsx
+<LightSlide
+  navigation={{
+    renderPrev: ({ onClick, disabled }) => (
+      <MyIconButton icon="chevron-left" onClick={onClick} disabled={disabled} />
+    ),
+    renderNext: ({ onClick, disabled }) => (
+      <MyIconButton icon="chevron-right" onClick={onClick} disabled={disabled} />
+    ),
+  }}
+>
+  ...
+</LightSlide>
+```
+
+When provided, your element **fully replaces** the default `<button>`. Attach the `onClick` you receive — it is the exact handler the built-in button uses, so navigation and the `onSlide` + `onNavButtonClick` analytics events fire identically.
+
+**`NavButtonRenderProps`** (passed to your render function):
+
+| Key | Type | Description |
+|---|---|---|
+| `onClick` | `() => void` | Triggers navigation (and `onSlide` + `onNavButtonClick`). Attach to your element |
+| `disabled` | `boolean` | Boundary state. Always `false` when `isLoop` is active |
+| `direction` | `"left" \| "right"` | Which button this is |
 
 ### Pagination dots
 
 ```tsx
-<OptiSwiper pagination={{}}>  {/* default dots */}
+<LightSlide pagination={{}}>  {/* default dots */}
   ...
-</OptiSwiper>
+</LightSlide>
 
-<OptiSwiper pagination={{
+<LightSlide pagination={{
   style: { padding: "12px 0" },
   dotStyle: { width: 10, height: 4, borderRadius: 2 },
   activeDotStyle: { width: 24, background: "#4f46e5" },
@@ -173,9 +207,9 @@ Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates 
 ### Auto-scroll
 
 ```tsx
-<OptiSwiper autoScroll={{ enabled: true, interval: 3000 }}>
+<LightSlide autoScroll={{ enabled: true, interval: 3000 }}>
   ...
-</OptiSwiper>
+</LightSlide>
 ```
 
 - Loops back to index 0 after the last slide
@@ -190,14 +224,42 @@ Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates 
 | `enabled` | `boolean` | Toggle auto-scroll on/off without removing the prop |
 | `interval` | `number` | Milliseconds between slide changes |
 
+### Flow (continuous ticker)
+
+```tsx
+<LightSlide flow={{ enabled: true }}>
+  ...
+</LightSlide>
+
+<LightSlide flow={{ enabled: true, speed: 80, resumeDelay: 3000 }}>
+  ...
+</LightSlide>
+```
+
+Unlike auto-scroll (which steps slide-by-slide), the flow scrolls the track **continuously** at `speed` pixels per second — a smooth ticker. It:
+
+- **Loops seamlessly** — clones are added automatically, so it wraps with no visible jump (works whether or not you also set `isLoop`).
+- **Pauses on interaction** — tapping or dragging the carousel stops the motion. A drag follows your finger from the current position (no snapping). Motion resumes `resumeDelay` ms after you let go, continuing from exactly where it stopped — no jank.
+- **Supersedes `autoScroll`** — if both are set, the flow wins.
+
+> The flow drives the track directly via `requestAnimationFrame` (no CSS transition), so animation is smooth at frame rate. During a flow the active pagination dot is not tracked (continuous motion has no discrete index).
+
+**`FlowConfig`**:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | `boolean` | required | Toggle the flow on/off |
+| `speed` | `number` | `40` | Scroll speed in **pixels per second** |
+| `resumeDelay` | `number` | `2000` | Milliseconds to stay paused after an interaction before resuming |
+
 ---
 
 ## Loop
 
 ```tsx
-<OptiSwiper isLoop>
+<LightSlide isLoop>
   ...
-</OptiSwiper>
+</LightSlide>
 ```
 
 When `isLoop` is true, the carousel wraps around seamlessly — dragging past the last slide flows directly into the first, and vice versa, without any visible jump.
@@ -217,8 +279,8 @@ When `isLoop` is true, the carousel wraps around seamlessly — dragging past th
 `slidesPerView` accepts any positive number, including floats. A value like `1.5` shows one full slide plus a preview of the next — a "peek" effect that communicates scrollability.
 
 ```tsx
-<OptiSwiper slidesPerView={1.5}>  {/* 1 full slide + peek of the next */}
-<OptiSwiper slidesPerView={3}>    {/* 6 slides → scrolls to index 0–3 */}
+<LightSlide slidesPerView={1.5}>  {/* 1 full slide + peek of the next */}
+<LightSlide slidesPerView={3}>    {/* 6 slides → scrolls to index 0–3 */}
 ```
 
 Each slide fills `containerWidth / slidesPerView` px. `maxIndex = ⌊slideCount − slidesPerView⌋` — the last scroll position where the visible window does not exceed the track.
@@ -247,8 +309,8 @@ Events are **silent by default** — no console output, no errors, nothing. They
 Provide only the events you care about — unhandled events produce no output and have no side effects.
 
 ```tsx
-import { OptiSlide, OptiSwiper } from "opti-swiper";
-import type { AnalyticsHandlers } from "opti-swiper";
+import { Slide, LightSlide } from "lightslide";
+import type { AnalyticsHandlers } from "lightslide";
 
 const analytics: AnalyticsHandlers = {
   onInViewport(payload) {
@@ -285,36 +347,47 @@ import type {
   AnalyticsHandlers,
   AutoScrollConfig,
   InViewportPayload,
+  FlowConfig,
+  NavButtonRenderProps,
   NavigationButtonPayload,
   NavigationConfig,
   PaginationClickPayload,
   PaginationConfig,
-  OptiSlideProps,
-  OptiSwiperProps,
+  SlideProps,
+  LightSlideProps,
   ReachedEndPayload,
   SlideData,
   SlidePayload,
   ViewedSlidesPayload,
-} from "opti-swiper";
+} from "lightslide";
 ```
 
 ---
 
 ## Styling
 
-`<OptiSwiper>` has `overflow: hidden` and `width: 100%` by default. Use `padding` on `<OptiSlide>` for gutters between cards.
+The base look ships as **scoped CSS-module (SCSS) classes** that are injected automatically when you import the component — there is no separate CSS file to import, and no runtime dependency beyond React.
+
+Override at two levels:
+
+- **`className` / `*ClassName` props** — appended after the built-in class, so your CSS can restyle the element.
+- **`style` / `*Style` props** — inline, so they always win regardless of stylesheet order.
+
+Dynamic geometry (slide width, track transform) is always applied inline and is not meant to be overridden.
+
+`<LightSlide>` has `overflow: hidden` and `width: 100%` by default. Use `padding` on `<Slide>` for gutters between cards.
 
 ```tsx
-<OptiSwiper
+<LightSlide
   slidesPerView={3}
   style={{ borderRadius: 16, background: "#f5f5f5" }}
   navigation={{ style: { background: "white" } }}
   pagination={{ activeDotStyle: { background: "#111" } }}
 >
-  <OptiSlide style={{ padding: "0 8px" }}>
+  <Slide style={{ padding: "0 8px" }}>
     <ProductCard />
-  </OptiSlide>
-</OptiSwiper>
+  </Slide>
+</LightSlide>
 ```
 
 ---
@@ -324,7 +397,7 @@ import type {
 ### Layout
 
 ```
-┌─ OptiSwiper (overflow: hidden, position: relative) ──────┐
+┌─ LightSlide (overflow: hidden, position: relative) ──────┐
 │  [Prev btn]                                  [Next btn]   │
 │  ┌─ track (display: flex, transform: translateX) ───────┐ │
 │  │  [Slide 0][Slide 1][Slide 2][Slide 3]...             │ │
@@ -381,7 +454,7 @@ cancelled
 
 ```bash
 npm install          # install dependencies
-npm test             # 50 tests across 6 suites
+npm test             # 79 tests across 11 suites
 npm run test:watch   # watch mode
 npm run lint         # ESLint
 npm run lint:fix     # auto-fix
@@ -398,27 +471,51 @@ npm run playground   # Vite dev server at localhost:5173
 
 ### Project structure
 
+Each component is a self-contained feature folder (component + test + styles + types):
+
 ```
 src/
+├── LightSlide/
+│   ├── LightSlide.tsx            # Main carousel (orchestrator)
+│   ├── LightSlide.test.tsx
+│   ├── LightSlide.module.scss    # Container + track base styles
+│   └── helpers/                  # Internal hooks & pure helpers
+│       ├── constants.ts          #   tuning constants
+│       ├── navigation.ts         #   navigation source/fn types
+│       ├── slideData.ts          #   collectSlideData (+ test)
+│       ├── loopClones.ts         #   buildLoopChildren (+ test)
+│       ├── useSlideMetrics.ts    #   measure container → slide px width
+│       ├── useTrackSnap.ts       #   transform/translateX snapping
+│       ├── useAutoScroll.ts      #   interval cycling (+ test)
+│       ├── useDragGesture.ts     #   pointer/drag handlers (+ test)
+│       ├── useFlow.ts         #   continuous ticker scroll (+ test)
+│       └── useViewportEngagement.ts  # IntersectionObserver + terminal events
+├── Slide/
+│   ├── Slide.tsx             # Slide (React.memo + forwardRef)
+│   └── Slide.module.scss
+├── Navigation/
+│   ├── Navigation.tsx            # Prev/next button component
+│   ├── Navigation.test.tsx
+│   ├── Navigation.types.ts       # NavigationConfig, NavButtonRenderProps
+│   └── Navigation.module.scss
+├── Pagination/
+│   ├── Pagination.tsx            # Pagination dots component
+│   ├── Pagination.test.tsx
+│   ├── Pagination.types.ts       # PaginationConfig
+│   └── Pagination.module.scss
 ├── analytics/
-│   ├── analytics.ts          # Payload builders + mergeHandlers
+│   ├── analytics.ts              # Payload builders + mergeHandlers
 │   └── analytics.test.ts
 ├── hooks/
-│   ├── useViewedSlides.ts    # Tracks unique viewed slide indices
+│   ├── useViewedSlides.ts        # Tracks unique viewed slide indices
 │   └── useViewedSlides.test.ts
 ├── utils/
-│   ├── swipe.ts              # getSnapIndex — threshold + velocity logic
+│   ├── swipe.ts                  # getSnapIndex — threshold + velocity logic
 │   └── swipe.test.ts
-├── Navigation.tsx            # Prev/next button component
-├── Navigation.test.tsx
-├── Pagination.tsx            # Pagination dots component
-├── Pagination.test.tsx
-├── OptiSwiper.tsx            # Main carousel
-├── OptiSwiper.test.tsx
-├── OptiSlide.tsx             # Slide (React.memo + forwardRef)
-├── swiperContext.ts          # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
-├── types.ts                  # All exported TypeScript types
-└── index.ts                  # Public API barrel
+├── lightSlideContext.ts              # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
+├── types.ts                      # Shared + public types (re-exports feature config types)
+├── styles.d.ts                   # Ambient declaration for *.module.scss imports
+└── index.ts                      # Public API barrel (the only index.ts)
 ```
 
 ---

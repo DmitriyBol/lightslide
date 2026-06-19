@@ -1,5 +1,14 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import type { NavigationConfig } from "./Navigation/Navigation.types";
+import type { PaginationConfig } from "./Pagination/Pagination.types";
+
+// Component-specific config types live with their feature.
+// Re-exported here so the public types form one cohesive surface.
+export type { NavigationConfig } from "./Navigation/Navigation.types";
+export type { NavButtonRenderProps } from "./Navigation/Navigation.types";
+export type { PaginationConfig } from "./Pagination/Pagination.types";
+
 // Slide index + arbitrary data attached to a slide, included in analytics payloads.
 export type SlideData = {
   index: number;
@@ -12,32 +21,17 @@ export type AutoScrollConfig = {
   interval: number;
 };
 
-// Prev/next navigation buttons.
-// style/className apply to both buttons; prevStyle/nextStyle/prevClassName/nextClassName merge on top.
-export type NavigationConfig = {
-  prevLabel?: ReactNode;
-  nextLabel?: ReactNode;
-  style?: CSSProperties;
-  className?: string;
-  prevStyle?: CSSProperties;
-  nextStyle?: CSSProperties;
-  prevClassName?: string;
-  nextClassName?: string;
-};
-
-// Pagination dots.
-// dotStyle/dotClassName apply to every dot; activeDotStyle/activeDotClassName merge on top for the active dot.
-export type PaginationConfig = {
-  style?: CSSProperties;
-  className?: string;
-  dotStyle?: CSSProperties;
-  dotClassName?: string;
-  activeDotStyle?: CSSProperties;
-  activeDotClassName?: string;
+// Continuous "flow"/ticker scrolling. Supersedes autoScroll when enabled and
+// works seamlessly with looping (clones are added automatically). Interacting with
+// the carousel pauses it; it resumes resumeDelay ms after the interaction ends.
+export type FlowConfig = {
+  enabled: boolean;
+  speed?: number; // px per second; default 40
+  resumeDelay?: number; // ms paused after an interaction; default 2000
 };
 
 // Main carousel props.
-export type OptiSwiperProps = {
+export type LightSlideProps = {
   children: ReactNode;
   style?: CSSProperties;
   className?: string;
@@ -47,13 +41,14 @@ export type OptiSwiperProps = {
   slidesPerView?: number;
   viewedTimeout?: number;
   autoScroll?: AutoScrollConfig;
+  flow?: FlowConfig;
   navigation?: NavigationConfig;
   pagination?: PaginationConfig;
   isLoop?: boolean;
 };
 
 // Individual slide props.
-export type OptiSlideProps = {
+export type SlideProps = {
   children: ReactNode;
   style?: CSSProperties;
   className?: string;
