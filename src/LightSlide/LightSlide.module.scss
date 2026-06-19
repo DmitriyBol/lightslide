@@ -1,16 +1,16 @@
 // Outer wrapper — clips the track and anchors absolutely-positioned controls.
 .container {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
+	position: relative;
+	width: 100%;
+	overflow: hidden;
 }
 
 // Inner draggable track. The translateX transform is dynamic and applied
 // inline by the component; only the static layout lives here.
 .track {
-  display: flex;
-  cursor: grab;
-  user-select: none;
-  touch-action: pan-y;
-  will-change: transform;
+	display: flex;
+	cursor: grab;
+	user-select: none;
+	touch-action: pan-y;
+	will-change: transform;
 }

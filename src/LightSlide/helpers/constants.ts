@@ -2,7 +2,7 @@
 export const DEFAULT_VIEWED_TIMEOUT = 30;
 
 // Snap animation tuning (used by the track transform).
-export const SNAP_EASING = "cubic-bezier(0.25, 1, 0.5, 1)";
+export const SNAP_EASING = 'cubic-bezier(0.25, 1, 0.5, 1)';
 export const SNAP_DURATION_MS = 300;
 
 // Movement (px) before a gesture is locked to horizontal vs vertical intent.

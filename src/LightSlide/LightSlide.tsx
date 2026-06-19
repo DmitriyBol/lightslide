@@ -1,279 +1,277 @@
 import {
-  Children,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+	Children,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 
 import {
-  buildNavButtonPayload,
-  buildPaginationClickPayload,
-  buildSlidePayload,
-  mergeHandlers,
-} from "../analytics/analytics";
-import { useViewedSlides } from "../hooks/useViewedSlides";
-import { LightSlideContext } from "../lightSlideContext";
-import { Navigation } from "../Navigation/Navigation";
-import { Pagination } from "../Pagination/Pagination";
-import type { LightSlideProps } from "../types";
-import { cx } from "../utils/cx";
+	buildNavButtonPayload,
+	buildPaginationClickPayload,
+	buildSlidePayload,
+	mergeHandlers,
+} from '../analytics/analytics';
+import {useViewedSlides} from '../hooks/useViewedSlides';
+import {LightSlideContext} from '../lightSlideContext';
+import {Navigation} from '../Navigation/Navigation';
+import {Pagination} from '../Pagination/Pagination';
+import type {LightSlideProps} from '../types';
+import {cx} from '../utils/cx';
 import {
-  DEFAULT_FLOW_RESUME_DELAY,
-  DEFAULT_FLOW_SPEED,
-  DEFAULT_VIEWED_TIMEOUT,
-} from "./helpers/constants";
-import { buildLoopChildren } from "./helpers/loopClones";
-import type { NavigateSource } from "./helpers/navigation";
-import { collectSlideData } from "./helpers/slideData";
-import { useAutoScroll } from "./helpers/useAutoScroll";
-import { useDragGesture } from "./helpers/useDragGesture";
-import { useFlow } from "./helpers/useFlow";
-import { useSlideMetrics } from "./helpers/useSlideMetrics";
-import { useTrackSnap } from "./helpers/useTrackSnap";
-import { useViewportEngagement } from "./helpers/useViewportEngagement";
-import styles from "./LightSlide.module.scss";
+	DEFAULT_FLOW_RESUME_DELAY,
+	DEFAULT_FLOW_SPEED,
+	DEFAULT_VIEWED_TIMEOUT,
+} from './helpers/constants';
+import {buildLoopChildren} from './helpers/loopClones';
+import type {NavigateSource} from './helpers/navigation';
+import {collectSlideData} from './helpers/slideData';
+import {useAutoScroll} from './helpers/useAutoScroll';
+import {useDragGesture} from './helpers/useDragGesture';
+import {useFlow} from './helpers/useFlow';
+import {useSlideMetrics} from './helpers/useSlideMetrics';
+import {useTrackSnap} from './helpers/useTrackSnap';
+import {useViewportEngagement} from './helpers/useViewportEngagement';
+import styles from './LightSlide.module.scss';
 
 export function LightSlide({
-  children,
-  style,
-  className,
-  trackStyle,
-  trackClassName,
-  analytics,
-  slidesPerView = 1,
-  viewedTimeout = DEFAULT_VIEWED_TIMEOUT,
-  autoScroll,
-  flow,
-  navigation,
-  pagination,
-  isLoop = false,
+	children,
+	style,
+	className,
+	trackStyle,
+	trackClassName,
+	analytics,
+	slidesPerView = 1,
+	viewedTimeout = DEFAULT_VIEWED_TIMEOUT,
+	autoScroll,
+	flow,
+	navigation,
+	pagination,
+	isLoop = false,
 }: LightSlideProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const currentIndexRef = useRef(0);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const trackRef = useRef<HTMLDivElement>(null);
+	const currentIndexRef = useRef(0);
 
-  const handlersRef = useRef(mergeHandlers(analytics));
-  handlersRef.current = mergeHandlers(analytics);
+	const handlersRef = useRef(mergeHandlers(analytics));
+	handlersRef.current = mergeHandlers(analytics);
 
-  const childArray = Children.toArray(children);
-  const slideCount = childArray.length;
-  const slideCountRef = useRef(slideCount);
-  slideCountRef.current = slideCount;
+	const childArray = Children.toArray(children);
+	const slideCount = childArray.length;
+	const slideCountRef = useRef(slideCount);
+	slideCountRef.current = slideCount;
 
-  const maxIndex = Math.max(0, Math.floor(slideCount - slidesPerView));
-  const maxIndexRef = useRef(maxIndex);
-  maxIndexRef.current = maxIndex;
+	const maxIndex = Math.max(0, Math.floor(slideCount - slidesPerView));
+	const maxIndexRef = useRef(maxIndex);
+	maxIndexRef.current = maxIndex;
 
-  const slidesPerViewRef = useRef(slidesPerView);
-  slidesPerViewRef.current = slidesPerView;
+	const slidesPerViewRef = useRef(slidesPerView);
+	slidesPerViewRef.current = slidesPerView;
 
-  const viewedTimeoutRef = useRef(viewedTimeout);
-  viewedTimeoutRef.current = viewedTimeout;
+	const viewedTimeoutRef = useRef(viewedTimeout);
+	viewedTimeoutRef.current = viewedTimeout;
 
-  // The flow needs the loop-clone structure to wrap seamlessly, so it also
-  // turns on effectiveLoop (whether or not the consumer set isLoop).
-  const effectiveFlow = !!flow?.enabled && maxIndex > 0;
-  const effectiveFlowRef = useRef(effectiveFlow);
-  effectiveFlowRef.current = effectiveFlow;
+	// The flow needs the loop-clone structure to wrap seamlessly, so it also
+	// turns on effectiveLoop (whether or not the consumer set isLoop).
+	const effectiveFlow = !!flow?.enabled && maxIndex > 0;
+	const effectiveFlowRef = useRef(effectiveFlow);
+	effectiveFlowRef.current = effectiveFlow;
 
-  const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
-  const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
-  const isLoopRef = useRef(effectiveLoop);
-  isLoopRef.current = effectiveLoop;
-  const loopOffsetRef = useRef(loopOffset);
-  loopOffsetRef.current = loopOffset;
+	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
+	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
+	const isLoopRef = useRef(effectiveLoop);
+	isLoopRef.current = effectiveLoop;
+	const loopOffsetRef = useRef(loopOffset);
+	loopOffsetRef.current = loopOffset;
 
-  const slideDataRef = useRef<unknown[]>([]);
-  slideDataRef.current = collectSlideData(childArray);
+	const slideDataRef = useRef<unknown[]>([]);
+	slideDataRef.current = collectSlideData(childArray);
 
-  const getSlideData = useCallback(
-    (index: number) => slideDataRef.current[index],
-    [],
-  );
-  const { markViewed, getViewedSlides } = useViewedSlides(getSlideData);
+	const getSlideData = useCallback(
+		(index: number) => slideDataRef.current[index],
+		[],
+	);
+	const {markViewed, getViewedSlides} = useViewedSlides(getSlideData);
 
-  const { fireTerminalIfNeeded } = useViewportEngagement({
-    containerRef,
-    currentIndexRef,
-    slideCountRef,
-    viewedTimeoutRef,
-    handlersRef,
-    markViewed,
-    getViewedSlides,
-    getSlideData,
-  });
+	const {fireTerminalIfNeeded} = useViewportEngagement({
+		containerRef,
+		currentIndexRef,
+		slideCountRef,
+		viewedTimeoutRef,
+		handlersRef,
+		markViewed,
+		getViewedSlides,
+		getSlideData,
+	});
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+	const [currentIndex, setCurrentIndex] = useState(0);
 
-  const { slideWidth, measureSlideWidth, getComputedSlideWidth } =
-    useSlideMetrics(containerRef, slidesPerViewRef);
+	const {slideWidth, measureSlideWidth, getComputedSlideWidth} =
+		useSlideMetrics(containerRef, slidesPerViewRef);
 
-  const { snapToVisual, snapTrack } = useTrackSnap(
-    trackRef,
-    getComputedSlideWidth,
-    isLoopRef,
-    loopOffsetRef,
-  );
+	const {snapToVisual, snapTrack} = useTrackSnap(
+		trackRef,
+		getComputedSlideWidth,
+		isLoopRef,
+		loopOffsetRef,
+	);
 
-  // Re-derive maxIndex, clamp the index, and re-snap (no animation) when the layout
-  // shape changes — slidesPerView or loop mode.
-  useEffect(() => {
-    measureSlideWidth();
-    const newMax = Math.max(
-      0,
-      Math.floor(slideCountRef.current - slidesPerViewRef.current),
-    );
-    maxIndexRef.current = newMax;
-    const corrected = Math.min(currentIndexRef.current, newMax);
-    currentIndexRef.current = corrected;
-    setCurrentIndex(corrected);
-    // While the flow runs it owns the transform (its rAF/layout effect positions
-    // the track); snapping here would fight it. Restore discrete position otherwise.
-    if (!effectiveFlowRef.current) snapTrack(corrected, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slidesPerView, isLoop, flow?.enabled]);
+	// Re-derive maxIndex, clamp the index, and re-snap (no animation) when the layout
+	// shape changes — slidesPerView or loop mode.
+	useEffect(() => {
+		measureSlideWidth();
+		const newMax = Math.max(
+			0,
+			Math.floor(slideCountRef.current - slidesPerViewRef.current),
+		);
+		maxIndexRef.current = newMax;
+		const corrected = Math.min(currentIndexRef.current, newMax);
+		currentIndexRef.current = corrected;
+		setCurrentIndex(corrected);
+		// While the flow runs it owns the transform (its rAF/layout effect positions
+		// the track); snapping here would fight it. Restore discrete position otherwise.
+		if (!effectiveFlowRef.current) snapTrack(corrected, false);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [slidesPerView, isLoop, flow?.enabled]);
 
-  // Single navigation path. `source` decides which extra analytics events fire and
-  // whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
-  const navigateToIndex = useCallback(
-    (nextIndex: number, source: NavigateSource) => {
-      const maxIdx = maxIndexRef.current;
-      const loopMode = isLoopRef.current;
-      const offset = loopOffsetRef.current;
-      const count = slideCountRef.current;
+	// Single navigation path. `source` decides which extra analytics events fire and
+	// whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
+	const navigateToIndex = useCallback(
+		(nextIndex: number, source: NavigateSource) => {
+			const maxIdx = maxIndexRef.current;
+			const loopMode = isLoopRef.current;
+			const offset = loopOffsetRef.current;
+			const count = slideCountRef.current;
 
-      const isBackwardWrap = loopMode && nextIndex < 0;
-      const isForwardWrap = loopMode && nextIndex > maxIdx;
+			const isBackwardWrap = loopMode && nextIndex < 0;
+			const isForwardWrap = loopMode && nextIndex > maxIdx;
 
-      let clamped: number;
-      if (isBackwardWrap) clamped = maxIdx;
-      else if (isForwardWrap) clamped = 0;
-      else clamped = Math.max(0, Math.min(maxIdx, nextIndex));
+			let clamped: number;
+			if (isBackwardWrap) clamped = maxIdx;
+			else if (isForwardWrap) clamped = 0;
+			else clamped = Math.max(0, Math.min(maxIdx, nextIndex));
 
-      const from = currentIndexRef.current;
+			const from = currentIndexRef.current;
 
-      if (clamped === from && !isBackwardWrap && !isForwardWrap) {
-        if (source === "drag")
-          snapToVisual(from + (loopMode ? offset : 0), true);
-        return;
-      }
+			if (clamped === from && !isBackwardWrap && !isForwardWrap) {
+				if (source === 'drag')
+					snapToVisual(from + (loopMode ? offset : 0), true);
+				return;
+			}
 
-      const direction: "left" | "right" =
-        isForwardWrap || clamped > from ? "right" : "left";
+			const direction: 'left' | 'right' =
+				isForwardWrap || clamped > from ? 'right' : 'left';
 
-      currentIndexRef.current = clamped;
-      setCurrentIndex(clamped);
-      markViewed(clamped);
+			currentIndexRef.current = clamped;
+			setCurrentIndex(clamped);
+			markViewed(clamped);
 
-      handlersRef.current.onSlide(buildSlidePayload(direction, from, clamped));
+			handlersRef.current.onSlide(buildSlidePayload(direction, from, clamped));
 
-      if (source === "button") {
-        handlersRef.current.onNavButtonClick(
-          buildNavButtonPayload(direction, from, clamped),
-        );
-      }
-      if (source === "pagination") {
-        handlersRef.current.onPaginationClick(
-          buildPaginationClickPayload(from, clamped),
-        );
-      }
+			if (source === 'button') {
+				handlersRef.current.onNavButtonClick(
+					buildNavButtonPayload(direction, from, clamped),
+				);
+			}
+			if (source === 'pagination') {
+				handlersRef.current.onPaginationClick(
+					buildPaginationClickPayload(from, clamped),
+				);
+			}
 
-      const isLoopWrap = isBackwardWrap || isForwardWrap;
-      if (source !== "auto" && !isLoopWrap && clamped === maxIdx) {
-        fireTerminalIfNeeded("reachedEnd");
-      }
+			const isLoopWrap = isBackwardWrap || isForwardWrap;
+			if (source !== 'auto' && !isLoopWrap && clamped === maxIdx) {
+				fireTerminalIfNeeded('reachedEnd');
+			}
 
-      if (isBackwardWrap) {
-        snapToVisual(0, true, () => snapToVisual(maxIdx + offset, false));
-      } else if (isForwardWrap) {
-        snapToVisual(count + offset, true, () => snapToVisual(offset, false));
-      } else {
-        snapToVisual(clamped + (loopMode ? offset : 0), true);
-      }
-    },
-    [markViewed, fireTerminalIfNeeded, snapToVisual],
-  );
+			if (isBackwardWrap) {
+				snapToVisual(0, true, () => snapToVisual(maxIdx + offset, false));
+			} else if (isForwardWrap) {
+				snapToVisual(count + offset, true, () => snapToVisual(offset, false));
+			} else {
+				snapToVisual(clamped + (loopMode ? offset : 0), true);
+			}
+		},
+		[markViewed, fireTerminalIfNeeded, snapToVisual],
+	);
 
-  const goToIndex = useCallback(
-    (index: number, source: "button" | "pagination") => {
-      navigateToIndex(index, source);
-    },
-    [navigateToIndex],
-  );
+	const goToIndex = useCallback(
+		(index: number, source: 'button' | 'pagination') => {
+			navigateToIndex(index, source);
+		},
+		[navigateToIndex],
+	);
 
-  const contextValue = useMemo(
-    () => ({
-      slideWidth,
-      currentIndex,
-      maxIndex,
-      isLoop: effectiveLoop,
-      goToIndex,
-    }),
-    [slideWidth, currentIndex, maxIndex, effectiveLoop, goToIndex],
-  );
+	const contextValue = useMemo(
+		() => ({
+			slideWidth,
+			currentIndex,
+			maxIndex,
+			isLoop: effectiveLoop,
+			goToIndex,
+		}),
+		[slideWidth, currentIndex, maxIndex, effectiveLoop, goToIndex],
+	);
 
-  const autoScrollPausedRef = useRef(false);
-  const navigateToIndexRef = useRef(navigateToIndex);
-  navigateToIndexRef.current = navigateToIndex;
+	const autoScrollPausedRef = useRef(false);
+	const navigateToIndexRef = useRef(navigateToIndex);
+	navigateToIndexRef.current = navigateToIndex;
 
-  // Flow supersedes step auto-scroll — they are both "auto motion".
-  useAutoScroll(effectiveFlow ? undefined : autoScroll, {
-    currentIndexRef,
-    maxIndexRef,
-    isLoopRef,
-    autoScrollPausedRef,
-    navigateToIndexRef,
-  });
+	// Flow supersedes step auto-scroll — they are both "auto motion".
+	useAutoScroll(effectiveFlow ? undefined : autoScroll, {
+		currentIndexRef,
+		maxIndexRef,
+		isLoopRef,
+		autoScrollPausedRef,
+		navigateToIndexRef,
+	});
 
-  const dragHandlers = useDragGesture({
-    trackRef,
-    currentIndexRef,
-    maxIndexRef,
-    isLoopRef,
-    loopOffsetRef,
-    autoScrollPausedRef,
-    getComputedSlideWidth,
-    snapToVisual,
-    navigateToIndex,
-  });
+	const dragHandlers = useDragGesture({
+		trackRef,
+		currentIndexRef,
+		maxIndexRef,
+		isLoopRef,
+		loopOffsetRef,
+		autoScrollPausedRef,
+		getComputedSlideWidth,
+		snapToVisual,
+		navigateToIndex,
+	});
 
-  const flowHandlers = useFlow({
-    enabled: effectiveFlow,
-    speed: flow?.speed ?? DEFAULT_FLOW_SPEED,
-    resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
-    trackRef,
-    slideCountRef,
-    loopOffsetRef,
-    getComputedSlideWidth,
-  });
+	const flowHandlers = useFlow({
+		enabled: effectiveFlow,
+		speed: flow?.speed ?? DEFAULT_FLOW_SPEED,
+		resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
+		trackRef,
+		slideCountRef,
+		loopOffsetRef,
+		getComputedSlideWidth,
+	});
 
-  // In flow mode the flow owns the track (continuous drift + auto-resume);
-  // otherwise the discrete drag-to-snap gesture is active.
-  const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
+	// In flow mode the flow owns the track (continuous drift + auto-resume);
+	// otherwise the discrete drag-to-snap gesture is active.
+	const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
 
-  const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
+	const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
 
-  return (
-    <LightSlideContext.Provider value={contextValue}>
-      <div
-        ref={containerRef}
-        className={cx(styles.container, className)}
-        style={style}
-      >
-        <div
-          ref={trackRef}
-          className={cx(styles.track, trackClassName)}
-          style={trackStyle}
-          {...pointerHandlers}
-        >
-          {displayChildren}
-        </div>
+	return (
+		<LightSlideContext.Provider value={contextValue}>
+			<div
+				ref={containerRef}
+				className={cx(styles.container, className)}
+				style={style}>
+				<div
+					ref={trackRef}
+					className={cx(styles.track, trackClassName)}
+					style={trackStyle}
+					{...pointerHandlers}>
+					{displayChildren}
+				</div>
 
-        {navigation && <Navigation config={navigation} />}
-        {pagination && <Pagination config={pagination} />}
-      </div>
-    </LightSlideContext.Provider>
-  );
+				{navigation && <Navigation config={navigation} />}
+				{pagination && <Pagination config={pagination} />}
+			</div>
+		</LightSlideContext.Provider>
+	);
 }

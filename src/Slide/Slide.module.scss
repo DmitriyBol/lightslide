@@ -1,6 +1,6 @@
 // Static slide styling. The concrete px width is dynamic
 // (containerWidth / slidesPerView) and is applied inline by the component.
 .slide {
-  box-sizing: border-box;
-  flex-shrink: 0;
+	box-sizing: border-box;
+	flex-shrink: 0;
 }

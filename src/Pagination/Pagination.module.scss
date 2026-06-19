@@ -1,27 +1,27 @@
 // Row of dots, centred below the track.
 .container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 0 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 10px 0 2px;
 }
 
 .dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  cursor: pointer;
-  background: rgba(0, 0, 0, 0.25);
-  border: none;
-  border-radius: 50%;
-  transition:
-    transform 200ms ease,
-    background 200ms ease;
+	flex-shrink: 0;
+	width: 8px;
+	height: 8px;
+	padding: 0;
+	cursor: pointer;
+	background: rgba(0, 0, 0, 0.25);
+	border: none;
+	border-radius: 50%;
+	transition:
+		transform 200ms ease,
+		background 200ms ease;
 }
 
 .active {
-  background: rgba(0, 0, 0, 0.75);
-  transform: scale(1.3);
+	background: rgba(0, 0, 0, 0.75);
+	transform: scale(1.3);
 }
