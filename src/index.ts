@@ -4,6 +4,7 @@ export type {
   AnalyticsHandlers,
   AutoScrollConfig,
   InViewportPayload,
+  MarqueeConfig,
   NavButtonRenderProps,
   NavigationButtonPayload,
   NavigationConfig,

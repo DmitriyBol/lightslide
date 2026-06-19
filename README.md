@@ -11,6 +11,7 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 - **Pagination dots** — optional dot indicators with active-state styling
 - **Scoped SCSS styling** — base look ships as CSS-module classes, auto-injected at import; override via `className`/`style` props
 - **Auto-scroll** — optional automatic cycling with configurable interval; pauses during drag
+- **Marquee** — optional continuous ticker scroll at a configurable speed; seamless with looping; pauses on interaction and resumes after a delay
 - **Responsive** — `ResizeObserver` keeps slide widths correct on any container resize
 - **Analytics ready** — 6 events covering viewport, slide, navigation, pagination, and engagement
 - **Mutually exclusive terminal events** — only one of `onReachedEnd` or `onViewedSlides` ever fires per session
@@ -86,6 +87,7 @@ The container component. Handles layout, all navigation types, and analytics.
 | `slidesPerView` | `number` | `1` | How many slides are visible at once |
 | `viewedTimeout` | `number` | `30` | Seconds of ≥50% viewport visibility before `onViewedSlides` fires |
 | `autoScroll` | `AutoScrollConfig` | — | Enable automatic slide cycling |
+| `marquee` | `MarqueeConfig` | — | Enable continuous ticker scrolling (supersedes `autoScroll`) |
 | `navigation` | `NavigationConfig` | — | Show prev/next buttons. Pass `{}` for defaults |
 | `pagination` | `PaginationConfig` | — | Show pagination dots. Pass `{}` for defaults |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop (see [Loop](#loop)) |
@@ -222,6 +224,34 @@ Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates 
 | `enabled` | `boolean` | Toggle auto-scroll on/off without removing the prop |
 | `interval` | `number` | Milliseconds between slide changes |
 
+### Marquee (continuous ticker)
+
+```tsx
+<OptiSwiper marquee={{ enabled: true }}>
+  ...
+</OptiSwiper>
+
+<OptiSwiper marquee={{ enabled: true, speed: 80, resumeDelay: 3000 }}>
+  ...
+</OptiSwiper>
+```
+
+Unlike auto-scroll (which steps slide-by-slide), the marquee scrolls the track **continuously** at `speed` pixels per second — a smooth ticker. It:
+
+- **Loops seamlessly** — clones are added automatically, so it wraps with no visible jump (works whether or not you also set `isLoop`).
+- **Pauses on interaction** — tapping or dragging the carousel stops the motion. A drag follows your finger from the current position (no snapping). Motion resumes `resumeDelay` ms after you let go, continuing from exactly where it stopped — no jank.
+- **Supersedes `autoScroll`** — if both are set, the marquee wins.
+
+> The marquee drives the track directly via `requestAnimationFrame` (no CSS transition), so animation is smooth at frame rate. During a marquee the active pagination dot is not tracked (continuous motion has no discrete index).
+
+**`MarqueeConfig`**:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | `boolean` | required | Toggle the marquee on/off |
+| `speed` | `number` | `40` | Scroll speed in **pixels per second** |
+| `resumeDelay` | `number` | `2000` | Milliseconds to stay paused after an interaction before resuming |
+
 ---
 
 ## Loop
@@ -317,6 +347,7 @@ import type {
   AnalyticsHandlers,
   AutoScrollConfig,
   InViewportPayload,
+  MarqueeConfig,
   NavButtonRenderProps,
   NavigationButtonPayload,
   NavigationConfig,
@@ -457,6 +488,7 @@ src/
 │       ├── useTrackSnap.ts       #   transform/translateX snapping
 │       ├── useAutoScroll.ts      #   interval cycling (+ test)
 │       ├── useDragGesture.ts     #   pointer/drag handlers (+ test)
+│       ├── useMarquee.ts         #   continuous ticker scroll (+ test)
 │       └── useViewportEngagement.ts  # IntersectionObserver + terminal events
 ├── OptiSlide/
 │   ├── OptiSlide.tsx             # Slide (React.memo + forwardRef)

@@ -45,8 +45,9 @@ src/
 │       ├── loopClones.ts (+test)   ·  buildLoopChildren (pure)
 │       ├── useSlideMetrics.ts      ·  container measure + per-slide px width
 │       ├── useTrackSnap.ts         ·  transform/translateX snap
-│       ├── useAutoScroll.ts (+test)·  interval cycling
+│       ├── useAutoScroll.ts (+test)·  interval cycling (step)
 │       ├── useDragGesture.ts (+test)· pointer handlers + drag refs
+│       ├── useMarquee.ts (+test)    ·  continuous ticker scroll (rAF)
 │       └── useViewportEngagement.ts·  IntersectionObserver + terminal events
 ├── OptiSlide/
 │   ├── OptiSlide.tsx
@@ -275,6 +276,16 @@ Direction lock: on the first 4px of movement, if `|deltaY| > |deltaX|` → verti
 - `onClick` is the **same handler** the default button uses → it calls `goToIndex(…, "button")`, so `onSlide` + `onNavButtonClick` fire identically. The consumer just attaches it.
 - `disabled` reflects boundary state (always `false` under `isLoop`).
 - The library does not wrap the returned node — the consumer owns markup, styling, and which props they attach.
+
+### Marquee: continuous rAF scroll, not step navigation
+
+`marquee` (`useMarquee`) is a **continuous** ticker — distinct from `autoScroll`'s discrete stepping. Key decisions:
+
+- **rAF drives the transform directly, with no CSS transition.** Per-frame `translateX` updates *are* the animation → smooth at frame rate. A CSS transition would fight the per-frame writes and cause lag/jank. (Same "transform, not scrollTo" philosophy as drag.)
+- **It forces the loop-clone structure** (`effectiveMarquee` ⊂ `effectiveLoop`) so the wrap is seamless: the offset is taken `% (slideCount × slideWidth)`, which lands on a clone that is pixel-identical to the start — no jump.
+- **Supersedes `autoScroll`** when both are set (`useAutoScroll(effectiveMarquee ? undefined : autoScroll, …)`). They are both "auto motion".
+- **In marquee mode the marquee owns the track and the pointer handlers** (`pointerHandlers = effectiveMarquee ? marqueeHandlers : dragHandlers`). The discrete drag-gesture is not attached; the reflow effect skips `snapTrack` (guarded by `effectiveMarqueeRef`) so nothing fights the rAF.
+- **No-jank invariants:** start at the home offset via a `useLayoutEffect` (before paint, no clone flash); interaction pauses by gating `advance` on `interactingRef` while the rAF keeps `lastTs` fresh (no dt spike on resume); a drag drifts from the *current* offset (continuous, no grab-jump); resume continues from the stopped offset after `resumeDelay`. `currentIndex` is intentionally **not** updated during a marquee (continuous motion has no discrete index), so pagination's active dot is not synced then.
 
 ---
 

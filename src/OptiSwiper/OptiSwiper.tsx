@@ -19,12 +19,17 @@ import { Pagination } from "../Pagination/Pagination";
 import { SwiperContext } from "../swiperContext";
 import type { OptiSwiperProps } from "../types";
 import { cx } from "../utils/cx";
-import { DEFAULT_VIEWED_TIMEOUT } from "./helpers/constants";
+import {
+  DEFAULT_MARQUEE_RESUME_DELAY,
+  DEFAULT_MARQUEE_SPEED,
+  DEFAULT_VIEWED_TIMEOUT,
+} from "./helpers/constants";
 import { buildLoopChildren } from "./helpers/loopClones";
 import type { NavigateSource } from "./helpers/navigation";
 import { collectSlideData } from "./helpers/slideData";
 import { useAutoScroll } from "./helpers/useAutoScroll";
 import { useDragGesture } from "./helpers/useDragGesture";
+import { useMarquee } from "./helpers/useMarquee";
 import { useSlideMetrics } from "./helpers/useSlideMetrics";
 import { useTrackSnap } from "./helpers/useTrackSnap";
 import { useViewportEngagement } from "./helpers/useViewportEngagement";
@@ -40,6 +45,7 @@ export function OptiSwiper({
   slidesPerView = 1,
   viewedTimeout = DEFAULT_VIEWED_TIMEOUT,
   autoScroll,
+  marquee,
   navigation,
   pagination,
   isLoop = false,
@@ -66,7 +72,13 @@ export function OptiSwiper({
   const viewedTimeoutRef = useRef(viewedTimeout);
   viewedTimeoutRef.current = viewedTimeout;
 
-  const effectiveLoop = isLoop && maxIndex > 0;
+  // The marquee needs the loop-clone structure to wrap seamlessly, so it also
+  // turns on effectiveLoop (whether or not the consumer set isLoop).
+  const effectiveMarquee = !!marquee?.enabled && maxIndex > 0;
+  const effectiveMarqueeRef = useRef(effectiveMarquee);
+  effectiveMarqueeRef.current = effectiveMarquee;
+
+  const effectiveLoop = (isLoop || effectiveMarquee) && maxIndex > 0;
   const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
   const isLoopRef = useRef(effectiveLoop);
   isLoopRef.current = effectiveLoop;
@@ -117,9 +129,11 @@ export function OptiSwiper({
     const corrected = Math.min(currentIndexRef.current, newMax);
     currentIndexRef.current = corrected;
     setCurrentIndex(corrected);
-    snapTrack(corrected, false);
+    // While the marquee runs it owns the transform (its rAF/layout effect positions
+    // the track); snapping here would fight it. Restore discrete position otherwise.
+    if (!effectiveMarqueeRef.current) snapTrack(corrected, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slidesPerView, isLoop]);
+  }, [slidesPerView, isLoop, marquee?.enabled]);
 
   // Single navigation path. `source` decides which extra analytics events fire and
   // whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
@@ -204,7 +218,8 @@ export function OptiSwiper({
   const navigateToIndexRef = useRef(navigateToIndex);
   navigateToIndexRef.current = navigateToIndex;
 
-  useAutoScroll(autoScroll, {
+  // Marquee supersedes step auto-scroll — they are both "auto motion".
+  useAutoScroll(effectiveMarquee ? undefined : autoScroll, {
     currentIndexRef,
     maxIndexRef,
     isLoopRef,
@@ -212,18 +227,31 @@ export function OptiSwiper({
     navigateToIndexRef,
   });
 
-  const { onPointerDown, onPointerMove, onPointerUp, onPointerCancel } =
-    useDragGesture({
-      trackRef,
-      currentIndexRef,
-      maxIndexRef,
-      isLoopRef,
-      loopOffsetRef,
-      autoScrollPausedRef,
-      getComputedSlideWidth,
-      snapToVisual,
-      navigateToIndex,
-    });
+  const dragHandlers = useDragGesture({
+    trackRef,
+    currentIndexRef,
+    maxIndexRef,
+    isLoopRef,
+    loopOffsetRef,
+    autoScrollPausedRef,
+    getComputedSlideWidth,
+    snapToVisual,
+    navigateToIndex,
+  });
+
+  const marqueeHandlers = useMarquee({
+    enabled: effectiveMarquee,
+    speed: marquee?.speed ?? DEFAULT_MARQUEE_SPEED,
+    resumeDelay: marquee?.resumeDelay ?? DEFAULT_MARQUEE_RESUME_DELAY,
+    trackRef,
+    slideCountRef,
+    loopOffsetRef,
+    getComputedSlideWidth,
+  });
+
+  // In marquee mode the marquee owns the track (continuous drift + auto-resume);
+  // otherwise the discrete drag-to-snap gesture is active.
+  const pointerHandlers = effectiveMarquee ? marqueeHandlers : dragHandlers;
 
   const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
 
@@ -238,10 +266,7 @@ export function OptiSwiper({
           ref={trackRef}
           className={cx(styles.track, trackClassName)}
           style={trackStyle}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
+          {...pointerHandlers}
         >
           {displayChildren}
         </div>

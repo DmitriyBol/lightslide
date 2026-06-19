@@ -197,3 +197,36 @@ describe("OptiSwiper — isLoop", () => {
     expect(handlers.onReachedEnd).not.toHaveBeenCalled();
   });
 });
+
+describe("OptiSwiper — marquee", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it("enables loop clones automatically when marquee is on (without isLoop)", () => {
+    render(
+      <OptiSwiper marquee={{ enabled: true }}>
+        <OptiSlide>Alpha</OptiSlide>
+        <OptiSlide>Beta</OptiSlide>
+        <OptiSlide>Gamma</OptiSlide>
+      </OptiSwiper>,
+    );
+    expect(screen.getAllByText("Alpha").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Beta").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Gamma").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not fire onReachedEnd while the marquee is running", () => {
+    const handlers = makeHandlers();
+    render(
+      <OptiSwiper marquee={{ enabled: true }} analytics={handlers}>
+        <OptiSlide>A</OptiSlide>
+        <OptiSlide>B</OptiSlide>
+        <OptiSlide>C</OptiSlide>
+      </OptiSwiper>,
+    );
+    expect(handlers.onReachedEnd).not.toHaveBeenCalled();
+  });
+});

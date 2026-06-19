@@ -13,3 +13,7 @@ export const RUBBER_BAND_DIVISOR = 3;
 
 // Fraction of the carousel that must be visible to count as "in viewport".
 export const VIEWPORT_THRESHOLD = 0.5;
+
+// Marquee (continuous ticker) defaults.
+export const DEFAULT_MARQUEE_SPEED = 40; // px per second
+export const DEFAULT_MARQUEE_RESUME_DELAY = 2000; // ms paused after an interaction

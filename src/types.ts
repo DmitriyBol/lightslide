@@ -21,6 +21,15 @@ export type AutoScrollConfig = {
   interval: number;
 };
 
+// Continuous "marquee"/ticker scrolling. Supersedes autoScroll when enabled and
+// works seamlessly with looping (clones are added automatically). Interacting with
+// the carousel pauses it; it resumes resumeDelay ms after the interaction ends.
+export type MarqueeConfig = {
+  enabled: boolean;
+  speed?: number; // px per second; default 40
+  resumeDelay?: number; // ms paused after an interaction; default 2000
+};
+
 // Main carousel props.
 export type OptiSwiperProps = {
   children: ReactNode;
@@ -32,6 +41,7 @@ export type OptiSwiperProps = {
   slidesPerView?: number;
   viewedTimeout?: number;
   autoScroll?: AutoScrollConfig;
+  marquee?: MarqueeConfig;
   navigation?: NavigationConfig;
   pagination?: PaginationConfig;
   isLoop?: boolean;
