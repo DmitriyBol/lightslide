@@ -1,4 +1,6 @@
 # LightSlide
+Please note that the project is currently undergoing testing and may contain functional bugs. 
+My goal is to identify and resolve as many issues as possible before reaching version 1.0.0. Thank you.
 
 A lightweight, fully-typed React carousel with built-in analytics events. Zero runtime dependencies beyond React.
 
