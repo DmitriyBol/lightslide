@@ -1,6 +1,7 @@
 import {renderHook} from '@testing-library/react';
 import type {MouseEvent, PointerEvent} from 'react';
 
+import {createStore} from './store';
 import {useFlow} from './useFlow';
 
 // Manual rAF control: capture the scheduled callback and drive it with explicit
@@ -40,8 +41,7 @@ function setup(overrides: Record<string, unknown> = {}) {
 		speed: 100,
 		resumeDelay: 2000,
 		trackRef: {current: track},
-		slideCountRef: {current: 3},
-		loopOffsetRef: {current: 1},
+		storeRef: {current: createStore({slideCount: 3, loopOffset: 1})},
 		getComputedSlideWidth: () => 300,
 		...overrides,
 	};
@@ -115,6 +115,17 @@ describe('useFlow', () => {
 		result.current.onPointerMove(moveEvent(450)); // dx -50 → -(300+100) + -50
 		expect(track.style.transform).toBe('translateX(-450px)');
 		result.current.onPointerUp(moveEvent(450)); // commit: offset = 100 - (-50) = 150
+		expect(track.style.transform).toBe('translateX(-450px)');
+	});
+
+	it('commits the drift when the pointer leaves the carousel mid-drag', () => {
+		const {result, track} = setup({speed: 100});
+		frame(0);
+		frame(1000); // offset 100 → -400
+		result.current.onPointerDown(downEvent(500));
+		result.current.onPointerMove(moveEvent(450)); // dx -50
+		// Leaves while still held: commit offset = 100 - (-50) = 150 → -(300 + 150)
+		result.current.onPointerLeave(moveEvent(450));
 		expect(track.style.transform).toBe('translateX(-450px)');
 	});
 

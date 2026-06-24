@@ -5,8 +5,11 @@ export const VELOCITY_THRESHOLD = 0.3;
 export const SNAP_THRESHOLD_RATIO = 0.5;
 
 // Decides which slide to snap to after a drag gesture.
-// Snaps forward/backward when |dragDeltaX| > slideWidth × SNAP_THRESHOLD_RATIO, or |velocityX| > VELOCITY_THRESHOLD.
-// When isLoop is true, returns -1 or maxIndex+1 at the boundaries to signal a loop wrap to the caller.
+// Snaps when |dragDeltaX| > slideWidth × SNAP_THRESHOLD_RATIO, or |velocityX| > VELOCITY_THRESHOLD.
+// The number of slides moved is round(|dragDeltaX| / slideWidth) (at least 1 once a snap is
+// triggered), so dragging across several slides in a single gesture lands on the slide actually
+// under the viewport rather than always advancing by one.
+// When isLoop is true, an out-of-range result (< 0 or > maxIndex) signals a loop wrap to the caller.
 export function getSnapIndex(
 	currentIndex: number,
 	maxIndex: number,
@@ -25,8 +28,13 @@ export function getSnapIndex(
 
 	if (!shouldAdvance) return currentIndex;
 
+	// Nearest-slide snap; a fast flick over a short distance still moves at least one.
+	const steps = Math.max(1, Math.round(absDelta / slideWidth));
+
 	if (dragDeltaX < 0) {
-		return isLoop ? currentIndex + 1 : Math.min(maxIndex, currentIndex + 1);
+		return isLoop
+			? currentIndex + steps
+			: Math.min(maxIndex, currentIndex + steps);
 	}
-	return isLoop ? currentIndex - 1 : Math.max(0, currentIndex - 1);
+	return isLoop ? currentIndex - steps : Math.max(0, currentIndex - steps);
 }

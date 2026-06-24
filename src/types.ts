@@ -10,9 +10,10 @@ export type {NavButtonRenderProps} from './Navigation/Navigation.types';
 export type {PaginationConfig} from './Pagination/Pagination.types';
 
 // Slide index + arbitrary data attached to a slide, included in analytics payloads.
-export type SlideData = {
+// Generic over the data shape (defaults to unknown so existing call sites are unchanged).
+export type SlideData<T = unknown> = {
 	index: number;
-	data?: unknown;
+	data?: T;
 };
 
 // Automatic slide cycling. Set enabled: false to pause without removing the prop.
@@ -39,10 +40,6 @@ export type LightSlideProps = {
 	trackClassName?: string;
 	analytics?: AnalyticsHandlers;
 	slidesPerView?: number;
-	// Seconds of ≥50% viewport visibility before onViewedSlides fires. Only has any
-	// effect when an onViewedSlides handler is provided (the timer is otherwise never
-	// started). Default 30.
-	viewedTimeout?: number;
 	autoScroll?: AutoScrollConfig;
 	flow?: FlowConfig;
 	navigation?: NavigationConfig;
@@ -56,15 +53,18 @@ export type LightSlideProps = {
 	fallback?: ReactNode;
 };
 
-// Individual slide props.
-export type SlideProps = {
+// Individual slide props. Generic over the `data` shape so `<Slide<Product> data={…} />`
+// is fully typed; defaults to unknown, so untyped usage keeps working.
+export type SlideProps<T = unknown> = {
 	children: ReactNode;
 	style?: CSSProperties;
 	className?: string;
-	data?: unknown;
+	data?: T;
 };
 
-// Analytics event handlers. All fields are optional; unhandled events are completely silent.
+// Analytics event handlers + config. All fields are optional; unhandled events are
+// completely silent. The viewed-slides config lives here too, so everything analytics
+// related sits in one place.
 export type AnalyticsHandlers = {
 	onInViewport?: (payload: InViewportPayload) => void;
 	onSlide?: (payload: SlidePayload) => void;
@@ -72,12 +72,15 @@ export type AnalyticsHandlers = {
 	onViewedSlides?: (payload: ViewedSlidesPayload) => void;
 	onNavButtonClick?: (payload: NavigationButtonPayload) => void;
 	onPaginationClick?: (payload: PaginationClickPayload) => void;
+	// Seconds of ≥50% viewport visibility before onViewedSlides fires. Only has any
+	// effect when an onViewedSlides handler is provided (the timer is otherwise never
+	// started). Default 30.
+	viewedTimeout?: number;
 };
 
 // Fired once the first time the carousel enters ≥50% of the viewport.
 export type InViewportPayload = {
 	event: 'carousel_in_viewport';
-	timestamp: number;
 };
 
 // Fired on every navigation — drag, button, pagination, or auto-scroll.
@@ -86,7 +89,6 @@ export type SlidePayload = {
 	direction: 'left' | 'right';
 	fromIndex: number;
 	toIndex: number;
-	timestamp: number;
 };
 
 // Fired when the user reaches maxIndex. Mutually exclusive with ViewedSlidesPayload.
@@ -94,7 +96,6 @@ export type SlidePayload = {
 export type ReachedEndPayload = {
 	event: 'carousel_reached_end';
 	slides: SlideData[];
-	timestamp: number;
 };
 
 // Fired after viewedTimeout seconds of visibility. Mutually exclusive with ReachedEndPayload.
@@ -102,7 +103,6 @@ export type ViewedSlidesPayload = {
 	event: 'carousel_viewed_slides';
 	slides: SlideData[];
 	viewedSeconds: number;
-	timestamp: number;
 };
 
 // Fired when a prev/next button is clicked, in addition to onSlide.
@@ -111,7 +111,6 @@ export type NavigationButtonPayload = {
 	direction: 'left' | 'right';
 	fromIndex: number;
 	toIndex: number;
-	timestamp: number;
 };
 
 // Fired when a pagination dot is clicked, in addition to onSlide.
@@ -119,5 +118,4 @@ export type PaginationClickPayload = {
 	event: 'carousel_pagination_click';
 	fromIndex: number;
 	toIndex: number;
-	timestamp: number;
 };

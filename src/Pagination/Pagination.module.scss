@@ -7,6 +7,13 @@
 	padding: 10px 0 2px;
 }
 
+// Held invisible until the carousel has measured on the client (matches the nav buttons),
+// so nothing flashes in before first layout.
+.hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
 .dot {
 	flex-shrink: 0;
 	width: 8px;

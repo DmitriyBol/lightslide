@@ -1,6 +1,13 @@
-// Outer wrapper — anchors absolutely-positioned controls. Overflow stays visible so
-// edge-anchored nav buttons are never clipped; the inner .viewport does the clipping.
+// Outer wrapper. Overflow stays visible so edge-anchored nav buttons are never clipped.
 .container {
+	position: relative;
+	width: 100%;
+}
+
+// Anchors the absolutely-positioned nav buttons. Its height tracks the viewport (its only
+// in-flow child), so the buttons centre on the track and are NOT pushed off-centre by the
+// pagination row, which lives below the stage in the container. Overflow stays visible.
+.stage {
 	position: relative;
 	width: 100%;
 }

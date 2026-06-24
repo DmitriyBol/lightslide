@@ -15,7 +15,7 @@ import {
 	buildSlidePayload,
 } from '../analytics/analytics';
 import {useViewedSlides} from '../hooks/useViewedSlides';
-import {LightSlideContext} from '../lightSlideContext';
+import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import {Navigation} from '../Navigation/Navigation';
 import {Pagination} from '../Pagination/Pagination';
 import type {LightSlideProps} from '../types';
@@ -28,6 +28,7 @@ import {
 import {buildLoopChildren} from './helpers/loopClones';
 import type {NavigateSource} from './helpers/navigation';
 import {collectSlideData} from './helpers/slideData';
+import {createStore} from './helpers/store';
 import {useAutoScroll} from './helpers/useAutoScroll';
 import {useDragGesture} from './helpers/useDragGesture';
 import {useFlow} from './helpers/useFlow';
@@ -44,7 +45,6 @@ export function LightSlide({
 	trackClassName,
 	analytics,
 	slidesPerView = 1,
-	viewedTimeout = DEFAULT_VIEWED_TIMEOUT,
 	autoScroll,
 	flow,
 	navigation,
@@ -55,7 +55,11 @@ export function LightSlide({
 }: LightSlideProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
-	const currentIndexRef = useRef(0);
+
+	// Single mutable store for all core data — read/written imperatively by the gesture
+	// and animation hooks (zero re-renders). The "functional" pieces (analytics handlers,
+	// the navigate fn) live in their own refs below. See helpers/store.ts.
+	const storeRef = useRef(createStore());
 
 	// Latest-ref of the raw analytics prop. Handlers are called optionally at each fire
 	// site (analytics?.onX?.(payload)) — no merging, no noop layer.
@@ -63,23 +67,14 @@ export function LightSlide({
 	analyticsRef.current = analytics;
 
 	// Viewed-slides tracking is opt-in: the timer only runs when the consumer actually
-	// handles onViewedSlides. (viewedTimeout is just its duration knob.)
+	// handles onViewedSlides. Its duration knob, viewedTimeout, lives alongside the
+	// handlers inside `analytics`.
 	const viewedTrackingEnabled = analytics?.onViewedSlides !== undefined;
+	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
 
 	const childArray = Children.toArray(children);
 	const slideCount = childArray.length;
-	const slideCountRef = useRef(slideCount);
-	slideCountRef.current = slideCount;
-
 	const maxIndex = Math.max(0, Math.floor(slideCount - slidesPerView));
-	const maxIndexRef = useRef(maxIndex);
-	maxIndexRef.current = maxIndex;
-
-	const slidesPerViewRef = useRef(slidesPerView);
-	slidesPerViewRef.current = slidesPerView;
-
-	const viewedTimeoutRef = useRef(viewedTimeout);
-	viewedTimeoutRef.current = viewedTimeout;
 
 	// While loading we render the fallback, not the track — so all auto motion
 	// (flow / auto-scroll) must stay off until the real slides mount.
@@ -88,30 +83,31 @@ export function LightSlide({
 	// The flow needs the loop-clone structure to wrap seamlessly, so it also
 	// turns on effectiveLoop (whether or not the consumer set isLoop).
 	const effectiveFlow = flow?.enabled === true && maxIndex > 0 && !isLoading;
-	const effectiveFlowRef = useRef(effectiveFlow);
-	effectiveFlowRef.current = effectiveFlow;
-
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
-	const isLoopRef = useRef(effectiveLoop);
-	isLoopRef.current = effectiveLoop;
-	const loopOffsetRef = useRef(loopOffset);
-	loopOffsetRef.current = loopOffset;
 
-	const slideDataRef = useRef<unknown[]>([]);
-	slideDataRef.current = collectSlideData(childArray);
+	// Sync the render-derived core data into the store every render. currentIndex and
+	// autoScrollPaused are owned by the imperative path (navigation / drag) and never
+	// overwritten here.
+	const store = storeRef.current;
+	store.slideCount = slideCount;
+	store.maxIndex = maxIndex;
+	store.slidesPerView = slidesPerView;
+	store.viewedTimeout = viewedTimeout;
+	store.effectiveFlow = effectiveFlow;
+	store.isLoop = effectiveLoop;
+	store.loopOffset = loopOffset;
+	store.slideData = collectSlideData(childArray);
 
 	const getSlideData = useCallback(
-		(index: number) => slideDataRef.current[index],
+		(index: number) => storeRef.current.slideData[index],
 		[],
 	);
 	const {markViewed, getViewedSlides} = useViewedSlides(getSlideData);
 
 	const {fireTerminalIfNeeded} = useViewportEngagement({
 		containerRef,
-		currentIndexRef,
-		slideCountRef,
-		viewedTimeoutRef,
+		storeRef,
 		analyticsRef,
 		viewedTrackingEnabled,
 		markViewed,
@@ -121,14 +117,21 @@ export function LightSlide({
 
 	const [currentIndex, setCurrentIndex] = useState(0);
 
+	// Reveal the controls only after the first client commit. Server-rendered (or
+	// not-yet-measured) prev/next buttons would otherwise flash in an un-positioned spot
+	// before the carousel lays out — they render at opacity 0 until ready instead.
+	const [isReady, setIsReady] = useState(false);
+	useLayoutEffect(() => {
+		setIsReady(true);
+	}, []);
+
 	const {slideWidth, measureSlideWidth, getComputedSlideWidth} =
-		useSlideMetrics(containerRef, slidesPerViewRef);
+		useSlideMetrics(containerRef, storeRef);
 
 	const {snapToVisual, snapTrack} = useTrackSnap(
 		trackRef,
 		getComputedSlideWidth,
-		isLoopRef,
-		loopOffsetRef,
+		storeRef,
 	);
 
 	// Re-derive maxIndex, clamp the index, and re-snap (no animation) when the layout
@@ -137,17 +140,15 @@ export function LightSlide({
 	// otherwise the prepend clones would flash for one frame and then jump to slide 0.
 	useLayoutEffect(() => {
 		measureSlideWidth();
-		const newMax = Math.max(
-			0,
-			Math.floor(slideCountRef.current - slidesPerViewRef.current),
-		);
-		maxIndexRef.current = newMax;
-		const corrected = Math.min(currentIndexRef.current, newMax);
-		currentIndexRef.current = corrected;
+		const s = storeRef.current;
+		const newMax = Math.max(0, Math.floor(s.slideCount - s.slidesPerView));
+		s.maxIndex = newMax;
+		const corrected = Math.min(s.currentIndex, newMax);
+		s.currentIndex = corrected;
 		setCurrentIndex(corrected);
 		// While the flow runs it owns the transform (its rAF/layout effect positions
 		// the track); snapping here would fight it. Restore discrete position otherwise.
-		if (!effectiveFlowRef.current) snapTrack(corrected, false);
+		if (!s.effectiveFlow) snapTrack(corrected, false);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [slidesPerView, isLoop, flow?.enabled, loading]);
 
@@ -155,10 +156,13 @@ export function LightSlide({
 	// whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
 	const navigateToIndex = useCallback(
 		(nextIndex: number, source: NavigateSource) => {
-			const maxIdx = maxIndexRef.current;
-			const loopMode = isLoopRef.current;
-			const offset = loopOffsetRef.current;
-			const count = slideCountRef.current;
+			const {
+				maxIndex: maxIdx,
+				isLoop: loopMode,
+				loopOffset: offset,
+				slideCount: count,
+				currentIndex: from,
+			} = storeRef.current;
 
 			const isBackwardWrap = loopMode && nextIndex < 0;
 			const isForwardWrap = loopMode && nextIndex > maxIdx;
@@ -167,8 +171,6 @@ export function LightSlide({
 			if (isBackwardWrap) clamped = maxIdx;
 			else if (isForwardWrap) clamped = 0;
 			else clamped = Math.max(0, Math.min(maxIdx, nextIndex));
-
-			const from = currentIndexRef.current;
 
 			if (clamped === from && !isBackwardWrap && !isForwardWrap) {
 				if (source === 'drag')
@@ -179,7 +181,7 @@ export function LightSlide({
 			const direction: 'left' | 'right' =
 				isForwardWrap || clamped > from ? 'right' : 'left';
 
-			currentIndexRef.current = clamped;
+			storeRef.current.currentIndex = clamped;
 			setCurrentIndex(clamped);
 			markViewed(clamped);
 
@@ -221,38 +223,34 @@ export function LightSlide({
 		[navigateToIndex],
 	);
 
-	const contextValue = useMemo(
+	// Two contexts so the slides don't re-render on navigation: <Slide> consumes only the
+	// geometry (slideWidth, changes on resize), while Navigation/Pagination consume the
+	// nav state (currentIndex etc., changes on every navigation).
+	const metricsValue = useMemo(() => ({slideWidth}), [slideWidth]);
+	const navValue = useMemo(
 		() => ({
-			slideWidth,
 			currentIndex,
 			maxIndex,
 			isLoop: effectiveLoop,
+			isReady,
 			goToIndex,
 		}),
-		[slideWidth, currentIndex, maxIndex, effectiveLoop, goToIndex],
+		[currentIndex, maxIndex, effectiveLoop, isReady, goToIndex],
 	);
 
-	const autoScrollPausedRef = useRef(false);
 	const navigateToIndexRef = useRef(navigateToIndex);
 	navigateToIndexRef.current = navigateToIndex;
 
 	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs
 	// while loading (no track to move).
 	useAutoScroll(effectiveFlow || isLoading ? undefined : autoScroll, {
-		currentIndexRef,
-		maxIndexRef,
-		isLoopRef,
-		autoScrollPausedRef,
+		storeRef,
 		navigateToIndexRef,
 	});
 
 	const dragHandlers = useDragGesture({
 		trackRef,
-		currentIndexRef,
-		maxIndexRef,
-		isLoopRef,
-		loopOffsetRef,
-		autoScrollPausedRef,
+		storeRef,
 		getComputedSlideWidth,
 		snapToVisual,
 		navigateToIndex,
@@ -263,8 +261,7 @@ export function LightSlide({
 		speed: flow?.speed ?? DEFAULT_FLOW_SPEED,
 		resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
 		trackRef,
-		slideCountRef,
-		loopOffsetRef,
+		storeRef,
 		getComputedSlideWidth,
 	});
 
@@ -281,29 +278,36 @@ export function LightSlide({
 	const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
 
 	return (
-		<LightSlideContext.Provider value={contextValue}>
-			<div
-				ref={containerRef}
-				className={cx(styles.container, className)}
-				style={style}>
-				<div className={styles.viewport}>
-					{isLoading ? (
-						fallback
-					) : (
-						<div
-							ref={trackRef}
-							className={cx(styles.track, trackClassName)}
-							style={trackStyle}
-							onDragStart={preventNativeDrag}
-							{...pointerHandlers}>
-							{displayChildren}
+		<SlideMetricsContext.Provider value={metricsValue}>
+			<NavContext.Provider value={navValue}>
+				<div
+					ref={containerRef}
+					className={cx(styles.container, className)}
+					style={style}>
+					{/* Stage height tracks the viewport only, so the controls anchored to it
+					    centre on the track — never offset by the pagination row below. */}
+					<div className={styles.stage}>
+						<div className={styles.viewport}>
+							{isLoading ? (
+								fallback
+							) : (
+								<div
+									ref={trackRef}
+									className={cx(styles.track, trackClassName)}
+									style={trackStyle}
+									onDragStart={preventNativeDrag}
+									{...pointerHandlers}>
+									{displayChildren}
+								</div>
+							)}
 						</div>
-					)}
-				</div>
 
-				{!isLoading && navigation && <Navigation config={navigation} />}
-				{!isLoading && pagination && <Pagination config={pagination} />}
-			</div>
-		</LightSlideContext.Provider>
+						{!isLoading && navigation && <Navigation config={navigation} />}
+					</div>
+
+					{!isLoading && pagination && <Pagination config={pagination} />}
+				</div>
+			</NavContext.Provider>
+		</SlideMetricsContext.Provider>
 	);
 }

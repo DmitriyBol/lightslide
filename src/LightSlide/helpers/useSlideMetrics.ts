@@ -2,6 +2,8 @@ import {useCallback, useLayoutEffect, useRef, useState} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
+import type {LightSlideStore} from './store';
+
 type SlideMetrics = {
 	slideWidth: number;
 	measureSlideWidth: () => void;
@@ -14,7 +16,7 @@ type SlideMetrics = {
 // the live DOM for synchronous use inside pointer handlers and snap math.
 export function useSlideMetrics(
 	containerRef: RefObject<HTMLDivElement>,
-	slidesPerViewRef: MutableRefObject<number>,
+	storeRef: MutableRefObject<LightSlideStore>,
 ): SlideMetrics {
 	const [slideWidth, setSlideWidth] = useState(0);
 	const slideWidthRef = useRef(0);
@@ -22,21 +24,21 @@ export function useSlideMetrics(
 	const measureSlideWidth = useCallback(() => {
 		if (!containerRef.current) return;
 		const w = Math.floor(
-			containerRef.current.offsetWidth / slidesPerViewRef.current,
+			containerRef.current.offsetWidth / storeRef.current.slidesPerView,
 		);
 		if (w === slideWidthRef.current) return;
 		slideWidthRef.current = w;
 		setSlideWidth(w);
-	}, [containerRef, slidesPerViewRef]);
+	}, [containerRef, storeRef]);
 
 	const getComputedSlideWidth = useCallback(
 		() =>
 			containerRef.current
 				? Math.floor(
-						containerRef.current.offsetWidth / slidesPerViewRef.current,
+						containerRef.current.offsetWidth / storeRef.current.slidesPerView,
 					)
 				: 0,
-		[containerRef, slidesPerViewRef],
+		[containerRef, storeRef],
 	);
 
 	useLayoutEffect(() => {

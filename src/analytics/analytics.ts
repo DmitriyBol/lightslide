@@ -13,7 +13,7 @@ import type {
 // with no handler simply does nothing.
 
 export function buildInViewportPayload(): InViewportPayload {
-	return {event: 'carousel_in_viewport', timestamp: Date.now()};
+	return {event: 'carousel_in_viewport'};
 }
 
 export function buildSlidePayload(
@@ -26,12 +26,11 @@ export function buildSlidePayload(
 		direction,
 		fromIndex,
 		toIndex,
-		timestamp: Date.now(),
 	};
 }
 
 export function buildReachedEndPayload(slides: SlideData[]): ReachedEndPayload {
-	return {event: 'carousel_reached_end', slides, timestamp: Date.now()};
+	return {event: 'carousel_reached_end', slides};
 }
 
 export function buildViewedSlidesPayload(
@@ -42,7 +41,6 @@ export function buildViewedSlidesPayload(
 		event: 'carousel_viewed_slides',
 		slides,
 		viewedSeconds,
-		timestamp: Date.now(),
 	};
 }
 
@@ -56,7 +54,6 @@ export function buildNavButtonPayload(
 		direction,
 		fromIndex,
 		toIndex,
-		timestamp: Date.now(),
 	};
 }
 
@@ -68,6 +65,5 @@ export function buildPaginationClickPayload(
 		event: 'carousel_pagination_click',
 		fromIndex,
 		toIndex,
-		timestamp: Date.now(),
 	};
 }

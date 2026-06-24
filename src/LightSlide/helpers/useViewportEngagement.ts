@@ -9,12 +9,11 @@ import {
 } from '../../analytics/analytics';
 import type {AnalyticsHandlers, SlideData} from '../../types';
 import {VIEWPORT_THRESHOLD} from './constants';
+import type {LightSlideStore} from './store';
 
 type ViewportEngagementParams = {
 	containerRef: RefObject<HTMLDivElement>;
-	currentIndexRef: MutableRefObject<number>;
-	slideCountRef: MutableRefObject<number>;
-	viewedTimeoutRef: MutableRefObject<number>;
+	storeRef: MutableRefObject<LightSlideStore>;
 	// Latest-ref of the raw analytics prop; handlers are called optionally at fire time.
 	analyticsRef: MutableRefObject<AnalyticsHandlers | undefined>;
 	// Whether the consumer actually wants viewed-slides tracking. When false the
@@ -31,9 +30,7 @@ type ViewportEngagementParams = {
 // Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
 export function useViewportEngagement({
 	containerRef,
-	currentIndexRef,
-	slideCountRef,
-	viewedTimeoutRef,
+	storeRef,
 	analyticsRef,
 	viewedTrackingEnabled,
 	markViewed,
@@ -59,7 +56,7 @@ export function useViewportEngagement({
 				const onReachedEnd = analyticsRef.current?.onReachedEnd;
 				if (onReachedEnd) {
 					const allSlides: SlideData[] = Array.from(
-						{length: slideCountRef.current},
+						{length: storeRef.current.slideCount},
 						(_, i) => ({index: i, data: getSlideData(i)}),
 					);
 					onReachedEnd(buildReachedEndPayload(allSlides));
@@ -69,18 +66,12 @@ export function useViewportEngagement({
 				if (onViewedSlides) {
 					const elapsed = viewedStartRef.current
 						? Math.round((Date.now() - viewedStartRef.current) / 1000)
-						: viewedTimeoutRef.current;
+						: storeRef.current.viewedTimeout;
 					onViewedSlides(buildViewedSlidesPayload(getViewedSlides(), elapsed));
 				}
 			}
 		},
-		[
-			getSlideData,
-			getViewedSlides,
-			slideCountRef,
-			viewedTimeoutRef,
-			analyticsRef,
-		],
+		[getSlideData, getViewedSlides, storeRef, analyticsRef],
 	);
 
 	useEffect(() => {
@@ -100,11 +91,11 @@ export function useViewportEngagement({
 						viewedTimerRef.current === null
 					) {
 						viewedStartRef.current = Date.now();
-						markViewed(currentIndexRef.current);
+						markViewed(storeRef.current.currentIndex);
 						viewedTimerRef.current = setTimeout(() => {
 							viewedTimerRef.current = null;
 							fireTerminalIfNeeded('viewedSlides');
-						}, viewedTimeoutRef.current * 1000);
+						}, storeRef.current.viewedTimeout * 1000);
 					}
 				} else if (viewedTimerRef.current !== null) {
 					clearTimeout(viewedTimerRef.current);
@@ -123,8 +114,7 @@ export function useViewportEngagement({
 		markViewed,
 		fireTerminalIfNeeded,
 		containerRef,
-		currentIndexRef,
-		viewedTimeoutRef,
+		storeRef,
 		analyticsRef,
 		viewedTrackingEnabled,
 	]);

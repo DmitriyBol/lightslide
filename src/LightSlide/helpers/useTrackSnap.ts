@@ -3,6 +3,7 @@ import {useCallback} from 'react';
 import type {MutableRefObject, RefObject} from 'react';
 
 import {SNAP_DURATION_MS, SNAP_EASING} from './constants';
+import type {LightSlideStore} from './store';
 
 type TrackSnap = {
 	snapToVisual: (
@@ -20,8 +21,7 @@ type TrackSnap = {
 export function useTrackSnap(
 	trackRef: RefObject<HTMLDivElement>,
 	getComputedSlideWidth: () => number,
-	isLoopRef: MutableRefObject<boolean>,
-	loopOffsetRef: MutableRefObject<number>,
+	storeRef: MutableRefObject<LightSlideStore>,
 ): TrackSnap {
 	const snapToVisual = useCallback(
 		(visualIndex: number, animate: boolean, onComplete?: () => void) => {
@@ -49,12 +49,11 @@ export function useTrackSnap(
 
 	const snapTrack = useCallback(
 		(logicalIndex: number, animate: boolean) => {
-			const visualIndex = isLoopRef.current
-				? logicalIndex + loopOffsetRef.current
-				: logicalIndex;
+			const {isLoop, loopOffset} = storeRef.current;
+			const visualIndex = isLoop ? logicalIndex + loopOffset : logicalIndex;
 			snapToVisual(visualIndex, animate);
 		},
-		[snapToVisual, isLoopRef, loopOffsetRef],
+		[snapToVisual, storeRef],
 	);
 
 	return {snapToVisual, snapTrack};

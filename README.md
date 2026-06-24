@@ -19,8 +19,8 @@ A lightweight, fully-typed React carousel with built-in analytics events. Zero r
 - **Responsive** — `ResizeObserver` keeps slide widths correct on any container resize
 - **Analytics ready** — 6 events covering viewport, slide, navigation, pagination, and engagement (engagement tracking is opt-in)
 - **Mutually exclusive terminal events** — only one of `onReachedEnd` or `onViewedSlides` ever fires per session
-- **No unnecessary re-renders** — all callbacks stable after mount via the "latest ref" pattern
-- **TypeScript** — fully typed public API
+- **No unnecessary re-renders** — core data lives in one imperative store and the context is split, so navigating never re-renders the slides; callbacks stay stable after mount
+- **TypeScript** — fully typed public API; `<Slide>` is generic over its `data` shape
 
 ---
 
@@ -87,9 +87,8 @@ The container component. Handles layout, all navigation types, and analytics.
 | `className` | `string` | — | Class name for the outer wrapper |
 | `trackStyle` | `CSSProperties` | — | Styles for the inner draggable track div |
 | `trackClassName` | `string` | — | Class name for the inner track |
-| `analytics` | `AnalyticsHandlers` | — | Custom event handlers (see [Analytics](#analytics)) |
+| `analytics` | `AnalyticsHandlers` | — | Custom event handlers + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once |
-| `viewedTimeout` | `number` | `30` | Seconds of ≥50% viewport visibility before `onViewedSlides` fires. **Only has an effect when an `onViewedSlides` handler is provided** (the timer is opt-in) |
 | `autoScroll` | `AutoScrollConfig` | — | Enable automatic slide cycling |
 | `flow` | `FlowConfig` | — | Enable continuous ticker scrolling (supersedes `autoScroll`) |
 | `navigation` | `NavigationConfig` | — | Show prev/next buttons. Pass `{}` for defaults |
@@ -107,7 +106,20 @@ A single slide. Width is automatically computed as `containerWidth / slidesPerVi
 | `children` | `ReactNode` | required | Slide content |
 | `style` | `CSSProperties` | — | Additional styles for the slide div |
 | `className` | `string` | — | Class name for the slide div |
-| `data` | `unknown` | — | Arbitrary data attached to this slide — included in analytics payloads |
+| `data` | `T` (default `unknown`) | — | Arbitrary data attached to this slide — included in analytics payloads |
+
+`Slide` is generic over its `data` type, so you can keep it fully typed:
+
+```tsx
+type Product = { id: number; name: string };
+
+<Slide<Product> data={{ id: 1, name: "Widget" }}>
+  <ProductCard />
+</Slide>
+```
+
+`SlideData<T>` is generic too; the analytics payloads use the default (`unknown`) `data`,
+which you narrow on your side.
 
 ---
 
@@ -115,7 +127,7 @@ A single slide. Width is automatically computed as `containerWidth / slidesPerVi
 
 ### Swipe / drag
 
-Built-in and always active. Drag horizontally to navigate — the slide follows the finger in real time and snaps on release at 50% of slide width or on a fast flick.
+Built-in and always active. Drag horizontally to navigate — the slide follows the finger in real time and snaps on release at 50% of slide width or on a fast flick. Dragging across **several** slides in one gesture snaps to the slide you actually dragged to (nearest boundary), not just one over.
 
 ### Navigation buttons
 
@@ -125,8 +137,6 @@ Built-in and always active. Drag horizontally to navigate — the slide follows 
 </LightSlide>
 
 <LightSlide navigation={{
-  prevLabel: "←",
-  nextLabel: "→",
   style: { background: "white", color: "black" },   // both buttons
   prevStyle: { left: 16 },                           // prev only
   nextStyle: { right: 16 },                          // next only
@@ -135,14 +145,12 @@ Built-in and always active. Drag horizontally to navigate — the slide follows 
 }}>
 ```
 
-Buttons are absolutely positioned over the carousel, vertically centered (prev-left / next-right). They disable and dim at the first/last slide unless `isLoop` is active. The track is clipped by an inner viewport while the controls live one level up, so buttons are **never cropped** by `overflow: hidden`.
+Buttons are absolutely positioned over the **track** (vertically centered, prev-left / next-right) — the pagination row below never offsets them. They disable and dim (to 50% opacity) at the first/last slide unless `isLoop` is active. The track is clipped by an inner viewport while the controls live one level up, so buttons are **never cropped** by `overflow: hidden`. To use a different label, bring your own element via `renderPrev` / `renderNext` below.
 
 **`NavigationConfig`** options:
 
 | Key | Type | Description |
 |---|---|---|
-| `prevLabel` | `ReactNode` | Content for the prev button. Default: `‹` |
-| `nextLabel` | `ReactNode` | Content for the next button. Default: `›` |
 | `style` | `CSSProperties` | Base style applied to both buttons |
 | `className` | `string` | Base class applied to both buttons |
 | `prevStyle` | `CSSProperties` | Overrides for the prev button |
@@ -173,7 +181,7 @@ Pass your own JSX for either button via `renderPrev` / `renderNext`. The library
 
 When provided, your element **fully replaces** the default `<button>`. Attach the `onClick` you receive — it is the exact handler the built-in button uses, so navigation and the `onSlide` + `onNavButtonClick` analytics events fire identically.
 
-Your custom element is wrapped in a positioning slot, so by default it lands **centered on the left (prev) / right (next)** and is never clipped by the carousel's overflow — you only have to style the button itself, not place it.
+Your custom element is wrapped in a minimal positioning slot, so by default it lands **centered on the left (prev) / right (next)** and is never clipped by the carousel's overflow — you only have to style the button itself, not place it. At the first/last slide the slot also dims to 50% opacity, so `disabled` has a sensible visual default even for custom buttons (wire the passed `disabled` to your element to also block the click).
 
 **`NavButtonRenderProps`** (passed to your render function):
 
@@ -346,9 +354,22 @@ Events are **silent by default** — no console output, no errors, nothing. They
 
 > The viewed-slides engagement timer is **opt-in**: if you don't pass an `onViewedSlides` handler it never starts, and `viewedTimeout` is ignored.
 
+### `viewedTimeout`
+
+The duration knob for `onViewedSlides` lives on the `analytics` object alongside the handlers (so all analytics config sits in one place):
+
+```tsx
+analytics={{
+  onViewedSlides: handleEngagement,
+  viewedTimeout: 15, // seconds of ≥50% visibility before it fires (default 30)
+}}
+```
+
+It is ignored unless an `onViewedSlides` handler is also provided.
+
 ### Custom handlers
 
-Provide only the events you care about — unhandled events produce no output and have no side effects.
+Provide only the events you care about — unhandled events produce no output and have no side effects. Payloads carry only their own fields (no timestamp — stamp it yourself in the handler if you need one).
 
 ```tsx
 import { Slide, LightSlide } from "lightslide";
@@ -356,31 +377,33 @@ import type { AnalyticsHandlers } from "lightslide";
 
 const analytics: AnalyticsHandlers = {
   onInViewport(payload) {
-    // { event: "carousel_in_viewport", timestamp }
+    // { event: "carousel_in_viewport" }
     tracker.track("carousel_viewed", payload);
   },
   onSlide(payload) {
-    // { event: "carousel_slide", direction, fromIndex, toIndex, timestamp }
+    // { event: "carousel_slide", direction, fromIndex, toIndex }
     tracker.track("carousel_slide", payload);
   },
   onReachedEnd(payload) {
-    // { event: "carousel_reached_end", slides: SlideData[], timestamp }
+    // { event: "carousel_reached_end", slides: SlideData[] }
     tracker.track("carousel_complete", payload);
   },
   onViewedSlides(payload) {
-    // { event: "carousel_viewed_slides", slides: SlideData[], viewedSeconds, timestamp }
+    // { event: "carousel_viewed_slides", slides: SlideData[], viewedSeconds }
     tracker.track("carousel_engagement", payload);
   },
   onNavButtonClick(payload) {
-    // { event: "carousel_nav_button", direction, fromIndex, toIndex, timestamp }
+    // { event: "carousel_nav_button", direction, fromIndex, toIndex }
     tracker.track("carousel_nav_click", payload);
   },
   onPaginationClick(payload) {
-    // { event: "carousel_pagination_click", fromIndex, toIndex, timestamp }
+    // { event: "carousel_pagination_click", fromIndex, toIndex }
     tracker.track("carousel_dot_click", payload);
   },
 };
 ```
+
+> Because a drag can cross several slides at once, `fromIndex` and `toIndex` on `carousel_slide` may differ by more than one — `toIndex` is the slide actually landed on.
 
 ### Exported types
 
@@ -450,10 +473,10 @@ Dynamic geometry (slide width, track transform) is always applied inline and is 
 └────────────────────────────────────────────────────────────────┘
 ```
 
-The inner **viewport** clips the track, while the **container** stays `overflow: visible`
-and anchors the absolutely-positioned controls — so prev/next buttons (built-in or your
-own `renderPrev`/`renderNext`) are vertically centered, prev-left / next-right, and never
-cropped.
+The inner **viewport** clips the track. A **stage** wrapper around just the viewport
+(`overflow: visible`) anchors the absolutely-positioned controls — so prev/next buttons
+(built-in or your own `renderPrev`/`renderNext`) are centered on the **track height only**
+(never offset by the pagination row below) and never cropped.
 
 With `isLoop`, the rendered track has additional clone slides at both ends:
 
@@ -468,9 +491,10 @@ where N = `Math.ceil(slidesPerView)`.
 1. **`onPointerDown`** — drag start. The pointer is **not** captured yet, so a plain tap reaches a link/button inside the slide.
 2. **`onPointerMove`** — `translateX` updated directly on the DOM (zero React re-renders during drag)
 3. **Direction lock** — first 4px decides horizontal vs vertical; vertical cancels drag and lets page scroll. On a real horizontal drag the pointer is captured so moves continue outside the element.
-4. **`onPointerUp`** — snap decision: `|drag| > 50% slide width` OR `velocity > 0.3 px/ms` → next/prev; otherwise snap back. The trailing `click` is swallowed so a drag that ends over a link/button doesn't also activate it.
+4. **`onPointerUp`** — snap decision: a snap triggers when `|drag| > 50% slide width` OR `velocity > 0.3 px/ms`, and moves `round(|drag| / slideWidth)` slides — so a multi-slide drag lands on the slide actually dragged to, not just the next one. Otherwise it snaps back. The trailing `click` is swallowed so a drag that ends over a link/button doesn't also activate it.
 5. **Rubber-banding** — `delta / 3` resistance at first and last slide (disabled in loop mode)
 6. **Native drag guard** — `onDragStart` is prevented so dragging an image/anchor inside a slide can't hijack the gesture
+7. **Pointer-leave safety** — if the pointer leaves the carousel mid-drag without a release (e.g. capture didn't hold), the drag is committed so the gesture never gets stuck
 
 ### Loop wrap animation
 
@@ -479,6 +503,10 @@ When a drag or button press crosses a boundary in loop mode, the track animates 
 ### Central navigation
 
 All navigation types call `navigateToIndex(index, source)`. The `source` parameter controls which analytics events fire beyond the base `onSlide`. Loop wrap-around is detected inside this function from the raw `nextIndex` value before clamping.
+
+### Core data store & re-renders
+
+All per-gesture core data (current index, max index, loop offset, …) lives in a **single mutable store** (`helpers/store.ts`) that the gesture/animation hooks read and write imperatively — kept separate from the "functional" pieces (analytics handlers, the navigate fn). Context is split in two: `<Slide>` consumes only the slide geometry, while the nav state (current index, etc.) is a separate context for Navigation/Pagination — so navigating does **not** re-render the slides.
 
 ### Terminal event logic
 
@@ -504,7 +532,7 @@ cancelled
 
 ```bash
 npm install          # install dependencies
-npm test             # 96 tests across 12 suites
+npm test             # 109 tests across 12 suites
 npm run test:watch   # watch mode
 npm run lint         # ESLint
 npm run lint:fix     # auto-fix
@@ -532,6 +560,7 @@ src/
 │   └── helpers/                  # Internal hooks & pure helpers
 │       ├── constants.ts          #   tuning constants
 │       ├── navigation.ts         #   navigation source/fn types
+│       ├── store.ts              #   single core-data store (LightSlideStore)
 │       ├── slideData.ts          #   collectSlideData (+ test)
 │       ├── loopClones.ts         #   buildLoopChildren (+ test)
 │       ├── useSlideMetrics.ts    #   measure container → slide px width
@@ -562,7 +591,7 @@ src/
 ├── utils/
 │   ├── swipe.ts                  # getSnapIndex — threshold + velocity logic
 │   └── swipe.test.ts
-├── lightSlideContext.ts              # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
+├── lightSlideContext.ts              # Split contexts: SlideMetricsContext (slideWidth) + NavContext (nav state)
 ├── types.ts                      # Shared + public types (re-exports feature config types)
 ├── styles.d.ts                   # Ambient declaration for *.module.scss imports
 └── index.ts                      # Public API barrel (the only index.ts)
