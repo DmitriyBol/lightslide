@@ -1,11 +1,28 @@
-// Prev/next buttons — vertically centred over the track.
-.button {
+// Shared placement for the built-in buttons and the custom-render slots: vertically
+// centred over the track, layered above it. @extend groups the selectors in the
+// emitted CSS (one rule, comma-joined) instead of repeating the block per class.
+%control {
 	position: absolute;
 	top: 50%;
 	z-index: 1;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transform: translateY(-50%);
+}
+
+%left {
+	left: 8px;
+}
+
+%right {
+	right: 8px;
+}
+
+// Prev/next buttons — vertically centred over the track.
+.button {
+	@extend %control;
+
 	width: 36px;
 	height: 36px;
 	padding: 0;
@@ -17,15 +34,14 @@
 	background: rgba(0, 0, 0, 0.45);
 	border: none;
 	border-radius: 50%;
-	transform: translateY(-50%);
 }
 
 .prev {
-	left: 8px;
+	@extend %left;
 }
 
 .next {
-	right: 8px;
+	@extend %right;
 }
 
 .button:disabled {
@@ -38,19 +54,13 @@
 // container, prev on the left / next on the right) without them having to position it,
 // and lives outside the clipping .viewport so it is never cropped.
 .slot {
-	position: absolute;
-	top: 50%;
-	z-index: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transform: translateY(-50%);
+	@extend %control;
 }
 
 .slotPrev {
-	left: 8px;
+	@extend %left;
 }
 
 .slotNext {
-	right: 8px;
+	@extend %right;
 }
