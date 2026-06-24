@@ -3,33 +3,31 @@ import React from 'react';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type {LightSlideContextType} from '../lightSlideContext';
-import {LightSlideContext} from '../lightSlideContext';
+import type {NavContextType} from '../lightSlideContext';
+import {NavContext} from '../lightSlideContext';
 import {Navigation} from './Navigation';
 
 import '@testing-library/jest-dom';
 
-function makeContext(
-	overrides?: Partial<LightSlideContextType>,
-): LightSlideContextType {
+function makeContext(overrides?: Partial<NavContextType>): NavContextType {
 	return {
-		slideWidth: 300,
 		currentIndex: 1,
 		maxIndex: 3,
 		isLoop: false,
+		isReady: true,
 		goToIndex: jest.fn(),
 		...overrides,
 	};
 }
 
 function renderNavigation(
-	ctx: LightSlideContextType,
+	ctx: NavContextType,
 	config: React.ComponentProps<typeof Navigation>['config'] = {},
 ) {
 	return render(
-		<LightSlideContext.Provider value={ctx}>
+		<NavContext.Provider value={ctx}>
 			<Navigation config={config} />
-		</LightSlideContext.Provider>,
+		</NavContext.Provider>,
 	);
 }
 
@@ -44,15 +42,6 @@ describe('Navigation', () => {
 		renderNavigation(makeContext());
 		expect(screen.getByLabelText('Previous slide')).toHaveTextContent('‹');
 		expect(screen.getByLabelText('Next slide')).toHaveTextContent('›');
-	});
-
-	it('renders custom prev/next labels', () => {
-		renderNavigation(makeContext(), {
-			prevLabel: 'Prev',
-			nextLabel: 'Next',
-		});
-		expect(screen.getByLabelText('Previous slide')).toHaveTextContent('Prev');
-		expect(screen.getByLabelText('Next slide')).toHaveTextContent('Next');
 	});
 
 	it('disables prev button at index 0', () => {
@@ -163,6 +152,36 @@ describe('Navigation — render props', () => {
 		);
 		expect(renderPrev).toHaveBeenCalledWith(
 			expect.objectContaining({disabled: false}),
+		);
+	});
+
+	it('dims a custom button slot at the boundary by default', () => {
+		renderNavigation(makeContext({currentIndex: 0, maxIndex: 3}), {
+			renderPrev: ({onClick, disabled}) => (
+				<button data-testid="custom-prev" onClick={onClick} disabled={disabled}>
+					PREV
+				</button>
+			),
+		});
+		// prev sits at the boundary → its positioning slot carries the default dim class.
+		const slot = screen.getByTestId('custom-prev').parentElement;
+		expect(slot?.className).toContain('slotDisabled');
+	});
+});
+
+describe('Navigation — readiness', () => {
+	it('hides the buttons until the carousel is ready (no SSR / pre-layout flash)', () => {
+		renderNavigation(makeContext({isReady: false}));
+		expect(screen.getByLabelText('Previous slide').className).toContain(
+			'hidden',
+		);
+		expect(screen.getByLabelText('Next slide').className).toContain('hidden');
+	});
+
+	it('shows the buttons once ready', () => {
+		renderNavigation(makeContext({isReady: true}));
+		expect(screen.getByLabelText('Previous slide').className).not.toContain(
+			'hidden',
 		);
 	});
 });

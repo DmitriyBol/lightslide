@@ -1,6 +1,7 @@
 import {act, renderHook} from '@testing-library/react';
 
 import type {NavigateFn} from './navigation';
+import {createStore} from './store';
 import {useAutoScroll} from './useAutoScroll';
 
 type Overrides = {
@@ -15,12 +16,17 @@ function setup(
 	overrides: Overrides = {},
 ) {
 	const navigate = jest.fn<ReturnType<NavigateFn>, Parameters<NavigateFn>>();
+	const storeRef = {
+		current: createStore({
+			currentIndex: overrides.currentIndex ?? 0,
+			maxIndex: overrides.maxIndex ?? 3,
+			isLoop: overrides.isLoop ?? false,
+			autoScrollPaused: overrides.paused ?? false,
+		}),
+	};
 	renderHook(() =>
 		useAutoScroll(config, {
-			currentIndexRef: {current: overrides.currentIndex ?? 0},
-			maxIndexRef: {current: overrides.maxIndex ?? 3},
-			isLoopRef: {current: overrides.isLoop ?? false},
-			autoScrollPausedRef: {current: overrides.paused ?? false},
+			storeRef,
 			navigateToIndexRef: {current: navigate},
 		}),
 	);

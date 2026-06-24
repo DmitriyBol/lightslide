@@ -46,7 +46,9 @@ beforeAll(() => {
 
 // ──────────────────────────────────────────────────────────────────────────
 
-function makeHandlers(): jest.Mocked<Required<AnalyticsHandlers>> {
+function makeHandlers(): jest.Mocked<
+	Required<Omit<AnalyticsHandlers, 'viewedTimeout'>>
+> {
 	return {
 		onInViewport: jest.fn(),
 		onSlide: jest.fn(),
@@ -64,8 +66,7 @@ function renderLightSlide(
 ) {
 	return render(
 		<LightSlide
-			analytics={handlers}
-			viewedTimeout={viewedTimeout}
+			analytics={{...handlers, viewedTimeout}}
 			slidesPerView={slidesPerView}>
 			<Slide data={{id: 1, name: 'Slide 1'}}>
 				<div>Slide 1</div>
@@ -290,7 +291,7 @@ describe('LightSlide — viewed-slides opt-in', () => {
 		const onViewedSlides = jest.fn();
 		// Provide onInViewport but NOT onViewedSlides — tracking must stay off.
 		render(
-			<LightSlide analytics={{onInViewport}} viewedTimeout={30}>
+			<LightSlide analytics={{onInViewport, viewedTimeout: 30}}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 			</LightSlide>,
@@ -335,5 +336,30 @@ describe('LightSlide — flow', () => {
 			</LightSlide>,
 		);
 		expect(handlers.onReachedEnd).not.toHaveBeenCalled();
+	});
+});
+
+describe('LightSlide — typed data chain', () => {
+	type Product = {id: number; name: string};
+
+	it('types the analytics payload slide data as the LightSlide type argument', () => {
+		const names: string[] = [];
+		render(
+			<LightSlide<Product>
+				analytics={{
+					// `p.slides[i].data` is `Product | undefined` here — `.name` only
+					// compiles because the type parameter flows through the chain.
+					onReachedEnd: p => {
+						for (const s of p.slides) if (s.data) names.push(s.data.name);
+					},
+					onViewedSlides: p => {
+						for (const s of p.slides) if (s.data) names.push(s.data.name);
+					},
+				}}>
+				<Slide<Product> data={{id: 1, name: 'A'}}>A</Slide>
+				<Slide<Product> data={{id: 2, name: 'B'}}>B</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByText('A')).toBeInTheDocument();
 	});
 });

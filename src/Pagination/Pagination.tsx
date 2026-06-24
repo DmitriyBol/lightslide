@@ -1,6 +1,6 @@
 import {useCallback} from 'react';
 
-import {useLightSlideContext} from '../lightSlideContext';
+import {useNavContext} from '../lightSlideContext';
 import {cx} from '../utils/cx';
 import styles from './Pagination.module.scss';
 import type {PaginationConfig} from './Pagination.types';
@@ -10,7 +10,7 @@ type PaginationProps = {
 };
 
 export function Pagination({config}: PaginationProps) {
-	const {currentIndex, maxIndex, goToIndex} = useLightSlideContext();
+	const {currentIndex, maxIndex, isReady, goToIndex} = useNavContext();
 
 	// Number of dots = number of scrollable positions
 	const dotCount = maxIndex + 1;
@@ -24,7 +24,11 @@ export function Pagination({config}: PaginationProps) {
 
 	return (
 		<div
-			className={cx(styles.container, config.className)}
+			className={cx(
+				styles.container,
+				!isReady && styles.hidden,
+				config.className,
+			)}
 			style={config.style}>
 			{Array.from({length: dotCount}, (_, i) => {
 				const isActive = i === currentIndex;

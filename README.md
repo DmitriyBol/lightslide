@@ -1,574 +1,323 @@
 # LightSlide
-Please note that the project is currently undergoing testing and may contain functional bugs. 
-My goal is to identify and resolve as many issues as possible before reaching version 1.0.0. Thank you.
 
-A lightweight, fully-typed React carousel with built-in analytics events. Zero runtime dependencies beyond React.
+> The project is currently in testing and may contain bugs. The goal is to find and fix as
+> many issues as possible before 1.0.0. Thank you.
 
-## Features
+A lightweight, fully-typed React carousel/slider with built-in analytics, infinite loop, and a
+continuous flow (ticker) mode. Zero runtime dependencies beyond React.
 
-- **Swipe & drag** — real-time finger tracking via Pointer Events; slides follow the finger and snap on release
-- **Interactive content friendly** — links/buttons inside slides stay clickable; a tap passes through, a drag never triggers them, and native image/anchor dragging can't hijack the gesture
-- **slidesPerView** — show 1, 2, or 3 slides at once; each slide fills `1/n` of the container proportionally
-- **isLoop** — seamless infinite loop; edge slides are cloned so wrap-around looks continuous (no first-paint flash)
-- **Navigation buttons** — optional prev/next buttons with full style control, or bring your own JSX via `renderPrev`/`renderNext` — custom buttons are auto-centered (prev-left / next-right) and never clipped
-- **Pagination dots** — optional dot indicators with active-state styling
-- **Loading fallback** — optional `loading` flag renders your own fallback node (skeleton/spinner/placeholder) while data is fetched
-- **Scoped SCSS styling** — base look ships as CSS-module classes, auto-injected at import; override via `className`/`style` props
-- **Auto-scroll** — optional automatic cycling with configurable interval; pauses during drag
-- **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping; pauses on interaction and resumes after a delay
-- **Responsive** — `ResizeObserver` keeps slide widths correct on any container resize
-- **Analytics ready** — 6 events covering viewport, slide, navigation, pagination, and engagement (engagement tracking is opt-in)
-- **Mutually exclusive terminal events** — only one of `onReachedEnd` or `onViewedSlides` ever fires per session
-- **No unnecessary re-renders** — all callbacks stable after mount via the "latest ref" pattern
-- **TypeScript** — fully typed public API
+## What it can do
 
----
+- **Swipe & drag** — real-time finger tracking via Pointer Events; the track follows the
+  pointer and snaps on release. A multi-slide drag lands on the slide you actually dragged to.
+- **Interactive content friendly** — links/buttons inside slides stay clickable; a tap passes
+  through, a drag never triggers them, native image/anchor drag can't hijack the gesture, and a
+  drag that leaves the carousel mid-gesture never gets stuck.
+- **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek).
+- **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
+- **Navigation buttons** — optional prev/next, fully styleable, or bring your own element via
+  `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at the edges.
+- **Pagination dots** — optional dot indicators with active-state styling.
+- **Auto-scroll** — optional step cycling at a configurable interval; pauses during drag.
+- **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping;
+  pauses on interaction and resumes after a delay.
+- **Loading fallback** — render your own placeholder node while data is fetched.
+- **Analytics** — six opt-in events (viewport, slide, navigation, pagination, engagement).
+- **Fully typed** — generic over your slide `data` shape; no unnecessary re-renders (core data
+  lives in one imperative store, context is split so navigating doesn't re-render the slides).
 
 ## Installation
 
 ```bash
 npm install lightslide
-# or
-yarn add lightslide
-```
-
-### Peer dependencies
-
-```bash
+# peer deps:
 npm install react react-dom
 ```
 
 Requires React ≥ 17.
 
----
-
-## Quick Start
+## Quick start
 
 ```tsx
-import { Slide, LightSlide } from "lightslide";
+import { LightSlide, Slide } from "lightslide";
 
 function ProductCarousel() {
   return (
-    <LightSlide
-      slidesPerView={2}
-      navigation={{}}
-      pagination={{}}
-      style={{ borderRadius: 12 }}
-    >
-      <Slide data={{ id: 1, name: "Product A" }}>
-        <ProductCard id={1} />
-      </Slide>
-      <Slide data={{ id: 2, name: "Product B" }}>
-        <ProductCard id={2} />
-      </Slide>
-      <Slide data={{ id: 3, name: "Product C" }}>
-        <ProductCard id={3} />
-      </Slide>
-      <Slide data={{ id: 4, name: "Product D" }}>
-        <ProductCard id={4} />
-      </Slide>
+    <LightSlide slidesPerView={2} navigation={{}} pagination={{}}>
+      <Slide data={{ id: 1 }}><ProductCard id={1} /></Slide>
+      <Slide data={{ id: 2 }}><ProductCard id={2} /></Slide>
+      <Slide data={{ id: 3 }}><ProductCard id={3} /></Slide>
+      <Slide data={{ id: 4 }}><ProductCard id={4} /></Slide>
     </LightSlide>
   );
 }
 ```
 
----
+## Components & props
 
-## Components
+### `<LightSlide<T>>`
 
-### `<LightSlide>`
-
-The container component. Handles layout, all navigation types, and analytics.
+The container — handles layout, all navigation, and analytics. Generic over the slide `data`
+shape `T` (defaults to `unknown`); pass it as `<LightSlide<Product> …>` to type the analytics
+payloads.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `children` | `ReactNode` | required | One or more `<Slide>` elements |
-| `style` | `CSSProperties` | — | Styles for the outer wrapper div |
-| `className` | `string` | — | Class name for the outer wrapper |
-| `trackStyle` | `CSSProperties` | — | Styles for the inner draggable track div |
-| `trackClassName` | `string` | — | Class name for the inner track |
-| `analytics` | `AnalyticsHandlers` | — | Custom event handlers (see [Analytics](#analytics)) |
-| `slidesPerView` | `number` | `1` | How many slides are visible at once |
-| `viewedTimeout` | `number` | `30` | Seconds of ≥50% viewport visibility before `onViewedSlides` fires. **Only has an effect when an `onViewedSlides` handler is provided** (the timer is opt-in) |
-| `autoScroll` | `AutoScrollConfig` | — | Enable automatic slide cycling |
-| `flow` | `FlowConfig` | — | Enable continuous ticker scrolling (supersedes `autoScroll`) |
-| `navigation` | `NavigationConfig` | — | Show prev/next buttons. Pass `{}` for defaults |
-| `pagination` | `PaginationConfig` | — | Show pagination dots. Pass `{}` for defaults |
-| `isLoop` | `boolean` | `false` | Seamless infinite loop (see [Loop](#loop)) |
-| `loading` | `boolean` | `false` | Render `fallback` instead of the slides (see [Loading fallback](#loading-fallback)) |
-| `fallback` | `ReactNode` | — | Node rendered while `loading` (your own skeleton/spinner/placeholder) |
+| `style` | `CSSProperties` | — | Styles for the outer wrapper |
+| `className` | `string` | — | Class for the outer wrapper |
+| `trackStyle` | `CSSProperties` | — | Styles for the inner track |
+| `trackClassName` | `string` | — | Class for the inner track |
+| `analytics` | `AnalyticsHandlers<T>` | — | Event handlers + `viewedTimeout` (see [Analytics](#analytics)) |
+| `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
+| `autoScroll` | `AutoScrollConfig` | — | Automatic slide cycling |
+| `flow` | `FlowConfig` | — | Continuous ticker scroll (supersedes `autoScroll`) |
+| `navigation` | `NavigationConfig` | — | Prev/next buttons. Pass `{}` for defaults |
+| `pagination` | `PaginationConfig` | — | Pagination dots. Pass `{}` for defaults |
+| `isLoop` | `boolean` | `false` | Seamless infinite loop |
+| `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
+| `fallback` | `ReactNode` | — | Placeholder shown while `loading` (omit → renders nothing) |
 
-### `<Slide>`
+### `<Slide<T>>`
 
-A single slide. Width is automatically computed as `containerWidth / slidesPerView`.
+A single slide. Width is computed as `containerWidth / slidesPerView`. Generic over `data`, so
+`<Slide<Product> data={…} />` is fully typed.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `children` | `ReactNode` | required | Slide content |
-| `style` | `CSSProperties` | — | Additional styles for the slide div |
-| `className` | `string` | — | Class name for the slide div |
-| `data` | `unknown` | — | Arbitrary data attached to this slide — included in analytics payloads |
-
----
-
-## Navigation
-
-### Swipe / drag
-
-Built-in and always active. Drag horizontally to navigate — the slide follows the finger in real time and snaps on release at 50% of slide width or on a fast flick.
-
-### Navigation buttons
+| `children` | `ReactNode` | required | Slide content (element, text, fragment, or array) |
+| `style` | `CSSProperties` | — | Additional styles for the slide |
+| `className` | `string` | — | Class for the slide |
+| `data` | `T` | — | Arbitrary data attached to this slide — surfaced in analytics payloads |
 
 ```tsx
-<LightSlide navigation={{}}>  {/* default arrows ‹ › */}
-  ...
-</LightSlide>
+type Product = { id: number; name: string };
 
-<LightSlide navigation={{
-  prevLabel: "←",
-  nextLabel: "→",
-  style: { background: "white", color: "black" },   // both buttons
-  prevStyle: { left: 16 },                           // prev only
-  nextStyle: { right: 16 },                          // next only
-  prevClassName: "btn-prev",
-  nextClassName: "btn-next",
-}}>
-```
-
-Buttons are absolutely positioned over the carousel, vertically centered (prev-left / next-right). They disable and dim at the first/last slide unless `isLoop` is active. The track is clipped by an inner viewport while the controls live one level up, so buttons are **never cropped** by `overflow: hidden`.
-
-**`NavigationConfig`** options:
-
-| Key | Type | Description |
-|---|---|---|
-| `prevLabel` | `ReactNode` | Content for the prev button. Default: `‹` |
-| `nextLabel` | `ReactNode` | Content for the next button. Default: `›` |
-| `style` | `CSSProperties` | Base style applied to both buttons |
-| `className` | `string` | Base class applied to both buttons |
-| `prevStyle` | `CSSProperties` | Overrides for the prev button |
-| `nextStyle` | `CSSProperties` | Overrides for the next button |
-| `prevClassName` | `string` | Extra class for the prev button |
-| `nextClassName` | `string` | Extra class for the next button |
-| `renderPrev` | `(props: NavButtonRenderProps) => ReactNode` | Render your own prev element — replaces the default button |
-| `renderNext` | `(props: NavButtonRenderProps) => ReactNode` | Render your own next element — replaces the default button |
-
-### Custom button elements (render-prop)
-
-Pass your own JSX for either button via `renderPrev` / `renderNext`. The library hands you the wiring; you own the markup.
-
-```tsx
-<LightSlide
-  navigation={{
-    renderPrev: ({ onClick, disabled }) => (
-      <MyIconButton icon="chevron-left" onClick={onClick} disabled={disabled} />
-    ),
-    renderNext: ({ onClick, disabled }) => (
-      <MyIconButton icon="chevron-right" onClick={onClick} disabled={disabled} />
-    ),
-  }}
+<LightSlide<Product>
+  analytics={{ onReachedEnd: (p) => p.slides.forEach((s) => s.data?.name) }}
 >
-  ...
+  <Slide<Product> data={{ id: 1, name: "Widget" }}><Card /></Slide>
 </LightSlide>
 ```
 
-When provided, your element **fully replaces** the default `<button>`. Attach the `onClick` you receive — it is the exact handler the built-in button uses, so navigation and the `onSlide` + `onNavButtonClick` analytics events fire identically.
+### Navigation
 
-Your custom element is wrapped in a positioning slot, so by default it lands **centered on the left (prev) / right (next)** and is never clipped by the carousel's overflow — you only have to style the button itself, not place it.
+```tsx
+<LightSlide navigation={{}} />                       {/* default ‹ › arrows */}
+<LightSlide navigation={{ prevStyle: { left: 16 } }} />
+```
 
-**`NavButtonRenderProps`** (passed to your render function):
+Buttons are absolutely positioned over the **track** (centered, prev-left / next-right) — the
+pagination row below never offsets them. They dim to 50% opacity and disable at the first/last
+slide unless `isLoop` is active, and are held invisible until the carousel has measured on the
+client (no SSR/pre-layout flash). For a custom label or element, use `renderPrev`/`renderNext`.
+
+**`NavigationConfig`**
 
 | Key | Type | Description |
 |---|---|---|
-| `onClick` | `() => void` | Triggers navigation (and `onSlide` + `onNavButtonClick`). Attach to your element |
+| `style` / `className` | `CSSProperties` / `string` | Applied to both buttons |
+| `prevStyle` / `nextStyle` | `CSSProperties` | Per-button style overrides |
+| `prevClassName` / `nextClassName` | `string` | Per-button extra class |
+| `renderPrev` / `renderNext` | `(props: NavButtonRenderProps) => ReactNode` | Render your own element (replaces the default button) |
+
+`renderPrev`/`renderNext` fully replace the `<button>` — attach the passed `onClick` (same
+handler the built-in button uses, so the `onSlide` + `onNavButtonClick` events fire identically)
+and `disabled`. Your element is wrapped in a minimal positioning slot, so it lands centered and
+un-clipped, and the slot dims to 50% at the boundary by default.
+
+**`NavButtonRenderProps`**
+
+| Key | Type | Description |
+|---|---|---|
+| `onClick` | `() => void` | Triggers navigation (+ `onSlide` / `onNavButtonClick`) |
 | `disabled` | `boolean` | Boundary state. Always `false` when `isLoop` is active |
 | `direction` | `"left" \| "right"` | Which button this is |
 
-### Pagination dots
+### Pagination
 
 ```tsx
-<LightSlide pagination={{}}>  {/* default dots */}
-  ...
-</LightSlide>
-
-<LightSlide pagination={{
-  style: { padding: "12px 0" },
-  dotStyle: { width: 10, height: 4, borderRadius: 2 },
-  activeDotStyle: { width: 24, background: "#4f46e5" },
-  dotClassName: "dot",
-  activeDotClassName: "dot--active",
-}}>
+<LightSlide pagination={{ activeDotStyle: { background: "#4f46e5" } }} />
 ```
 
-Dot count = `maxIndex + 1` (number of scrollable positions). Active dot updates reactively on every navigation type. The active state change is animated with a smooth `200ms ease` transition on both `transform` (scale) and `background` (color).
+Dot count = `maxIndex + 1` (number of scroll positions). The active dot updates on every
+navigation type. Not tracked during a flow (continuous motion has no discrete index).
 
-**`PaginationConfig`** options:
-
-| Key | Type | Description |
-|---|---|---|
-| `style` | `CSSProperties` | Container (row of dots) styles |
-| `className` | `string` | Container class |
-| `dotStyle` | `CSSProperties` | Style applied to every dot |
-| `dotClassName` | `string` | Class applied to every dot |
-| `activeDotStyle` | `CSSProperties` | Additional style for the active dot |
-| `activeDotClassName` | `string` | Additional class for the active dot |
+**`PaginationConfig`**: `style`, `className`, `dotStyle`, `dotClassName`, `activeDotStyle`,
+`activeDotClassName`.
 
 ### Auto-scroll
 
 ```tsx
-<LightSlide autoScroll={{ enabled: true, interval: 3000 }}>
-  ...
-</LightSlide>
+<LightSlide autoScroll={{ enabled: true, interval: 3000 }} />
 ```
 
-- Loops back to index 0 after the last slide
-- Pauses automatically during pointer drag; resumes after release
-- Does **not** fire `onReachedEnd` on loop wrap-around
-- All navigation types (drag, buttons, pagination) work alongside auto-scroll
+Loops back to 0 after the last slide; pauses during drag; does **not** fire `onReachedEnd`.
 
-**`AutoScrollConfig`**:
-
-| Key | Type | Description |
-|---|---|---|
-| `enabled` | `boolean` | Toggle auto-scroll on/off without removing the prop |
-| `interval` | `number` | Milliseconds between slide changes |
+**`AutoScrollConfig`**: `enabled: boolean`, `interval: number` (ms).
 
 ### Flow (continuous ticker)
 
 ```tsx
-<LightSlide flow={{ enabled: true }}>
-  ...
-</LightSlide>
-
-<LightSlide flow={{ enabled: true, speed: 80, resumeDelay: 3000 }}>
-  ...
-</LightSlide>
+<LightSlide flow={{ enabled: true, speed: 80, resumeDelay: 3000 }} />
 ```
 
-Unlike auto-scroll (which steps slide-by-slide), the flow scrolls the track **continuously** at `speed` pixels per second — a smooth ticker. It:
+Scrolls the track continuously at `speed` px/s (driven by `requestAnimationFrame`, no CSS
+transition). Loops seamlessly (clones added automatically), pauses on interaction, and resumes
+from where it stopped after `resumeDelay`. Supersedes `autoScroll` when both are set.
 
-- **Loops seamlessly** — clones are added automatically, so it wraps with no visible jump (works whether or not you also set `isLoop`).
-- **Pauses on interaction** — tapping or dragging the carousel stops the motion. A drag follows your finger from the current position (no snapping). Motion resumes `resumeDelay` ms after you let go, continuing from exactly where it stopped — no jank.
-- **Supersedes `autoScroll`** — if both are set, the flow wins.
+**`FlowConfig`**: `enabled: boolean`, `speed?: number` (default 40), `resumeDelay?: number`
+(default 2000 ms).
 
-> The flow drives the track directly via `requestAnimationFrame` (no CSS transition), so animation is smooth at frame rate. During a flow the active pagination dot is not tracked (continuous motion has no discrete index).
-
-**`FlowConfig`**:
-
-| Key | Type | Default | Description |
-|---|---|---|---|
-| `enabled` | `boolean` | required | Toggle the flow on/off |
-| `speed` | `number` | `40` | Scroll speed in **pixels per second** |
-| `resumeDelay` | `number` | `2000` | Milliseconds to stay paused after an interaction before resuming |
-
----
-
-## Loop
+## isLoop
 
 ```tsx
-<LightSlide isLoop>
-  ...
-</LightSlide>
+<LightSlide isLoop>…</LightSlide>
 ```
 
-When `isLoop` is true, the carousel wraps around seamlessly — dragging past the last slide flows directly into the first, and vice versa, without any visible jump.
-
-**How it works:** `Math.ceil(slidesPerView)` slides are cloned from each end of the track. When the snap animation lands on a clone, the track silently repositions to the matching real slide before the next interaction. From the user's perspective the scroll is continuous.
-
-**Effect on navigation buttons:** prev/next buttons are never disabled when `isLoop` is active — they remain enabled at all positions.
-
-**Effect on analytics:** `onReachedEnd` is not fired on loop wrap-around (the carousel has no logical end). All other events — `onSlide`, `onNavButtonClick`, `onPaginationClick` — fire normally.
-
-**No-op condition:** if `maxIndex === 0` (only one scroll position), `isLoop` has no effect.
-
----
+`Math.ceil(slidesPerView)` slides are cloned at each end; when a snap lands on a clone, the track
+silently repositions to the matching real slide before the next interaction. Prev/next buttons
+are never disabled while looping, and `onReachedEnd` is never fired. No-op when `maxIndex === 0`.
 
 ## Loading fallback
 
-Render a placeholder while async slide data is still being fetched by passing `loading`
-together with your own `fallback` node:
-
 ```tsx
-<LightSlide
-  slidesPerView={3}
-  loading={isFetching}
-  fallback={<MySkeletonRow />}
->
+<LightSlide loading={isFetching} fallback={<MySkeletonRow />}>
   {products.map((p) => (
-    <Slide key={p.id} data={p}>
-      <ProductCard product={p} />
-    </Slide>
+    <Slide key={p.id} data={p}><ProductCard product={p} /></Slide>
   ))}
 </LightSlide>
 ```
 
-While `loading` is true the carousel renders `fallback` instead of the track, and the
-navigation/pagination are hidden. When it clears, the real slides mount and everything
-behaves normally. The library ships **no** built-in skeleton — you supply (and style) the
-placeholder, which keeps the bundle tiny and gives you full control. With no `fallback`,
-the area renders empty while loading.
-
-| Prop | Type | Description |
-|---|---|---|
-| `loading` | `boolean` | When true, render `fallback` instead of the slides |
-| `fallback` | `ReactNode` | Placeholder node shown while loading (omit → renders nothing) |
-
----
+While `loading` is true the carousel renders `fallback` instead of the track, and
+navigation/pagination are hidden. The library ships **no** built-in skeleton — you supply and
+style the placeholder. With no `fallback`, the area renders empty.
 
 ## slidesPerView
 
-`slidesPerView` accepts any positive number, including floats. A value like `1.5` shows one full slide plus a preview of the next — a "peek" effect that communicates scrollability.
-
-```tsx
-<LightSlide slidesPerView={1.5}>  {/* 1 full slide + peek of the next */}
-<LightSlide slidesPerView={3}>    {/* 6 slides → scrolls to index 0–3 */}
-```
-
-Each slide fills `containerWidth / slidesPerView` px. `maxIndex = ⌊slideCount − slidesPerView⌋` — the last scroll position where the visible window does not exceed the track.
-
----
+Accepts any positive number, including floats — `1.5` shows one full slide plus a peek of the
+next. Each slide fills `containerWidth / slidesPerView` px;
+`maxIndex = ⌊slideCount − slidesPerView⌋`.
 
 ## Analytics
 
-Events are **silent by default** — no console output, no errors, nothing. They only execute when you provide a handler. Pass only the events you care about via the `analytics` prop.
+Events are **silent by default** — they run only when you provide a handler. Payloads carry only
+their own fields (no timestamp — add your own in the handler if needed).
 
-### Events
+| Event | Handler | When it fires | Payload |
+|---|---|---|---|
+| `carousel_in_viewport` | `onInViewport` | First time ≥50% visible (once) | `{ event }` |
+| `carousel_slide` | `onSlide` | Every navigation (drag/button/pagination/auto) | `{ event, direction, fromIndex, toIndex }` |
+| `carousel_reached_end` | `onReachedEnd` | User reaches the last position (once) | `{ event, slides }` — **all** slides |
+| `carousel_viewed_slides` | `onViewedSlides` | After `viewedTimeout` s of visibility (once, opt-in) | `{ event, slides, viewedSeconds }` — **viewed** slides |
+| `carousel_nav_button` | `onNavButtonClick` | Prev/next clicked (with `onSlide`) | `{ event, direction, fromIndex, toIndex }` |
+| `carousel_pagination_click` | `onPaginationClick` | Dot clicked (with `onSlide`) | `{ event, fromIndex, toIndex }` |
 
-| Event | Handler | When it fires |
-|---|---|---|
-| `carousel_in_viewport` | `onInViewport` | First time carousel becomes ≥50% visible. Once. |
-| `carousel_slide` | `onSlide` | On **every** navigation (drag, button, pagination, auto-scroll). |
-| `carousel_reached_end` | `onReachedEnd` | User reaches maxIndex. Once. Not fired by auto-scroll or `isLoop` wrap-around. |
-| `carousel_viewed_slides` | `onViewedSlides` | After `viewedTimeout` seconds of visibility. Once. **Opt-in** — the timer runs only when this handler is provided. |
-| `carousel_nav_button` | `onNavButtonClick` | Prev/next button clicked. Fires in addition to `onSlide`. |
-| `carousel_pagination_click` | `onPaginationClick` | Pagination dot clicked. Fires in addition to `onSlide`. |
+Notes:
 
-> `onReachedEnd` and `onViewedSlides` are **mutually exclusive** — whichever fires first suppresses the other for the session lifetime.
-
-> The viewed-slides engagement timer is **opt-in**: if you don't pass an `onViewedSlides` handler it never starts, and `viewedTimeout` is ignored.
-
-### Custom handlers
-
-Provide only the events you care about — unhandled events produce no output and have no side effects.
+- `onReachedEnd` and `onViewedSlides` are **mutually exclusive** — whichever fires first
+  suppresses the other for the session. Together they form the engagement signal: "the user
+  reached the end, or watched long enough."
+- The viewed-slides timer is **opt-in**: it starts only when `onViewedSlides` is provided, and
+  its duration knob `viewedTimeout` (seconds, default 30) lives on the `analytics` object.
+- `fromIndex`/`toIndex` on `carousel_slide` may differ by more than one (a drag can cross
+  several slides); `toIndex` is the slide actually landed on.
 
 ```tsx
-import { Slide, LightSlide } from "lightslide";
-import type { AnalyticsHandlers } from "lightslide";
-
-const analytics: AnalyticsHandlers = {
-  onInViewport(payload) {
-    // { event: "carousel_in_viewport", timestamp }
-    tracker.track("carousel_viewed", payload);
-  },
-  onSlide(payload) {
-    // { event: "carousel_slide", direction, fromIndex, toIndex, timestamp }
-    tracker.track("carousel_slide", payload);
-  },
-  onReachedEnd(payload) {
-    // { event: "carousel_reached_end", slides: SlideData[], timestamp }
-    tracker.track("carousel_complete", payload);
-  },
-  onViewedSlides(payload) {
-    // { event: "carousel_viewed_slides", slides: SlideData[], viewedSeconds, timestamp }
-    tracker.track("carousel_engagement", payload);
-  },
-  onNavButtonClick(payload) {
-    // { event: "carousel_nav_button", direction, fromIndex, toIndex, timestamp }
-    tracker.track("carousel_nav_click", payload);
-  },
-  onPaginationClick(payload) {
-    // { event: "carousel_pagination_click", fromIndex, toIndex, timestamp }
-    tracker.track("carousel_dot_click", payload);
-  },
-};
+analytics={{
+  onViewedSlides: (p) => track("engagement", p), // p.slides = slides actually seen
+  onReachedEnd: (p) => track("complete", p),      // p.slides = every slide
+  viewedTimeout: 20,
+}}
 ```
 
-### Exported types
-
-```ts
-import type {
-  AnalyticsHandlers,
-  AutoScrollConfig,
-  InViewportPayload,
-  FlowConfig,
-  NavButtonRenderProps,
-  NavigationButtonPayload,
-  NavigationConfig,
-  PaginationClickPayload,
-  PaginationConfig,
-  SlideProps,
-  LightSlideProps,
-  ReachedEndPayload,
-  SlideData,
-  SlidePayload,
-  ViewedSlidesPayload,
-} from "lightslide";
-```
-
----
+`SlideData<T>` is `{ index: number; data?: T }`. With `<LightSlide<T>>` the `slides` arrays are
+typed `SlideData<T>[]`.
 
 ## Styling
 
-The base look ships as **scoped CSS-module (SCSS) classes** that are injected automatically when you import the component — there is no separate CSS file to import, and no runtime dependency beyond React.
+The base look ships as scoped CSS-module (SCSS) classes injected on import — no separate CSS file,
+no runtime dependency beyond React. Override via `className`/`*ClassName` (appended after the
+built-in class) or `style`/`*Style` (inline, always wins). Dynamic geometry (slide width, track
+transform) is always applied inline. The outer container is `overflow: visible` so controls
+aren't clipped; an inner viewport clips the track. Use `padding` on `<Slide>` for gutters.
 
-Override at two levels:
+## Exported types
 
-- **`className` / `*ClassName` props** — appended after the built-in class, so your CSS can restyle the element.
-- **`style` / `*Style` props** — inline, so they always win regardless of stylesheet order.
-
-Dynamic geometry (slide width, track transform) is always applied inline and is not meant to be overridden.
-
-`<LightSlide>` is `width: 100%` with an inner viewport that has `overflow: hidden` to clip the track (the outer container stays `overflow: visible` so controls aren't clipped). Use `padding` on `<Slide>` for gutters between cards.
-
-```tsx
-<LightSlide
-  slidesPerView={3}
-  style={{ borderRadius: 16, background: "#f5f5f5" }}
-  navigation={{ style: { background: "white" } }}
-  pagination={{ activeDotStyle: { background: "#111" } }}
->
-  <Slide style={{ padding: "0 8px" }}>
-    <ProductCard />
-  </Slide>
-</LightSlide>
+```ts
+import type {
+  AnalyticsHandlers, AutoScrollConfig, FlowConfig,
+  InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
+  NavigationButtonPayload, PaginationClickPayload,
+  NavigationConfig, NavButtonRenderProps, PaginationConfig,
+  LightSlideProps, SlideProps, SlideData,
+} from "lightslide";
 ```
 
----
-
-## How It Works
-
-### Layout
-
-```
-┌─ LightSlide container (position: relative, overflow: visible) ──┐
-│ [Prev btn]                                        [Next btn]    │  ← controls live here, never clipped
-│  ┌─ viewport (overflow: hidden) ───────────────────────────┐   │
-│  │  ┌─ track (display: flex, transform: translateX) ─────┐ │   │
-│  │  │  [Slide 0][Slide 1][Slide 2][Slide 3]...           │ │   │
-│  │  └────────────────────────────────────────────────────┘ │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│  ●  ○  ○  ○   ← pagination dots                                 │
-└────────────────────────────────────────────────────────────────┘
-```
-
-The inner **viewport** clips the track, while the **container** stays `overflow: visible`
-and anchors the absolutely-positioned controls — so prev/next buttons (built-in or your
-own `renderPrev`/`renderNext`) are vertically centered, prev-left / next-right, and never
-cropped.
-
-With `isLoop`, the rendered track has additional clone slides at both ends:
-
-```
-[clone(last N)][Slide 0]...[Slide n][clone(first N)]
-```
-
-where N = `Math.ceil(slidesPerView)`.
-
-### Drag & snap
-
-1. **`onPointerDown`** — drag start. The pointer is **not** captured yet, so a plain tap reaches a link/button inside the slide.
-2. **`onPointerMove`** — `translateX` updated directly on the DOM (zero React re-renders during drag)
-3. **Direction lock** — first 4px decides horizontal vs vertical; vertical cancels drag and lets page scroll. On a real horizontal drag the pointer is captured so moves continue outside the element.
-4. **`onPointerUp`** — snap decision: `|drag| > 50% slide width` OR `velocity > 0.3 px/ms` → next/prev; otherwise snap back. The trailing `click` is swallowed so a drag that ends over a link/button doesn't also activate it.
-5. **Rubber-banding** — `delta / 3` resistance at first and last slide (disabled in loop mode)
-6. **Native drag guard** — `onDragStart` is prevented so dragging an image/anchor inside a slide can't hijack the gesture
-
-### Loop wrap animation
-
-When a drag or button press crosses a boundary in loop mode, the track animates into the clone zone, then silently jumps to the matching real position — all within a single `transitionend` callback. The result is continuous motion with no visible jump.
-
-### Central navigation
-
-All navigation types call `navigateToIndex(index, source)`. The `source` parameter controls which analytics events fire beyond the base `onSlide`. Loop wrap-around is detected inside this function from the raw `nextIndex` value before clamping.
-
-### Terminal event logic
-
-```
-carousel enters viewport
-        │
-  timer starts (viewedTimeout)
-        │
-   ┌────┴──────────────────────┐
-   │                           │
-user reaches              timer elapses
-last scroll position
-   │                           │
-   ▼                           ▼
-onReachedEnd              onViewedSlides
-fires, timer              fires
-cancelled
-```
-
----
-
-## Development
-
-```bash
-npm install          # install dependencies
-npm test             # 96 tests across 12 suites
-npm run test:watch   # watch mode
-npm run lint         # ESLint
-npm run lint:fix     # auto-fix
-npm run format       # Prettier
-npm run format:check # check without writing
-npm run build        # Rollup CJS + ESM
-npm run size         # bundle size check (after build)
-npm run playground   # Vite dev server at localhost:5173
-```
-
-> **Playground** lives in `playground/` and is excluded from version control (`.gitignore`). It imports directly from `../src` — no build step needed. Run `npm run playground` to start the dev server and interact with all examples live.
-
-> All analytics handlers in the playground are wired to visible event logs — every event type can be observed in the UI without opening DevTools.
-
-### Project structure
+## Project structure
 
 Each component is a self-contained feature folder (component + test + styles + types):
 
 ```
 src/
 ├── LightSlide/
-│   ├── LightSlide.tsx            # Main carousel (orchestrator)
+│   ├── LightSlide.tsx              # Main carousel (orchestrator), generic over slide data
 │   ├── LightSlide.test.tsx
-│   ├── LightSlide.module.scss    # Container + track base styles
-│   └── helpers/                  # Internal hooks & pure helpers
-│       ├── constants.ts          #   tuning constants
-│       ├── navigation.ts         #   navigation source/fn types
-│       ├── slideData.ts          #   collectSlideData (+ test)
-│       ├── loopClones.ts         #   buildLoopChildren (+ test)
-│       ├── useSlideMetrics.ts    #   measure container → slide px width
-│       ├── useTrackSnap.ts       #   transform/translateX snapping
-│       ├── useAutoScroll.ts      #   interval cycling (+ test)
-│       ├── useDragGesture.ts     #   pointer/drag handlers (+ test)
-│       ├── useFlow.ts         #   continuous ticker scroll (+ test)
-│       └── useViewportEngagement.ts  # IntersectionObserver + terminal events
+│   ├── LightSlide.module.scss      # Container / stage / viewport / track styles
+│   └── helpers/                    # Internal hooks & pure helpers
+│       ├── constants.ts            #   tuning constants
+│       ├── navigation.ts           #   navigation source/fn types
+│       ├── store.ts                #   single core-data store (LightSlideStore<T>)
+│       ├── slideData.ts            #   collectSlideData (+ test)
+│       ├── loopClones.ts           #   buildLoopChildren (+ test)
+│       ├── useSlideMetrics.ts      #   measure container → slide px width
+│       ├── useTrackSnap.ts         #   transform/translateX snapping
+│       ├── useAutoScroll.ts        #   interval cycling (+ test)
+│       ├── useDragGesture.ts       #   pointer/drag handlers (+ test)
+│       ├── useFlow.ts              #   continuous ticker scroll (+ test)
+│       └── useViewportEngagement.ts#   IntersectionObserver + terminal events
 ├── Slide/
-│   ├── Slide.tsx             # Slide (React.memo + forwardRef)
+│   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
 │   └── Slide.module.scss
 ├── Navigation/
-│   ├── Navigation.tsx            # Prev/next button component
+│   ├── Navigation.tsx              # Prev/next buttons
 │   ├── Navigation.test.tsx
-│   ├── Navigation.types.ts       # NavigationConfig, NavButtonRenderProps
+│   ├── Navigation.types.ts         # NavigationConfig, NavButtonRenderProps
 │   └── Navigation.module.scss
 ├── Pagination/
-│   ├── Pagination.tsx            # Pagination dots component
+│   ├── Pagination.tsx              # Pagination dots
 │   ├── Pagination.test.tsx
-│   ├── Pagination.types.ts       # PaginationConfig
+│   ├── Pagination.types.ts         # PaginationConfig
 │   └── Pagination.module.scss
 ├── analytics/
-│   ├── analytics.ts              # Payload builders (pure)
+│   ├── analytics.ts                # Payload builders (pure)
 │   └── analytics.test.ts
 ├── hooks/
-│   ├── useViewedSlides.ts        # Tracks unique viewed slide indices
+│   ├── useViewedSlides.ts          # Tracks unique viewed slide indices
 │   └── useViewedSlides.test.ts
 ├── utils/
-│   ├── swipe.ts                  # getSnapIndex — threshold + velocity logic
+│   ├── cx.ts                       # tiny className combiner (clsx-style)
+│   ├── cx.test.ts
+│   ├── swipe.ts                    # getSnapIndex — threshold + velocity + multi-slide
 │   └── swipe.test.ts
-├── lightSlideContext.ts              # Context: slideWidth, currentIndex, maxIndex, isLoop, goToIndex
-├── types.ts                      # Shared + public types (re-exports feature config types)
-├── styles.d.ts                   # Ambient declaration for *.module.scss imports
-└── index.ts                      # Public API barrel (the only index.ts)
+├── lightSlideContext.ts            # Split contexts: SlideMetricsContext + NavContext
+├── types.ts                        # Shared + public types
+├── styles.d.ts                     # Ambient declaration for *.module.scss imports
+└── index.ts                        # Public API barrel
 ```
 
----
+## Development
+
+```bash
+npm install          # install dependencies
+npm test             # 110 tests across 12 suites
+npm run lint         # ESLint
+npm run stylelint    # Stylelint
+npm run format       # Prettier (tabs)
+npm run build        # Rollup CJS + ESM + d.ts
+npm run size         # bundle size check (after build)
+npm run playground   # Vite dev server (playground/ is gitignored)
+```
 
 ## License
 

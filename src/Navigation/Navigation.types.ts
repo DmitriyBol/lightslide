@@ -12,10 +12,9 @@ export type NavButtonRenderProps = {
 
 // Prev/next navigation buttons.
 // style/className apply to both buttons; prevStyle/nextStyle/prevClassName/nextClassName merge on top.
-// renderPrev/renderNext fully replace the default button with your own JSX — you attach the passed props.
+// renderPrev/renderNext fully replace the default button with your own JSX (which is where
+// any custom label goes) — you attach the passed props.
 export type NavigationConfig = {
-	prevLabel?: ReactNode;
-	nextLabel?: ReactNode;
 	style?: CSSProperties;
 	className?: string;
 	prevStyle?: CSSProperties;

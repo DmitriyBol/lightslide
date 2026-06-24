@@ -9,37 +9,34 @@ import {
 } from '../../analytics/analytics';
 import type {AnalyticsHandlers, SlideData} from '../../types';
 import {VIEWPORT_THRESHOLD} from './constants';
+import type {LightSlideStore} from './store';
 
-type ViewportEngagementParams = {
+type ViewportEngagementParams<T> = {
 	containerRef: RefObject<HTMLDivElement>;
-	currentIndexRef: MutableRefObject<number>;
-	slideCountRef: MutableRefObject<number>;
-	viewedTimeoutRef: MutableRefObject<number>;
+	storeRef: MutableRefObject<LightSlideStore<T>>;
 	// Latest-ref of the raw analytics prop; handlers are called optionally at fire time.
-	analyticsRef: MutableRefObject<AnalyticsHandlers | undefined>;
+	analyticsRef: MutableRefObject<AnalyticsHandlers<T> | undefined>;
 	// Whether the consumer actually wants viewed-slides tracking. When false the
 	// viewed-timeout timer is never started (the feature is opt-in via onViewedSlides).
 	viewedTrackingEnabled: boolean;
 	markViewed: (index: number) => void;
-	getViewedSlides: () => SlideData[];
-	getSlideData: (index: number) => unknown;
+	getViewedSlides: () => SlideData<T>[];
+	getSlideData: (index: number) => T | undefined;
 };
 
 // Owns the viewport/terminal-event lifecycle: fires onInViewport once, starts the
 // viewed-timeout timer while visible, and enforces that onReachedEnd / onViewedSlides
 // are mutually exclusive for the component's lifetime (terminalFiredRef guard).
 // Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
-export function useViewportEngagement({
+export function useViewportEngagement<T>({
 	containerRef,
-	currentIndexRef,
-	slideCountRef,
-	viewedTimeoutRef,
+	storeRef,
 	analyticsRef,
 	viewedTrackingEnabled,
 	markViewed,
 	getViewedSlides,
 	getSlideData,
-}: ViewportEngagementParams) {
+}: ViewportEngagementParams<T>) {
 	const terminalFiredRef = useRef(false);
 	const inViewportFiredRef = useRef(false);
 	const viewedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,8 +55,8 @@ export function useViewportEngagement({
 			if (kind === 'reachedEnd') {
 				const onReachedEnd = analyticsRef.current?.onReachedEnd;
 				if (onReachedEnd) {
-					const allSlides: SlideData[] = Array.from(
-						{length: slideCountRef.current},
+					const allSlides: SlideData<T>[] = Array.from(
+						{length: storeRef.current.slideCount},
 						(_, i) => ({index: i, data: getSlideData(i)}),
 					);
 					onReachedEnd(buildReachedEndPayload(allSlides));
@@ -69,18 +66,12 @@ export function useViewportEngagement({
 				if (onViewedSlides) {
 					const elapsed = viewedStartRef.current
 						? Math.round((Date.now() - viewedStartRef.current) / 1000)
-						: viewedTimeoutRef.current;
+						: storeRef.current.viewedTimeout;
 					onViewedSlides(buildViewedSlidesPayload(getViewedSlides(), elapsed));
 				}
 			}
 		},
-		[
-			getSlideData,
-			getViewedSlides,
-			slideCountRef,
-			viewedTimeoutRef,
-			analyticsRef,
-		],
+		[getSlideData, getViewedSlides, storeRef, analyticsRef],
 	);
 
 	useEffect(() => {
@@ -100,11 +91,11 @@ export function useViewportEngagement({
 						viewedTimerRef.current === null
 					) {
 						viewedStartRef.current = Date.now();
-						markViewed(currentIndexRef.current);
+						markViewed(storeRef.current.currentIndex);
 						viewedTimerRef.current = setTimeout(() => {
 							viewedTimerRef.current = null;
 							fireTerminalIfNeeded('viewedSlides');
-						}, viewedTimeoutRef.current * 1000);
+						}, storeRef.current.viewedTimeout * 1000);
 					}
 				} else if (viewedTimerRef.current !== null) {
 					clearTimeout(viewedTimerRef.current);
@@ -123,8 +114,7 @@ export function useViewportEngagement({
 		markViewed,
 		fireTerminalIfNeeded,
 		containerRef,
-		currentIndexRef,
-		viewedTimeoutRef,
+		storeRef,
 		analyticsRef,
 		viewedTrackingEnabled,
 	]);

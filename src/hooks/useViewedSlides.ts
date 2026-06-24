@@ -2,7 +2,9 @@ import {useCallback, useRef} from 'react';
 
 import type {SlideData} from '../types';
 
-export function useViewedSlides(getSlideData: (index: number) => unknown) {
+export function useViewedSlides<T = unknown>(
+	getSlideData: (index: number) => T | undefined,
+) {
 	const viewed = useRef<Set<number>>(new Set());
 
 	const markViewed = useCallback((index: number) => {
@@ -10,7 +12,7 @@ export function useViewedSlides(getSlideData: (index: number) => unknown) {
 	}, []);
 
 	const getViewedSlides = useCallback(
-		(): SlideData[] =>
+		(): SlideData<T>[] =>
 			Array.from(viewed.current)
 				.sort((a, b) => a - b)
 				.map(index => ({index, data: getSlideData(index)})),
