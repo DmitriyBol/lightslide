@@ -34,4 +34,16 @@ describe('collectSlideData', () => {
 	it('returns an empty array for no children', () => {
 		expect(collectSlideData([])).toEqual([]);
 	});
+
+	it('accepts a typed data prop via the Slide generic', () => {
+		type Product = {id: number; name: string};
+		const product: Product = {id: 1, name: 'A'};
+		// Compiles only if <Slide<T>> is generic over its data type (ts-jest type-checks).
+		const children = [
+			<Slide<Product> key="a" data={product}>
+				A
+			</Slide>,
+		];
+		expect(collectSlideData(children)).toEqual([product]);
+	});
 });

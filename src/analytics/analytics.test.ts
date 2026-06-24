@@ -8,13 +8,9 @@ import {
 } from './analytics';
 
 describe('payload builders', () => {
-	beforeEach(() => jest.useFakeTimers().setSystemTime(1_000_000));
-	afterEach(() => jest.useRealTimers());
-
 	it('buildInViewportPayload returns correct shape', () => {
 		expect(buildInViewportPayload()).toEqual({
 			event: 'carousel_in_viewport',
-			timestamp: 1_000_000,
 		});
 	});
 
@@ -24,7 +20,6 @@ describe('payload builders', () => {
 			direction: 'right',
 			fromIndex: 0,
 			toIndex: 1,
-			timestamp: 1_000_000,
 		});
 	});
 
@@ -36,7 +31,6 @@ describe('payload builders', () => {
 		const p = buildReachedEndPayload(slides);
 		expect(p.event).toBe('carousel_reached_end');
 		expect(p.slides).toHaveLength(2);
-		expect(p.timestamp).toBe(1_000_000);
 	});
 
 	it('buildViewedSlidesPayload includes slides and elapsed time', () => {
@@ -52,7 +46,6 @@ describe('payload builders', () => {
 			direction: 'right',
 			fromIndex: 1,
 			toIndex: 2,
-			timestamp: 1_000_000,
 		});
 	});
 
@@ -61,7 +54,6 @@ describe('payload builders', () => {
 			event: 'carousel_pagination_click',
 			fromIndex: 0,
 			toIndex: 3,
-			timestamp: 1_000_000,
 		});
 	});
 });

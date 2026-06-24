@@ -46,12 +46,12 @@
 
 .button:disabled {
 	cursor: default;
-	opacity: 0.35;
+	opacity: 0.5;
 }
 
 // Positioning slot for custom renderPrev/renderNext output. Gives consumer JSX the
 // same default placement as the built-in buttons (vertically centred over the
-// container, prev on the left / next on the right) without them having to position it,
+// track, prev on the left / next on the right) without them having to position it,
 // and lives outside the clipping .viewport so it is never cropped.
 .slot {
 	@extend %control;
@@ -63,4 +63,18 @@
 
 .slotNext {
 	@extend %right;
+}
+
+// Default boundary state for custom buttons: dim like the built-in :disabled button so
+// "disabled" has a visible default even when the consumer brings their own element.
+.slotDisabled {
+	opacity: 0.5;
+}
+
+// Held invisible (but in the DOM) until the carousel has measured on the client, so the
+// controls never flash in an un-positioned spot during SSR / before first layout. Listed
+// last so it wins over the equal-specificity :disabled / .slotDisabled rules above.
+.hidden {
+	opacity: 0;
+	pointer-events: none;
 }

@@ -3,33 +3,31 @@ import React from 'react';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type {LightSlideContextType} from '../lightSlideContext';
-import {LightSlideContext} from '../lightSlideContext';
+import type {NavContextType} from '../lightSlideContext';
+import {NavContext} from '../lightSlideContext';
 import {Pagination} from './Pagination';
 
 import '@testing-library/jest-dom';
 
-function makeContext(
-	overrides?: Partial<LightSlideContextType>,
-): LightSlideContextType {
+function makeContext(overrides?: Partial<NavContextType>): NavContextType {
 	return {
-		slideWidth: 300,
 		currentIndex: 0,
 		maxIndex: 4,
 		isLoop: false,
+		isReady: true,
 		goToIndex: jest.fn(),
 		...overrides,
 	};
 }
 
 function renderPagination(
-	ctx: LightSlideContextType,
+	ctx: NavContextType,
 	config: React.ComponentProps<typeof Pagination>['config'] = {},
 ) {
 	return render(
-		<LightSlideContext.Provider value={ctx}>
+		<NavContext.Provider value={ctx}>
 			<Pagination config={config} />
-		</LightSlideContext.Provider>,
+		</NavContext.Provider>,
 	);
 }
 

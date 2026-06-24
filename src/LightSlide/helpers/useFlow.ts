@@ -8,14 +8,14 @@ import type {
 } from 'react';
 
 import {DRAG_DIRECTION_LOCK_PX} from './constants';
+import type {LightSlideStore} from './store';
 
 type FlowParams = {
 	enabled: boolean;
 	speed: number; // resolved px per second
 	resumeDelay: number; // resolved ms
 	trackRef: RefObject<HTMLDivElement>;
-	slideCountRef: MutableRefObject<number>;
-	loopOffsetRef: MutableRefObject<number>;
+	storeRef: MutableRefObject<LightSlideStore>;
 	getComputedSlideWidth: () => number;
 };
 
@@ -24,6 +24,7 @@ type FlowHandlers = {
 	onPointerMove: (e: PointerEvent<HTMLDivElement>) => void;
 	onPointerUp: (e: PointerEvent<HTMLDivElement>) => void;
 	onPointerCancel: () => void;
+	onPointerLeave: (e: PointerEvent<HTMLDivElement>) => void;
 	onClickCapture: (e: MouseEvent<HTMLDivElement>) => void;
 };
 
@@ -42,8 +43,7 @@ export function useFlow({
 	speed,
 	resumeDelay,
 	trackRef,
-	slideCountRef,
-	loopOffsetRef,
+	storeRef,
 	getComputedSlideWidth,
 }: FlowParams): FlowHandlers {
 	const offsetRef = useRef(0);
@@ -66,18 +66,18 @@ export function useFlow({
 	resumeDelayRef.current = resumeDelay;
 
 	const contentWidth = useCallback(
-		() => slideCountRef.current * getComputedSlideWidth(),
-		[slideCountRef, getComputedSlideWidth],
+		() => storeRef.current.slideCount * getComputedSlideWidth(),
+		[storeRef, getComputedSlideWidth],
 	);
 
 	const applyTransform = useCallback(() => {
 		const track = trackRef.current;
 		if (!track) return;
 		const sw = getComputedSlideWidth();
-		const base = loopOffsetRef.current * sw;
+		const base = storeRef.current.loopOffset * sw;
 		track.style.transition = '';
 		track.style.transform = `translateX(${-(base + offsetRef.current)}px)`;
-	}, [trackRef, loopOffsetRef, getComputedSlideWidth]);
+	}, [trackRef, storeRef, getComputedSlideWidth]);
 
 	const clearResumeTimer = useCallback(() => {
 		if (resumeTimerRef.current !== null) {
@@ -178,12 +178,12 @@ export function useFlow({
 			const track = trackRef.current;
 			if (track) {
 				const sw = getComputedSlideWidth();
-				const base = loopOffsetRef.current * sw;
+				const base = storeRef.current.loopOffset * sw;
 				track.style.transition = '';
 				track.style.transform = `translateX(${-(base + offsetAtDragStartRef.current) + dx}px)`;
 			}
 		},
-		[trackRef, loopOffsetRef, getComputedSlideWidth, scheduleResume],
+		[trackRef, storeRef, getComputedSlideWidth, scheduleResume],
 	);
 
 	const endInteraction = useCallback(
@@ -218,6 +218,17 @@ export function useFlow({
 		endInteraction(false, 0);
 	}, [endInteraction]);
 
+	// Safety net for a pointer that leaves the carousel mid-drag without a release event
+	// (capture suppresses this while engaged, so it only fires when capture didn't hold):
+	// commit the drift so the flow is never left paused/stuck.
+	const onPointerLeave = useCallback(
+		(e: PointerEvent<HTMLDivElement>) => {
+			if (dragStartXRef.current === null) return;
+			endInteraction(true, e.clientX - dragStartXRef.current);
+		},
+		[endInteraction],
+	);
+
 	// Capture-phase guard: only the click that immediately follows a real drag is
 	// cancelled; ordinary taps fall through untouched (links remain clickable).
 	const onClickCapture = useCallback((e: MouseEvent<HTMLDivElement>) => {
@@ -232,6 +243,7 @@ export function useFlow({
 		onPointerMove,
 		onPointerUp,
 		onPointerCancel,
+		onPointerLeave,
 		onClickCapture,
 	};
 }
