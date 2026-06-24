@@ -1,6 +1,11 @@
 import {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
 
-import type {MutableRefObject, PointerEvent, RefObject} from 'react';
+import type {
+	MouseEvent,
+	MutableRefObject,
+	PointerEvent,
+	RefObject,
+} from 'react';
 
 import {DRAG_DIRECTION_LOCK_PX} from './constants';
 
@@ -19,6 +24,7 @@ type FlowHandlers = {
 	onPointerMove: (e: PointerEvent<HTMLDivElement>) => void;
 	onPointerUp: (e: PointerEvent<HTMLDivElement>) => void;
 	onPointerCancel: () => void;
+	onClickCapture: (e: MouseEvent<HTMLDivElement>) => void;
 };
 
 const wrap = (value: number, span: number) =>
@@ -50,6 +56,8 @@ export function useFlow({
 	const dragStartYRef = useRef<number | null>(null);
 	const isDraggingRef = useRef(false);
 	const offsetAtDragStartRef = useRef(0);
+	const pointerIdRef = useRef<number | null>(null);
+	const suppressClickRef = useRef(false);
 
 	// Latest-ref so changing speed/resumeDelay never restarts the rAF loop.
 	const speedRef = useRef(speed);
@@ -134,8 +142,10 @@ export function useFlow({
 			dragStartXRef.current = e.clientX;
 			dragStartYRef.current = e.clientY;
 			isDraggingRef.current = false;
+			suppressClickRef.current = false;
+			pointerIdRef.current = e.pointerId;
 			offsetAtDragStartRef.current = offsetRef.current;
-			e.currentTarget.setPointerCapture(e.pointerId);
+			// Capture is deferred to the first real drag move so a tap reaches child links.
 		},
 		[clearResumeTimer],
 	);
@@ -160,6 +170,9 @@ export function useFlow({
 					return;
 				}
 				isDraggingRef.current = true;
+				if (trackRef.current && pointerIdRef.current !== null) {
+					trackRef.current.setPointerCapture?.(pointerIdRef.current);
+				}
 			}
 
 			const track = trackRef.current;
@@ -181,6 +194,9 @@ export function useFlow({
 					contentWidth(),
 				);
 				applyTransform();
+				// A real drag just ended — swallow the trailing click so it does not also
+				// activate a link/button under the release point.
+				suppressClickRef.current = true;
 			}
 			dragStartXRef.current = null;
 			isDraggingRef.current = false;
@@ -202,5 +218,20 @@ export function useFlow({
 		endInteraction(false, 0);
 	}, [endInteraction]);
 
-	return {onPointerDown, onPointerMove, onPointerUp, onPointerCancel};
+	// Capture-phase guard: only the click that immediately follows a real drag is
+	// cancelled; ordinary taps fall through untouched (links remain clickable).
+	const onClickCapture = useCallback((e: MouseEvent<HTMLDivElement>) => {
+		if (!suppressClickRef.current) return;
+		suppressClickRef.current = false;
+		e.preventDefault();
+		e.stopPropagation();
+	}, []);
+
+	return {
+		onPointerDown,
+		onPointerMove,
+		onPointerUp,
+		onPointerCancel,
+		onClickCapture,
+	};
 }

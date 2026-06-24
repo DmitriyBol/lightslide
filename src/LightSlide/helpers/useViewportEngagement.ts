@@ -15,7 +15,11 @@ type ViewportEngagementParams = {
 	currentIndexRef: MutableRefObject<number>;
 	slideCountRef: MutableRefObject<number>;
 	viewedTimeoutRef: MutableRefObject<number>;
-	handlersRef: MutableRefObject<Required<AnalyticsHandlers>>;
+	// Latest-ref of the raw analytics prop; handlers are called optionally at fire time.
+	analyticsRef: MutableRefObject<AnalyticsHandlers | undefined>;
+	// Whether the consumer actually wants viewed-slides tracking. When false the
+	// viewed-timeout timer is never started (the feature is opt-in via onViewedSlides).
+	viewedTrackingEnabled: boolean;
 	markViewed: (index: number) => void;
 	getViewedSlides: () => SlideData[];
 	getSlideData: (index: number) => unknown;
@@ -30,7 +34,8 @@ export function useViewportEngagement({
 	currentIndexRef,
 	slideCountRef,
 	viewedTimeoutRef,
-	handlersRef,
+	analyticsRef,
+	viewedTrackingEnabled,
 	markViewed,
 	getViewedSlides,
 	getSlideData,
@@ -51,18 +56,22 @@ export function useViewportEngagement({
 			}
 
 			if (kind === 'reachedEnd') {
-				const allSlides: SlideData[] = Array.from(
-					{length: slideCountRef.current},
-					(_, i) => ({index: i, data: getSlideData(i)}),
-				);
-				handlersRef.current.onReachedEnd(buildReachedEndPayload(allSlides));
+				const onReachedEnd = analyticsRef.current?.onReachedEnd;
+				if (onReachedEnd) {
+					const allSlides: SlideData[] = Array.from(
+						{length: slideCountRef.current},
+						(_, i) => ({index: i, data: getSlideData(i)}),
+					);
+					onReachedEnd(buildReachedEndPayload(allSlides));
+				}
 			} else {
-				const elapsed = viewedStartRef.current
-					? Math.round((Date.now() - viewedStartRef.current) / 1000)
-					: viewedTimeoutRef.current;
-				handlersRef.current.onViewedSlides(
-					buildViewedSlidesPayload(getViewedSlides(), elapsed),
-				);
+				const onViewedSlides = analyticsRef.current?.onViewedSlides;
+				if (onViewedSlides) {
+					const elapsed = viewedStartRef.current
+						? Math.round((Date.now() - viewedStartRef.current) / 1000)
+						: viewedTimeoutRef.current;
+					onViewedSlides(buildViewedSlidesPayload(getViewedSlides(), elapsed));
+				}
 			}
 		},
 		[
@@ -70,7 +79,7 @@ export function useViewportEngagement({
 			getViewedSlides,
 			slideCountRef,
 			viewedTimeoutRef,
-			handlersRef,
+			analyticsRef,
 		],
 	);
 
@@ -83,9 +92,13 @@ export function useViewportEngagement({
 				if (entry.isIntersecting) {
 					if (!inViewportFiredRef.current) {
 						inViewportFiredRef.current = true;
-						handlersRef.current.onInViewport(buildInViewportPayload());
+						analyticsRef.current?.onInViewport?.(buildInViewportPayload());
 					}
-					if (!terminalFiredRef.current && viewedTimerRef.current === null) {
+					if (
+						viewedTrackingEnabled &&
+						!terminalFiredRef.current &&
+						viewedTimerRef.current === null
+					) {
 						viewedStartRef.current = Date.now();
 						markViewed(currentIndexRef.current);
 						viewedTimerRef.current = setTimeout(() => {
@@ -112,7 +125,8 @@ export function useViewportEngagement({
 		containerRef,
 		currentIndexRef,
 		viewedTimeoutRef,
-		handlersRef,
+		analyticsRef,
+		viewedTrackingEnabled,
 	]);
 
 	return {fireTerminalIfNeeded};

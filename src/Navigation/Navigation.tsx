@@ -26,11 +26,16 @@ export function Navigation({config}: NavigationProps) {
 	return (
 		<>
 			{config.renderPrev ? (
-				config.renderPrev({
-					direction: 'left',
-					onClick: handlePrev,
-					disabled: prevDisabled,
-				})
+				// Custom JSX is wrapped in a positioning slot so it lands left-of-centre by
+				// default (and outside the clipping viewport), while the consumer still owns
+				// the element's own markup/styling.
+				<div className={cx(styles.slot, styles.slotPrev)}>
+					{config.renderPrev({
+						direction: 'left',
+						onClick: handlePrev,
+						disabled: prevDisabled,
+					})}
+				</div>
 			) : (
 				<button
 					aria-label="Previous slide"
@@ -48,11 +53,13 @@ export function Navigation({config}: NavigationProps) {
 			)}
 
 			{config.renderNext ? (
-				config.renderNext({
-					direction: 'right',
-					onClick: handleNext,
-					disabled: nextDisabled,
-				})
+				<div className={cx(styles.slot, styles.slotNext)}>
+					{config.renderNext({
+						direction: 'right',
+						onClick: handleNext,
+						disabled: nextDisabled,
+					})}
+				</div>
 			) : (
 				<button
 					aria-label="Next slide"

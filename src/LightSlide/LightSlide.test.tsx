@@ -197,6 +197,114 @@ describe('LightSlide — isLoop', () => {
 	});
 });
 
+describe('LightSlide — loading fallback', () => {
+	beforeEach(() => jest.useFakeTimers());
+	afterEach(() => {
+		jest.useRealTimers();
+		jest.clearAllMocks();
+	});
+
+	it('renders no slides (and nothing) while loading with no fallback', () => {
+		render(
+			<LightSlide loading slidesPerView={3}>
+				<Slide>Alpha</Slide>
+				<Slide>Beta</Slide>
+				<Slide>Gamma</Slide>
+			</LightSlide>,
+		);
+		expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+		expect(screen.queryByText('Gamma')).not.toBeInTheDocument();
+	});
+
+	it('renders a custom fallback node while loading', () => {
+		render(
+			<LightSlide loading fallback={<div>Loading products…</div>}>
+				<Slide>Alpha</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByText('Loading products…')).toBeInTheDocument();
+		expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+	});
+
+	it('hides navigation and pagination while loading', () => {
+		render(
+			<LightSlide loading navigation={{}} pagination={{}}>
+				<Slide>Alpha</Slide>
+				<Slide>Beta</Slide>
+			</LightSlide>,
+		);
+		expect(screen.queryByLabelText('Previous slide')).not.toBeInTheDocument();
+		expect(screen.queryByLabelText('Next slide')).not.toBeInTheDocument();
+	});
+
+	it('shows the real slides once loading clears', () => {
+		const {rerender} = render(
+			<LightSlide loading>
+				<Slide>Alpha</Slide>
+				<Slide>Beta</Slide>
+			</LightSlide>,
+		);
+		expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+
+		rerender(
+			<LightSlide loading={false}>
+				<Slide>Alpha</Slide>
+				<Slide>Beta</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByText('Alpha')).toBeInTheDocument();
+	});
+});
+
+describe('LightSlide — viewed-slides opt-in', () => {
+	beforeEach(() => jest.useFakeTimers());
+	afterEach(() => {
+		jest.useRealTimers();
+		jest.clearAllMocks();
+	});
+
+	it('is silent (no console output) when no analytics prop is provided', () => {
+		const spyLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+		const spyWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+		const spyError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+		render(
+			<LightSlide>
+				<Slide>A</Slide>
+				<Slide>B</Slide>
+			</LightSlide>,
+		);
+		act(() => triggerIO(true));
+		act(() => jest.advanceTimersByTime(60_000));
+
+		expect(spyLog).not.toHaveBeenCalled();
+		expect(spyWarn).not.toHaveBeenCalled();
+		expect(spyError).not.toHaveBeenCalled();
+		spyLog.mockRestore();
+		spyWarn.mockRestore();
+		spyError.mockRestore();
+	});
+
+	it('does not fire onViewedSlides when no handler is provided (timer never starts)', () => {
+		const onInViewport = jest.fn();
+		const onViewedSlides = jest.fn();
+		// Provide onInViewport but NOT onViewedSlides — tracking must stay off.
+		render(
+			<LightSlide analytics={{onInViewport}} viewedTimeout={30}>
+				<Slide>A</Slide>
+				<Slide>B</Slide>
+			</LightSlide>,
+		);
+
+		act(() => triggerIO(true));
+		act(() => jest.advanceTimersByTime(60_000));
+
+		expect(onViewedSlides).not.toHaveBeenCalled();
+		// onInViewport still fires — it is independent of viewed tracking.
+		expect(onInViewport).toHaveBeenCalledTimes(1);
+	});
+});
+
 describe('LightSlide — flow', () => {
 	beforeEach(() => jest.useFakeTimers());
 	afterEach(() => {

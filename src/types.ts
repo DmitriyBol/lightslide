@@ -39,12 +39,21 @@ export type LightSlideProps = {
 	trackClassName?: string;
 	analytics?: AnalyticsHandlers;
 	slidesPerView?: number;
+	// Seconds of ≥50% viewport visibility before onViewedSlides fires. Only has any
+	// effect when an onViewedSlides handler is provided (the timer is otherwise never
+	// started). Default 30.
 	viewedTimeout?: number;
 	autoScroll?: AutoScrollConfig;
 	flow?: FlowConfig;
 	navigation?: NavigationConfig;
 	pagination?: PaginationConfig;
 	isLoop?: boolean;
+	// When true, the carousel renders `fallback` instead of the slides — useful while
+	// async slide data is still being fetched. With no `fallback` it renders nothing.
+	loading?: boolean;
+	// Node rendered in place of the track while `loading` is true (your own skeleton /
+	// spinner / placeholder). Style it however you like.
+	fallback?: ReactNode;
 };
 
 // Individual slide props.

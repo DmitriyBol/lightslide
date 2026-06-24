@@ -1,17 +1,18 @@
 import {
 	Children,
 	useCallback,
-	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from 'react';
 
+import type {DragEvent} from 'react';
+
 import {
 	buildNavButtonPayload,
 	buildPaginationClickPayload,
 	buildSlidePayload,
-	mergeHandlers,
 } from '../analytics/analytics';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {LightSlideContext} from '../lightSlideContext';
@@ -49,13 +50,21 @@ export function LightSlide({
 	navigation,
 	pagination,
 	isLoop = false,
+	loading = false,
+	fallback,
 }: LightSlideProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
 	const currentIndexRef = useRef(0);
 
-	const handlersRef = useRef(mergeHandlers(analytics));
-	handlersRef.current = mergeHandlers(analytics);
+	// Latest-ref of the raw analytics prop. Handlers are called optionally at each fire
+	// site (analytics?.onX?.(payload)) — no merging, no noop layer.
+	const analyticsRef = useRef(analytics);
+	analyticsRef.current = analytics;
+
+	// Viewed-slides tracking is opt-in: the timer only runs when the consumer actually
+	// handles onViewedSlides. (viewedTimeout is just its duration knob.)
+	const viewedTrackingEnabled = analytics?.onViewedSlides !== undefined;
 
 	const childArray = Children.toArray(children);
 	const slideCount = childArray.length;
@@ -72,9 +81,13 @@ export function LightSlide({
 	const viewedTimeoutRef = useRef(viewedTimeout);
 	viewedTimeoutRef.current = viewedTimeout;
 
+	// While loading we render the fallback, not the track — so all auto motion
+	// (flow / auto-scroll) must stay off until the real slides mount.
+	const isLoading = loading;
+
 	// The flow needs the loop-clone structure to wrap seamlessly, so it also
 	// turns on effectiveLoop (whether or not the consumer set isLoop).
-	const effectiveFlow = !!flow?.enabled && maxIndex > 0;
+	const effectiveFlow = flow?.enabled === true && maxIndex > 0 && !isLoading;
 	const effectiveFlowRef = useRef(effectiveFlow);
 	effectiveFlowRef.current = effectiveFlow;
 
@@ -99,7 +112,8 @@ export function LightSlide({
 		currentIndexRef,
 		slideCountRef,
 		viewedTimeoutRef,
-		handlersRef,
+		analyticsRef,
+		viewedTrackingEnabled,
 		markViewed,
 		getViewedSlides,
 		getSlideData,
@@ -118,8 +132,10 @@ export function LightSlide({
 	);
 
 	// Re-derive maxIndex, clamp the index, and re-snap (no animation) when the layout
-	// shape changes — slidesPerView or loop mode.
-	useEffect(() => {
+	// shape changes — slidesPerView, loop mode, or loading clearing. Runs as a *layout*
+	// effect so loop mode positions the track at its home offset before the first paint;
+	// otherwise the prepend clones would flash for one frame and then jump to slide 0.
+	useLayoutEffect(() => {
 		measureSlideWidth();
 		const newMax = Math.max(
 			0,
@@ -133,7 +149,7 @@ export function LightSlide({
 		// the track); snapping here would fight it. Restore discrete position otherwise.
 		if (!effectiveFlowRef.current) snapTrack(corrected, false);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [slidesPerView, isLoop, flow?.enabled]);
+	}, [slidesPerView, isLoop, flow?.enabled, loading]);
 
 	// Single navigation path. `source` decides which extra analytics events fire and
 	// whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
@@ -167,15 +183,17 @@ export function LightSlide({
 			setCurrentIndex(clamped);
 			markViewed(clamped);
 
-			handlersRef.current.onSlide(buildSlidePayload(direction, from, clamped));
+			analyticsRef.current?.onSlide?.(
+				buildSlidePayload(direction, from, clamped),
+			);
 
 			if (source === 'button') {
-				handlersRef.current.onNavButtonClick(
+				analyticsRef.current?.onNavButtonClick?.(
 					buildNavButtonPayload(direction, from, clamped),
 				);
 			}
 			if (source === 'pagination') {
-				handlersRef.current.onPaginationClick(
+				analyticsRef.current?.onPaginationClick?.(
 					buildPaginationClickPayload(from, clamped),
 				);
 			}
@@ -218,8 +236,9 @@ export function LightSlide({
 	const navigateToIndexRef = useRef(navigateToIndex);
 	navigateToIndexRef.current = navigateToIndex;
 
-	// Flow supersedes step auto-scroll — they are both "auto motion".
-	useAutoScroll(effectiveFlow ? undefined : autoScroll, {
+	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs
+	// while loading (no track to move).
+	useAutoScroll(effectiveFlow || isLoading ? undefined : autoScroll, {
 		currentIndexRef,
 		maxIndexRef,
 		isLoopRef,
@@ -253,6 +272,12 @@ export function LightSlide({
 	// otherwise the discrete drag-to-snap gesture is active.
 	const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
 
+	// Stop native image/anchor drag-and-drop from hijacking the pointer gesture
+	// (which is what "drag is broken when a big component is inside" was).
+	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+	}, []);
+
 	const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
 
 	return (
@@ -261,16 +286,23 @@ export function LightSlide({
 				ref={containerRef}
 				className={cx(styles.container, className)}
 				style={style}>
-				<div
-					ref={trackRef}
-					className={cx(styles.track, trackClassName)}
-					style={trackStyle}
-					{...pointerHandlers}>
-					{displayChildren}
+				<div className={styles.viewport}>
+					{isLoading ? (
+						fallback
+					) : (
+						<div
+							ref={trackRef}
+							className={cx(styles.track, trackClassName)}
+							style={trackStyle}
+							onDragStart={preventNativeDrag}
+							{...pointerHandlers}>
+							{displayChildren}
+						</div>
+					)}
 				</div>
 
-				{navigation && <Navigation config={navigation} />}
-				{pagination && <Pagination config={pagination} />}
+				{!isLoading && navigation && <Navigation config={navigation} />}
+				{!isLoading && pagination && <Pagination config={pagination} />}
 			</div>
 		</LightSlideContext.Provider>
 	);
