@@ -11,24 +11,24 @@ import type {AnalyticsHandlers, SlideData} from '../../types';
 import {VIEWPORT_THRESHOLD} from './constants';
 import type {LightSlideStore} from './store';
 
-type ViewportEngagementParams = {
+type ViewportEngagementParams<T> = {
 	containerRef: RefObject<HTMLDivElement>;
-	storeRef: MutableRefObject<LightSlideStore>;
+	storeRef: MutableRefObject<LightSlideStore<T>>;
 	// Latest-ref of the raw analytics prop; handlers are called optionally at fire time.
-	analyticsRef: MutableRefObject<AnalyticsHandlers | undefined>;
+	analyticsRef: MutableRefObject<AnalyticsHandlers<T> | undefined>;
 	// Whether the consumer actually wants viewed-slides tracking. When false the
 	// viewed-timeout timer is never started (the feature is opt-in via onViewedSlides).
 	viewedTrackingEnabled: boolean;
 	markViewed: (index: number) => void;
-	getViewedSlides: () => SlideData[];
-	getSlideData: (index: number) => unknown;
+	getViewedSlides: () => SlideData<T>[];
+	getSlideData: (index: number) => T | undefined;
 };
 
 // Owns the viewport/terminal-event lifecycle: fires onInViewport once, starts the
 // viewed-timeout timer while visible, and enforces that onReachedEnd / onViewedSlides
 // are mutually exclusive for the component's lifetime (terminalFiredRef guard).
 // Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
-export function useViewportEngagement({
+export function useViewportEngagement<T>({
 	containerRef,
 	storeRef,
 	analyticsRef,
@@ -36,7 +36,7 @@ export function useViewportEngagement({
 	markViewed,
 	getViewedSlides,
 	getSlideData,
-}: ViewportEngagementParams) {
+}: ViewportEngagementParams<T>) {
 	const terminalFiredRef = useRef(false);
 	const inViewportFiredRef = useRef(false);
 	const viewedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,7 +55,7 @@ export function useViewportEngagement({
 			if (kind === 'reachedEnd') {
 				const onReachedEnd = analyticsRef.current?.onReachedEnd;
 				if (onReachedEnd) {
-					const allSlides: SlideData[] = Array.from(
+					const allSlides: SlideData<T>[] = Array.from(
 						{length: storeRef.current.slideCount},
 						(_, i) => ({index: i, data: getSlideData(i)}),
 					);

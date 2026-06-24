@@ -9,8 +9,9 @@ export type {NavigationConfig} from './Navigation/Navigation.types';
 export type {NavButtonRenderProps} from './Navigation/Navigation.types';
 export type {PaginationConfig} from './Pagination/Pagination.types';
 
-// Slide index + arbitrary data attached to a slide, included in analytics payloads.
-// Generic over the data shape (defaults to unknown so existing call sites are unchanged).
+// Slide index + the data attached to a slide, included in analytics payloads. Generic over
+// the data shape: specify it (e.g. `SlideData<Product>`) for a fully-typed `data`, or let it
+// default to `unknown` — the safe, must-narrow-before-use default for "consumer didn't say".
 export type SlideData<T = unknown> = {
 	index: number;
 	data?: T;
@@ -31,14 +32,16 @@ export type FlowConfig = {
 	resumeDelay?: number; // ms paused after an interaction; default 2000
 };
 
-// Main carousel props.
-export type LightSlideProps = {
+// Main carousel props. Generic over the slide `data` shape `T` (carried through to the
+// analytics payloads), defaulting to `unknown`. Write `<LightSlide<Product> …>` to type the
+// whole chain; omit it and everything still works with an unspecified data type.
+export type LightSlideProps<T = unknown> = {
 	children: ReactNode;
 	style?: CSSProperties;
 	className?: string;
 	trackStyle?: CSSProperties;
 	trackClassName?: string;
-	analytics?: AnalyticsHandlers;
+	analytics?: AnalyticsHandlers<T>;
 	slidesPerView?: number;
 	autoScroll?: AutoScrollConfig;
 	flow?: FlowConfig;
@@ -55,6 +58,8 @@ export type LightSlideProps = {
 
 // Individual slide props. Generic over the `data` shape so `<Slide<Product> data={…} />`
 // is fully typed; defaults to unknown, so untyped usage keeps working.
+// `children` is `ReactNode` — the precise React type for renderable content: a single
+// element, several elements, an array, text, or a fragment are all valid slide contents.
 export type SlideProps<T = unknown> = {
 	children: ReactNode;
 	style?: CSSProperties;
@@ -63,13 +68,14 @@ export type SlideProps<T = unknown> = {
 };
 
 // Analytics event handlers + config. All fields are optional; unhandled events are
-// completely silent. The viewed-slides config lives here too, so everything analytics
-// related sits in one place.
-export type AnalyticsHandlers = {
+// completely silent. Generic over the slide `data` shape `T`, which flows into the
+// terminal-event payloads (onReachedEnd / onViewedSlides). The viewed-slides config lives
+// here too, so everything analytics related sits in one place.
+export type AnalyticsHandlers<T = unknown> = {
 	onInViewport?: (payload: InViewportPayload) => void;
 	onSlide?: (payload: SlidePayload) => void;
-	onReachedEnd?: (payload: ReachedEndPayload) => void;
-	onViewedSlides?: (payload: ViewedSlidesPayload) => void;
+	onReachedEnd?: (payload: ReachedEndPayload<T>) => void;
+	onViewedSlides?: (payload: ViewedSlidesPayload<T>) => void;
 	onNavButtonClick?: (payload: NavigationButtonPayload) => void;
 	onPaginationClick?: (payload: PaginationClickPayload) => void;
 	// Seconds of ≥50% viewport visibility before onViewedSlides fires. Only has any
@@ -92,16 +98,17 @@ export type SlidePayload = {
 };
 
 // Fired when the user reaches maxIndex. Mutually exclusive with ViewedSlidesPayload.
-// Not fired by auto-scroll loops or isLoop wrap-around.
-export type ReachedEndPayload = {
+// Not fired by auto-scroll loops or isLoop wrap-around. `slides` is every slide.
+export type ReachedEndPayload<T = unknown> = {
 	event: 'carousel_reached_end';
-	slides: SlideData[];
+	slides: SlideData<T>[];
 };
 
 // Fired after viewedTimeout seconds of visibility. Mutually exclusive with ReachedEndPayload.
-export type ViewedSlidesPayload = {
+// `slides` is the slides the user actually saw.
+export type ViewedSlidesPayload<T = unknown> = {
 	event: 'carousel_viewed_slides';
-	slides: SlideData[];
+	slides: SlideData<T>[];
 	viewedSeconds: number;
 };
 

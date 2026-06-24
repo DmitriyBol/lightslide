@@ -37,7 +37,7 @@ import {useTrackSnap} from './helpers/useTrackSnap';
 import {useViewportEngagement} from './helpers/useViewportEngagement';
 import styles from './LightSlide.module.scss';
 
-export function LightSlide({
+export function LightSlide<T = unknown>({
 	children,
 	style,
 	className,
@@ -52,14 +52,14 @@ export function LightSlide({
 	isLoop = false,
 	loading = false,
 	fallback,
-}: LightSlideProps) {
+}: LightSlideProps<T>) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
 
 	// Single mutable store for all core data — read/written imperatively by the gesture
 	// and animation hooks (zero re-renders). The "functional" pieces (analytics handlers,
 	// the navigate fn) live in their own refs below. See helpers/store.ts.
-	const storeRef = useRef(createStore());
+	const storeRef = useRef(createStore<T>());
 
 	// Latest-ref of the raw analytics prop. Handlers are called optionally at each fire
 	// site (analytics?.onX?.(payload)) — no merging, no noop layer.
@@ -97,7 +97,7 @@ export function LightSlide({
 	store.effectiveFlow = effectiveFlow;
 	store.isLoop = effectiveLoop;
 	store.loopOffset = loopOffset;
-	store.slideData = collectSlideData(childArray);
+	store.slideData = collectSlideData<T>(childArray);
 
 	const getSlideData = useCallback(
 		(index: number) => storeRef.current.slideData[index],

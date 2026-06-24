@@ -29,14 +29,16 @@ export function buildSlidePayload(
 	};
 }
 
-export function buildReachedEndPayload(slides: SlideData[]): ReachedEndPayload {
+export function buildReachedEndPayload<T>(
+	slides: SlideData<T>[],
+): ReachedEndPayload<T> {
 	return {event: 'carousel_reached_end', slides};
 }
 
-export function buildViewedSlidesPayload(
-	slides: SlideData[],
+export function buildViewedSlidesPayload<T>(
+	slides: SlideData<T>[],
 	viewedSeconds: number,
-): ViewedSlidesPayload {
+): ViewedSlidesPayload<T> {
 	return {
 		event: 'carousel_viewed_slides',
 		slides,

@@ -30,7 +30,7 @@ function SlideInner<T>(
 // call signature. `data` is the only generic field and it is render-irrelevant (read by
 // the parent, not here), so the cast is purely about preserving the consumer's data type
 // at the call site — e.g. `<Slide<Product> data={product} />`.
-export const Slide = React.memo(React.forwardRef(SlideInner)) as (<T = unknown>(
+export const Slide = React.memo(React.forwardRef(SlideInner)) as (<T>(
 	props: SlideProps<T> & {ref?: Ref<HTMLDivElement>},
 ) => ReactElement) & {displayName?: string};
 

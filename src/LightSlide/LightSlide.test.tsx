@@ -338,3 +338,28 @@ describe('LightSlide — flow', () => {
 		expect(handlers.onReachedEnd).not.toHaveBeenCalled();
 	});
 });
+
+describe('LightSlide — typed data chain', () => {
+	type Product = {id: number; name: string};
+
+	it('types the analytics payload slide data as the LightSlide type argument', () => {
+		const names: string[] = [];
+		render(
+			<LightSlide<Product>
+				analytics={{
+					// `p.slides[i].data` is `Product | undefined` here — `.name` only
+					// compiles because the type parameter flows through the chain.
+					onReachedEnd: p => {
+						for (const s of p.slides) if (s.data) names.push(s.data.name);
+					},
+					onViewedSlides: p => {
+						for (const s of p.slides) if (s.data) names.push(s.data.name);
+					},
+				}}>
+				<Slide<Product> data={{id: 1, name: 'A'}}>A</Slide>
+				<Slide<Product> data={{id: 2, name: 'B'}}>B</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByText('A')).toBeInTheDocument();
+	});
+});

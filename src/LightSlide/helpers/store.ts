@@ -8,7 +8,9 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
 // second on pointermove — so it must never live in React state or trigger a re-render.
 // Keeping it in one object means hooks take a single `storeRef` instead of a fan-out of
 // eight-plus individual refs.
-export type LightSlideStore = {
+// Generic over the slide `data` shape `T` (defaults to unknown). T only types `slideData`;
+// the motion hooks that don't read it accept `LightSlideStore` (i.e. `<unknown>`).
+export type LightSlideStore<T = unknown> = {
 	// Active logical slide index (0..maxIndex). Mutated by navigation, mirrored to React
 	// state for rendering.
 	currentIndex: number;
@@ -26,16 +28,17 @@ export type LightSlideStore = {
 	isLoop: boolean;
 	// Clone slides prepended/appended in loop mode (0 when not looping).
 	loopOffset: number;
-	// Each slide's `data` prop, indexed to match the rendered slides.
-	slideData: unknown[];
+	// Each slide's `data` prop, indexed to match the rendered slides (undefined for a
+	// non-Slide child or a Slide with no `data`).
+	slideData: (T | undefined)[];
 	// Set while a pointer drag is in progress so auto motion (auto-scroll/flow) pauses.
 	autoScrollPaused: boolean;
 };
 
 // Creates a store seeded with safe defaults; `overrides` is a convenience for tests.
-export function createStore(
-	overrides: Partial<LightSlideStore> = {},
-): LightSlideStore {
+export function createStore<T = unknown>(
+	overrides: Partial<LightSlideStore<T>> = {},
+): LightSlideStore<T> {
 	return {
 		currentIndex: 0,
 		slideCount: 0,
