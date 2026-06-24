@@ -1,6 +1,12 @@
-// Outer wrapper — clips the track and anchors absolutely-positioned controls.
+// Outer wrapper — anchors absolutely-positioned controls. Overflow stays visible so
+// edge-anchored nav buttons are never clipped; the inner .viewport does the clipping.
 .container {
 	position: relative;
+	width: 100%;
+}
+
+// Clips the track. Width follows the container so slide geometry is unchanged.
+.viewport {
 	width: 100%;
 	overflow: hidden;
 }

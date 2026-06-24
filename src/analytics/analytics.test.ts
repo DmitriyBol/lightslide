@@ -5,7 +5,6 @@ import {
 	buildReachedEndPayload,
 	buildSlidePayload,
 	buildViewedSlidesPayload,
-	mergeHandlers,
 } from './analytics';
 
 describe('payload builders', () => {
@@ -64,76 +63,5 @@ describe('payload builders', () => {
 			toIndex: 3,
 			timestamp: 1_000_000,
 		});
-	});
-});
-
-describe('mergeHandlers', () => {
-	it('is silent by default — no console output when no handler provided', () => {
-		const spyLog = jest.spyOn(console, 'log');
-		const spyWarn = jest.spyOn(console, 'warn');
-		const spyError = jest.spyOn(console, 'error');
-		const handlers = mergeHandlers();
-		handlers.onInViewport(buildInViewportPayload());
-		handlers.onSlide(buildSlidePayload('right', 0, 1));
-		handlers.onReachedEnd(buildReachedEndPayload([]));
-		handlers.onViewedSlides(buildViewedSlidesPayload([], 30));
-		handlers.onNavButtonClick(buildNavButtonPayload('left', 1, 0));
-		handlers.onPaginationClick(buildPaginationClickPayload(0, 2));
-		expect(spyLog).not.toHaveBeenCalled();
-		expect(spyWarn).not.toHaveBeenCalled();
-		expect(spyError).not.toHaveBeenCalled();
-		spyLog.mockRestore();
-		spyWarn.mockRestore();
-		spyError.mockRestore();
-	});
-
-	it('calls onSlide handler when provided', () => {
-		const onSlide = jest.fn();
-		mergeHandlers({onSlide}).onSlide(buildSlidePayload('left', 1, 0));
-		expect(onSlide).toHaveBeenCalledTimes(1);
-		expect(onSlide.mock.calls[0][0].direction).toBe('left');
-	});
-
-	it('calls onInViewport handler when provided', () => {
-		const onInViewport = jest.fn();
-		mergeHandlers({onInViewport}).onInViewport(buildInViewportPayload());
-		expect(onInViewport).toHaveBeenCalledTimes(1);
-		expect(onInViewport.mock.calls[0][0].event).toBe('carousel_in_viewport');
-	});
-
-	it('calls onNavButtonClick handler when provided', () => {
-		const onNavButtonClick = jest.fn();
-		mergeHandlers({onNavButtonClick}).onNavButtonClick(
-			buildNavButtonPayload('right', 0, 1),
-		);
-		expect(onNavButtonClick).toHaveBeenCalledTimes(1);
-		expect(onNavButtonClick.mock.calls[0][0].event).toBe('carousel_nav_button');
-	});
-
-	it('calls onPaginationClick handler when provided', () => {
-		const onPaginationClick = jest.fn();
-		mergeHandlers({onPaginationClick}).onPaginationClick(
-			buildPaginationClickPayload(0, 3),
-		);
-		expect(onPaginationClick).toHaveBeenCalledTimes(1);
-		expect(onPaginationClick.mock.calls[0][0].event).toBe(
-			'carousel_pagination_click',
-		);
-	});
-
-	it('provided handlers fire, omitted ones stay silent', () => {
-		const spyLog = jest.spyOn(console, 'log');
-		const spyWarn = jest.spyOn(console, 'warn');
-		const onSlide = jest.fn();
-		const handlers = mergeHandlers({onSlide});
-		// onSlide provided → fires
-		handlers.onSlide(buildSlidePayload('right', 0, 1));
-		expect(onSlide).toHaveBeenCalledTimes(1);
-		// onInViewport not provided → completely silent
-		handlers.onInViewport(buildInViewportPayload());
-		expect(spyLog).not.toHaveBeenCalled();
-		expect(spyWarn).not.toHaveBeenCalled();
-		spyLog.mockRestore();
-		spyWarn.mockRestore();
 	});
 });

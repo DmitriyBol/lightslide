@@ -1,5 +1,5 @@
 import {renderHook} from '@testing-library/react';
-import type {PointerEvent} from 'react';
+import type {MouseEvent, PointerEvent} from 'react';
 
 import {useFlow} from './useFlow';
 
@@ -18,8 +18,23 @@ const downEvent = (x: number, y = 100) =>
 const moveEvent = (x: number, y = 100) =>
 	({clientX: x, clientY: y}) as unknown as PointerEvent<HTMLDivElement>;
 
+const clickEvent = () => {
+	const preventDefault = jest.fn();
+	const stopPropagation = jest.fn();
+	return {
+		event: {
+			preventDefault,
+			stopPropagation,
+		} as unknown as MouseEvent<HTMLDivElement>,
+		preventDefault,
+		stopPropagation,
+	};
+};
+
 function setup(overrides: Record<string, unknown> = {}) {
 	const track = document.createElement('div');
+	// jsdom does not implement pointer capture — stub it so we can assert calls.
+	track.setPointerCapture = jest.fn();
 	const params = {
 		enabled: true,
 		speed: 100,
@@ -107,5 +122,55 @@ describe('useFlow', () => {
 		const {track} = setup({enabled: false});
 		expect(window.requestAnimationFrame).not.toHaveBeenCalled();
 		expect(track.style.transform).toBe('');
+	});
+
+	it('does not capture the pointer on down (a tap reaches child links)', () => {
+		const {result, track} = setup();
+		result.current.onPointerDown(downEvent(500));
+		expect(track.setPointerCapture).not.toHaveBeenCalled();
+	});
+
+	it('captures the pointer once a real horizontal drag begins', () => {
+		const {result, track} = setup();
+		result.current.onPointerDown(downEvent(500));
+		result.current.onPointerMove(moveEvent(450)); // dx -50, horizontal
+		expect(track.setPointerCapture).toHaveBeenCalledWith(1);
+	});
+
+	it('suppresses the click that follows a real drag', () => {
+		const {result} = setup();
+		result.current.onPointerDown(downEvent(500));
+		result.current.onPointerMove(moveEvent(450)); // real horizontal drag
+		result.current.onPointerUp(moveEvent(450));
+
+		const {event, preventDefault, stopPropagation} = clickEvent();
+		result.current.onClickCapture(event);
+		expect(preventDefault).toHaveBeenCalled();
+		expect(stopPropagation).toHaveBeenCalled();
+	});
+
+	it('does not suppress the click after a plain tap', () => {
+		const {result} = setup();
+		result.current.onPointerDown(downEvent(500));
+		result.current.onPointerUp(moveEvent(500)); // no movement → tap
+
+		const {event, preventDefault} = clickEvent();
+		result.current.onClickCapture(event);
+		expect(preventDefault).not.toHaveBeenCalled();
+	});
+
+	it('only suppresses one click per drag', () => {
+		const {result} = setup();
+		result.current.onPointerDown(downEvent(500));
+		result.current.onPointerMove(moveEvent(450));
+		result.current.onPointerUp(moveEvent(450));
+
+		const first = clickEvent();
+		result.current.onClickCapture(first.event);
+		expect(first.preventDefault).toHaveBeenCalled();
+
+		const second = clickEvent();
+		result.current.onClickCapture(second.event);
+		expect(second.preventDefault).not.toHaveBeenCalled();
 	});
 });

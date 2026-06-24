@@ -1,5 +1,4 @@
 import type {
-	AnalyticsHandlers,
 	InViewportPayload,
 	NavigationButtonPayload,
 	PaginationClickPayload,
@@ -9,20 +8,9 @@ import type {
 	ViewedSlidesPayload,
 } from '../types';
 
-type ResolvedHandlers = Required<AnalyticsHandlers>;
-
-const noop = () => {};
-
-export function mergeHandlers(custom?: AnalyticsHandlers): ResolvedHandlers {
-	return {
-		onInViewport: custom?.onInViewport ?? noop,
-		onSlide: custom?.onSlide ?? noop,
-		onReachedEnd: custom?.onReachedEnd ?? noop,
-		onViewedSlides: custom?.onViewedSlides ?? noop,
-		onNavButtonClick: custom?.onNavButtonClick ?? noop,
-		onPaginationClick: custom?.onPaginationClick ?? noop,
-	};
-}
+// Pure payload builders. Handlers are called directly and optionally at the fire
+// site (`analytics?.onX?.(payload)`) — there is no merging or noop layer: an event
+// with no handler simply does nothing.
 
 export function buildInViewportPayload(): InViewportPayload {
 	return {event: 'carousel_in_viewport', timestamp: Date.now()};
