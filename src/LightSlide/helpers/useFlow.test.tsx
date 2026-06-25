@@ -41,8 +41,11 @@ function setup(overrides: Record<string, unknown> = {}) {
 		speed: 100,
 		resumeDelay: 2000,
 		trackRef: {current: track},
-		storeRef: {current: createStore({slideCount: 3, loopOffset: 1})},
-		getComputedSlideWidth: () => 300,
+		// slideWidth is the cached width every flow path (rAF loop, drag, positioning) sizes
+		// its transform from — the single source of truth, read straight off the store.
+		storeRef: {
+			current: createStore({slideCount: 3, loopOffset: 1, slideWidth: 300}),
+		},
 		...overrides,
 	};
 	const {result} = renderHook(() =>

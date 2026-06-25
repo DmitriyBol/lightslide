@@ -16,7 +16,6 @@ type FlowParams = {
 	resumeDelay: number; // resolved ms
 	trackRef: RefObject<HTMLDivElement>;
 	storeRef: MutableRefObject<LightSlideStore>;
-	getComputedSlideWidth: () => number;
 };
 
 type FlowHandlers = {
@@ -27,6 +26,48 @@ type FlowHandlers = {
 	onPointerLeave: (e: PointerEvent<HTMLDivElement>) => void;
 	onClickCapture: (e: MouseEvent<HTMLDivElement>) => void;
 };
+
+/**
+ * Per-instance flow state, held in ONE ref (mirrors useDragGesture's `drag`): the rAF loop
+ * mutates `offset`/`lastTs` every frame and the drag fields mutate on every pointermove, so
+ * none of it may live in React state or trigger a re-render. The fields shared with a drag
+ * gesture (startX, startY, dragging, pointerId, suppressClick) keep the same names as DragState
+ * for cross-hook uniformity.
+ *
+ * `offset` is the current scroll offset in px (advanced by the loop, wrapped at one content
+ * width); `raf` is the running requestAnimationFrame handle; `lastTs` is the previous frame's
+ * timestamp for dt-based (frame-rate-independent) motion; `resumeTimer` restarts the drift
+ * resumeDelay ms after an interaction ends; `interacting` pauses the drift while the user is
+ * engaged; `offsetAtStart` is the offset captured at drag start so the strip drifts from where
+ * it was grabbed.
+ */
+type FlowState = {
+	offset: number;
+	raf: number | null;
+	lastTs: number | null;
+	resumeTimer: ReturnType<typeof setTimeout> | null;
+	interacting: boolean;
+	startX: number | null;
+	startY: number | null;
+	dragging: boolean;
+	offsetAtStart: number;
+	pointerId: number | null;
+	suppressClick: boolean;
+};
+
+const initialFlowState = (): FlowState => ({
+	offset: 0,
+	raf: null,
+	lastTs: null,
+	resumeTimer: null,
+	interacting: false,
+	startX: null,
+	startY: null,
+	dragging: false,
+	offsetAtStart: 0,
+	pointerId: null,
+	suppressClick: false,
+});
 
 const wrap = (value: number, span: number) =>
 	span > 0 ? ((value % span) + span) % span : 0;
@@ -44,107 +85,98 @@ export function useFlow({
 	resumeDelay,
 	trackRef,
 	storeRef,
-	getComputedSlideWidth,
 }: FlowParams): FlowHandlers {
-	const offsetRef = useRef(0);
-	const rafRef = useRef<number | null>(null);
-	const lastTsRef = useRef<number | null>(null);
-	const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const interactingRef = useRef(false);
+	const flow = useRef<FlowState>(initialFlowState());
 
-	const dragStartXRef = useRef<number | null>(null);
-	const dragStartYRef = useRef<number | null>(null);
-	const isDraggingRef = useRef(false);
-	const offsetAtDragStartRef = useRef(0);
-	const pointerIdRef = useRef<number | null>(null);
-	const suppressClickRef = useRef(false);
-
-	// Latest-ref so changing speed/resumeDelay never restarts the rAF loop.
+	// Latest-refs of the prop knobs so changing speed/resumeDelay never restarts the rAF
+	// loop. Kept separate from the flow scratch state, the same way LightSlide keeps its
+	// analytics latest-ref out of the core store.
 	const speedRef = useRef(speed);
 	speedRef.current = speed;
 	const resumeDelayRef = useRef(resumeDelay);
 	resumeDelayRef.current = resumeDelay;
 
-	const contentWidth = useCallback(
-		() => storeRef.current.slideCount * getComputedSlideWidth(),
-		[storeRef, getComputedSlideWidth],
+	const applyTransform = useCallback(
+		(sw: number) => {
+			const track = trackRef.current;
+			if (!track) return;
+			const base = storeRef.current.loopOffset * sw;
+			track.style.transition = '';
+			track.style.transform = `translateX(${-(base + flow.current.offset)}px)`;
+		},
+		[trackRef, storeRef],
 	);
 
-	const applyTransform = useCallback(() => {
-		const track = trackRef.current;
-		if (!track) return;
-		const sw = getComputedSlideWidth();
-		const base = storeRef.current.loopOffset * sw;
-		track.style.transition = '';
-		track.style.transform = `translateX(${-(base + offsetRef.current)}px)`;
-	}, [trackRef, storeRef, getComputedSlideWidth]);
-
 	const clearResumeTimer = useCallback(() => {
-		if (resumeTimerRef.current !== null) {
-			clearTimeout(resumeTimerRef.current);
-			resumeTimerRef.current = null;
+		if (flow.current.resumeTimer !== null) {
+			clearTimeout(flow.current.resumeTimer);
+			flow.current.resumeTimer = null;
 		}
 	}, []);
 
 	const scheduleResume = useCallback(() => {
 		clearResumeTimer();
-		resumeTimerRef.current = setTimeout(() => {
-			resumeTimerRef.current = null;
-			interactingRef.current = false;
+		flow.current.resumeTimer = setTimeout(() => {
+			flow.current.resumeTimer = null;
+			flow.current.interacting = false;
 		}, resumeDelayRef.current);
 	}, [clearResumeTimer]);
 
 	// Position at the home offset before first paint, so the prepend clones never flash.
+	// useSlideMetrics' layout effect runs first and seeds store.slideWidth, so it is ready.
 	useLayoutEffect(() => {
 		if (!enabled) return;
-		if (getComputedSlideWidth() > 0) applyTransform();
-	}, [enabled, applyTransform, getComputedSlideWidth]);
+		const sw = storeRef.current.slideWidth;
+		if (sw > 0) applyTransform(sw);
+	}, [enabled, applyTransform, storeRef]);
 
 	useEffect(() => {
 		if (!enabled) return;
+		// flow.current is stable for the component's life (never reassigned), so capturing it
+		// once is safe and lets the cleanup read the latest raf id without an exhaustive-deps
+		// warning about ref.current in cleanup.
+		const f = flow.current;
 
 		const step = (ts: number) => {
-			if (lastTsRef.current === null) lastTsRef.current = ts;
-			const dt = ts - lastTsRef.current;
-			lastTsRef.current = ts;
+			if (f.lastTs === null) f.lastTs = ts;
+			const dt = ts - f.lastTs;
+			f.lastTs = ts;
 
-			const sw = getComputedSlideWidth();
-			if (!interactingRef.current && sw > 0) {
-				offsetRef.current = wrap(
-					offsetRef.current + (speedRef.current * dt) / 1000,
-					contentWidth(),
-				);
-				applyTransform();
+			// Read the cached slide width from the store — NEVER offsetWidth — so the hot
+			// loop forces no layout/reflow per frame. (Reading offsetWidth here is what made
+			// flow stutter once mounted in a heavy host page: every frame triggered a full
+			// document reflow. The width only changes on resize, where the ResizeObserver
+			// refreshes store.slideWidth for us.)
+			const sw = storeRef.current.slideWidth;
+			if (!f.interacting && sw > 0) {
+				const span = storeRef.current.slideCount * sw;
+				f.offset = wrap(f.offset + (speedRef.current * dt) / 1000, span);
+				applyTransform(sw);
 			}
 
-			rafRef.current = requestAnimationFrame(step);
+			f.raf = requestAnimationFrame(step);
 		};
 
-		rafRef.current = requestAnimationFrame(step);
+		f.raf = requestAnimationFrame(step);
 		return () => {
-			if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-			rafRef.current = null;
-			lastTsRef.current = null;
+			if (f.raf !== null) cancelAnimationFrame(f.raf);
+			f.raf = null;
+			f.lastTs = null;
 			clearResumeTimer();
 		};
-	}, [
-		enabled,
-		applyTransform,
-		contentWidth,
-		getComputedSlideWidth,
-		clearResumeTimer,
-	]);
+	}, [enabled, applyTransform, storeRef, clearResumeTimer]);
 
 	const onPointerDown = useCallback(
 		(e: PointerEvent<HTMLDivElement>) => {
-			interactingRef.current = true;
+			const f = flow.current;
+			f.interacting = true;
 			clearResumeTimer();
-			dragStartXRef.current = e.clientX;
-			dragStartYRef.current = e.clientY;
-			isDraggingRef.current = false;
-			suppressClickRef.current = false;
-			pointerIdRef.current = e.pointerId;
-			offsetAtDragStartRef.current = offsetRef.current;
+			f.startX = e.clientX;
+			f.startY = e.clientY;
+			f.dragging = false;
+			f.suppressClick = false;
+			f.pointerId = e.pointerId;
+			f.offsetAtStart = f.offset;
 			// Capture is deferred to the first real drag move so a tap reaches child links.
 		},
 		[clearResumeTimer],
@@ -152,12 +184,13 @@ export function useFlow({
 
 	const onPointerMove = useCallback(
 		(e: PointerEvent<HTMLDivElement>) => {
-			if (dragStartXRef.current === null) return;
+			const f = flow.current;
+			if (f.startX === null) return;
 
-			const dx = e.clientX - dragStartXRef.current;
-			const dy = e.clientY - (dragStartYRef.current ?? e.clientY);
+			const dx = e.clientX - f.startX;
+			const dy = e.clientY - (f.startY ?? e.clientY);
 
-			if (!isDraggingRef.current) {
+			if (!f.dragging) {
 				if (
 					Math.abs(dx) < DRAG_DIRECTION_LOCK_PX &&
 					Math.abs(dy) < DRAG_DIRECTION_LOCK_PX
@@ -165,50 +198,49 @@ export function useFlow({
 					return;
 				if (Math.abs(dy) > Math.abs(dx)) {
 					// Vertical intent → release for page scroll and let the flow resume.
-					dragStartXRef.current = null;
+					f.startX = null;
 					scheduleResume();
 					return;
 				}
-				isDraggingRef.current = true;
-				if (trackRef.current && pointerIdRef.current !== null) {
-					trackRef.current.setPointerCapture?.(pointerIdRef.current);
+				f.dragging = true;
+				if (trackRef.current && f.pointerId !== null) {
+					trackRef.current.setPointerCapture?.(f.pointerId);
 				}
 			}
 
 			const track = trackRef.current;
 			if (track) {
-				const sw = getComputedSlideWidth();
+				const sw = storeRef.current.slideWidth;
 				const base = storeRef.current.loopOffset * sw;
 				track.style.transition = '';
-				track.style.transform = `translateX(${-(base + offsetAtDragStartRef.current) + dx}px)`;
+				track.style.transform = `translateX(${-(base + f.offsetAtStart) + dx}px)`;
 			}
 		},
-		[trackRef, storeRef, getComputedSlideWidth, scheduleResume],
+		[trackRef, storeRef, scheduleResume],
 	);
 
 	const endInteraction = useCallback(
 		(commit: boolean, dx: number) => {
-			if (commit && isDraggingRef.current) {
-				offsetRef.current = wrap(
-					offsetAtDragStartRef.current - dx,
-					contentWidth(),
-				);
-				applyTransform();
+			const f = flow.current;
+			if (commit && f.dragging) {
+				const sw = storeRef.current.slideWidth;
+				f.offset = wrap(f.offsetAtStart - dx, storeRef.current.slideCount * sw);
+				applyTransform(sw);
 				// A real drag just ended — swallow the trailing click so it does not also
 				// activate a link/button under the release point.
-				suppressClickRef.current = true;
+				f.suppressClick = true;
 			}
-			dragStartXRef.current = null;
-			isDraggingRef.current = false;
+			f.startX = null;
+			f.dragging = false;
 			scheduleResume();
 		},
-		[applyTransform, contentWidth, scheduleResume],
+		[applyTransform, storeRef, scheduleResume],
 	);
 
 	const onPointerUp = useCallback(
 		(e: PointerEvent<HTMLDivElement>) => {
-			const dx =
-				dragStartXRef.current === null ? 0 : e.clientX - dragStartXRef.current;
+			const f = flow.current;
+			const dx = f.startX === null ? 0 : e.clientX - f.startX;
 			endInteraction(true, dx);
 		},
 		[endInteraction],
@@ -223,8 +255,9 @@ export function useFlow({
 	// commit the drift so the flow is never left paused/stuck.
 	const onPointerLeave = useCallback(
 		(e: PointerEvent<HTMLDivElement>) => {
-			if (dragStartXRef.current === null) return;
-			endInteraction(true, e.clientX - dragStartXRef.current);
+			const f = flow.current;
+			if (f.startX === null) return;
+			endInteraction(true, e.clientX - f.startX);
 		},
 		[endInteraction],
 	);
@@ -232,8 +265,8 @@ export function useFlow({
 	// Capture-phase guard: only the click that immediately follows a real drag is
 	// cancelled; ordinary taps fall through untouched (links remain clickable).
 	const onClickCapture = useCallback((e: MouseEvent<HTMLDivElement>) => {
-		if (!suppressClickRef.current) return;
-		suppressClickRef.current = false;
+		if (!flow.current.suppressClick) return;
+		flow.current.suppressClick = false;
 		e.preventDefault();
 		e.stopPropagation();
 	}, []);

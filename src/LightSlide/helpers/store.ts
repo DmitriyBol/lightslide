@@ -1,37 +1,37 @@
 import {DEFAULT_VIEWED_TIMEOUT} from './constants';
 
-// The carousel's core data model — one mutable object held in a single ref.
-//
-// "Core data" (this) is split from the "functional" pieces (the analytics handlers and
-// the navigate fn, which stay in their own refs): everything here is plain state that is
-// read and written imperatively during gestures and animations — dozens of times per
-// second on pointermove — so it must never live in React state or trigger a re-render.
-// Keeping it in one object means hooks take a single `storeRef` instead of a fan-out of
-// eight-plus individual refs.
-// Generic over the slide `data` shape `T` (defaults to unknown). T only types `slideData`;
-// the motion hooks that don't read it accept `LightSlideStore` (i.e. `<unknown>`).
+/**
+ * The carousel's core data model — one mutable object held in a single ref.
+ *
+ * Split from the "functional" pieces (the analytics handlers and the navigate fn, which stay in
+ * their own refs): everything here is plain state read and written imperatively during gestures
+ * and animations — dozens of times per second on pointermove — so it must never live in React
+ * state or trigger a re-render. Keeping it in one object means hooks take a single `storeRef`
+ * instead of a fan-out of individual refs.
+ *
+ * Generic over the slide `data` shape `T` (defaults to unknown). T only types `slideData`; the
+ * motion hooks that don't read it accept `LightSlideStore` (i.e. `<unknown>`).
+ *
+ * Most fields are self-describing; the non-obvious ones: `currentIndex` is the active logical
+ * index, mutated by navigation and mirrored to React state for rendering. `maxIndex` is the last
+ * reachable position, max(0, floor(slideCount - slidesPerView)). `isLoop` is true when looping is
+ * active (the isLoop prop or flow, with more than one position); `loopOffset` is how many clones
+ * are prepended/appended (0 when not looping). `slideWidth` is the cached per-slide px width,
+ * floor(containerWidth / slidesPerView), written by useSlideMetrics on mount/resize and read by
+ * every motion/gesture/snap path so the hot loop never touches layout (offsetWidth).
+ * `autoScrollPaused` is set while a drag is in progress so auto motion (auto-scroll/flow) pauses.
+ */
 export type LightSlideStore<T = unknown> = {
-	// Active logical slide index (0..maxIndex). Mutated by navigation, mirrored to React
-	// state for rendering.
 	currentIndex: number;
-	// Number of <Slide> children.
 	slideCount: number;
-	// Last reachable scroll position: max(0, floor(slideCount - slidesPerView)).
 	maxIndex: number;
-	// How many slides are visible at once.
 	slidesPerView: number;
-	// Seconds of ≥50% visibility before onViewedSlides fires (analytics knob).
 	viewedTimeout: number;
-	// Whether the continuous flow/ticker is currently driving the track.
 	effectiveFlow: boolean;
-	// Whether looping is active (isLoop or flow, and there is more than one position).
 	isLoop: boolean;
-	// Clone slides prepended/appended in loop mode (0 when not looping).
 	loopOffset: number;
-	// Each slide's `data` prop, indexed to match the rendered slides (undefined for a
-	// non-Slide child or a Slide with no `data`).
+	slideWidth: number;
 	slideData: (T | undefined)[];
-	// Set while a pointer drag is in progress so auto motion (auto-scroll/flow) pauses.
 	autoScrollPaused: boolean;
 };
 
@@ -48,6 +48,7 @@ export function createStore<T = unknown>(
 		effectiveFlow: false,
 		isLoop: false,
 		loopOffset: 0,
+		slideWidth: 0,
 		slideData: [],
 		autoScrollPaused: false,
 		...overrides,

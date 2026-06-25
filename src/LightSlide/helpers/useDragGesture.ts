@@ -15,7 +15,6 @@ import type {LightSlideStore} from './store';
 type DragGestureParams = {
 	trackRef: RefObject<HTMLDivElement>;
 	storeRef: MutableRefObject<LightSlideStore>;
-	getComputedSlideWidth: () => number;
 	snapToVisual: (
 		visualIndex: number,
 		animate: boolean,
@@ -33,11 +32,13 @@ type DragHandlers = {
 	onClickCapture: (e: MouseEvent<HTMLDivElement>) => void;
 };
 
-// Per-gesture scratch state. Kept in ONE ref (not React state, not several separate refs):
-// it mutates on every pointermove (dozens/sec) and must never trigger a re-render — the
-// whole "DOM-mutate during the gesture" design depends on that. The carousel's shared core
-// data (currentIndex, maxIndex, …) is read from the passed-in storeRef; this ref holds only
-// the transient state local to one drag.
+/**
+ * Per-gesture scratch state. Kept in ONE ref (not React state, not several separate refs): it
+ * mutates on every pointermove (dozens/sec) and must never trigger a re-render — the whole
+ * "DOM-mutate during the gesture" design depends on that. The carousel's shared core data
+ * (currentIndex, maxIndex, slideWidth, …) is read from the passed-in storeRef; this ref holds
+ * only the transient state local to one drag.
+ */
 type DragState = {
 	startX: number | null;
 	startY: number | null;
@@ -71,7 +72,6 @@ const initialDragState = (): DragState => ({
 export function useDragGesture({
 	trackRef,
 	storeRef,
-	getComputedSlideWidth,
 	snapToVisual,
 	navigateToIndex,
 }: DragGestureParams): DragHandlers {
@@ -142,12 +142,12 @@ export function useDragGesture({
 			const delta = atStart || atEnd ? dx / RUBBER_BAND_DIVISOR : dx;
 
 			if (trackRef.current) {
-				const sw = getComputedSlideWidth();
+				const sw = storeRef.current.slideWidth;
 				const visualIndex = visualIndexOf(currentIndex);
 				trackRef.current.style.transform = `translateX(${-visualIndex * sw + delta}px)`;
 			}
 		},
-		[getComputedSlideWidth, visualIndexOf, trackRef, storeRef],
+		[visualIndexOf, trackRef, storeRef],
 	);
 
 	const commitDrag = useCallback(
@@ -169,7 +169,7 @@ export function useDragGesture({
 			d.suppressClick = true;
 
 			const {currentIndex, maxIndex, isLoop} = storeRef.current;
-			const sw = getComputedSlideWidth();
+			const sw = storeRef.current.slideWidth;
 			const nextIndex = getSnapIndex(
 				currentIndex,
 				maxIndex,
@@ -181,7 +181,7 @@ export function useDragGesture({
 
 			navigateToIndex(nextIndex, 'drag');
 		},
-		[getComputedSlideWidth, navigateToIndex, storeRef],
+		[navigateToIndex, storeRef],
 	);
 
 	const onPointerUp = useCallback(

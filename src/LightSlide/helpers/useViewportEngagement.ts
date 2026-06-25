@@ -24,9 +24,33 @@ type ViewportEngagementParams<T> = {
 	getSlideData: (index: number) => T | undefined;
 };
 
+/**
+ * Per-instance engagement lifecycle state, held in ONE ref (mirrors useDragGesture's `drag`
+ * and useFlow's `flow`): imperative flags and timer handles that must never trigger a re-render.
+ *
+ * `terminalFired` guards the mutually-exclusive terminal pair (onReachedEnd / onViewedSlides) —
+ * once either fires it is set so the other never does. `inViewportFired` makes onInViewport fire
+ * only on first visibility. `viewedTimer` is the pending viewed-timeout timer (null when not
+ * counting); `viewedStart` is the wall-clock start of the current visible streak, for the
+ * elapsed-seconds payload.
+ */
+type EngagementState = {
+	terminalFired: boolean;
+	inViewportFired: boolean;
+	viewedTimer: ReturnType<typeof setTimeout> | null;
+	viewedStart: number | null;
+};
+
+const initialEngagementState = (): EngagementState => ({
+	terminalFired: false,
+	inViewportFired: false,
+	viewedTimer: null,
+	viewedStart: null,
+});
+
 // Owns the viewport/terminal-event lifecycle: fires onInViewport once, starts the
 // viewed-timeout timer while visible, and enforces that onReachedEnd / onViewedSlides
-// are mutually exclusive for the component's lifetime (terminalFiredRef guard).
+// are mutually exclusive for the component's lifetime (the terminalFired guard).
 // Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
 export function useViewportEngagement<T>({
 	containerRef,
@@ -37,19 +61,17 @@ export function useViewportEngagement<T>({
 	getViewedSlides,
 	getSlideData,
 }: ViewportEngagementParams<T>) {
-	const terminalFiredRef = useRef(false);
-	const inViewportFiredRef = useRef(false);
-	const viewedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const viewedStartRef = useRef<number | null>(null);
+	const engagement = useRef<EngagementState>(initialEngagementState());
 
 	const fireTerminalIfNeeded = useCallback(
 		(kind: 'reachedEnd' | 'viewedSlides') => {
-			if (terminalFiredRef.current) return;
-			terminalFiredRef.current = true;
+			const s = engagement.current;
+			if (s.terminalFired) return;
+			s.terminalFired = true;
 
-			if (viewedTimerRef.current !== null) {
-				clearTimeout(viewedTimerRef.current);
-				viewedTimerRef.current = null;
+			if (s.viewedTimer !== null) {
+				clearTimeout(s.viewedTimer);
+				s.viewedTimer = null;
 			}
 
 			if (kind === 'reachedEnd') {
@@ -64,8 +86,8 @@ export function useViewportEngagement<T>({
 			} else {
 				const onViewedSlides = analyticsRef.current?.onViewedSlides;
 				if (onViewedSlides) {
-					const elapsed = viewedStartRef.current
-						? Math.round((Date.now() - viewedStartRef.current) / 1000)
+					const elapsed = s.viewedStart
+						? Math.round((Date.now() - s.viewedStart) / 1000)
 						: storeRef.current.viewedTimeout;
 					onViewedSlides(buildViewedSlidesPayload(getViewedSlides(), elapsed));
 				}
@@ -77,29 +99,32 @@ export function useViewportEngagement<T>({
 	useEffect(() => {
 		const wrapper = containerRef.current;
 		if (!wrapper) return;
+		// engagement.current is stable for the component's life — capture it once so the
+		// cleanup reads the live timer handle without an exhaustive-deps warning.
+		const s = engagement.current;
 
 		const io = new IntersectionObserver(
 			([entry]) => {
 				if (entry.isIntersecting) {
-					if (!inViewportFiredRef.current) {
-						inViewportFiredRef.current = true;
+					if (!s.inViewportFired) {
+						s.inViewportFired = true;
 						analyticsRef.current?.onInViewport?.(buildInViewportPayload());
 					}
 					if (
 						viewedTrackingEnabled &&
-						!terminalFiredRef.current &&
-						viewedTimerRef.current === null
+						!s.terminalFired &&
+						s.viewedTimer === null
 					) {
-						viewedStartRef.current = Date.now();
+						s.viewedStart = Date.now();
 						markViewed(storeRef.current.currentIndex);
-						viewedTimerRef.current = setTimeout(() => {
-							viewedTimerRef.current = null;
+						s.viewedTimer = setTimeout(() => {
+							s.viewedTimer = null;
 							fireTerminalIfNeeded('viewedSlides');
 						}, storeRef.current.viewedTimeout * 1000);
 					}
-				} else if (viewedTimerRef.current !== null) {
-					clearTimeout(viewedTimerRef.current);
-					viewedTimerRef.current = null;
+				} else if (s.viewedTimer !== null) {
+					clearTimeout(s.viewedTimer);
+					s.viewedTimer = null;
 				}
 			},
 			{threshold: VIEWPORT_THRESHOLD},
@@ -108,7 +133,7 @@ export function useViewportEngagement<T>({
 		io.observe(wrapper);
 		return () => {
 			io.disconnect();
-			if (viewedTimerRef.current !== null) clearTimeout(viewedTimerRef.current);
+			if (s.viewedTimer !== null) clearTimeout(s.viewedTimer);
 		};
 	}, [
 		markViewed,

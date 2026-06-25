@@ -22,13 +22,14 @@ function setupDrag(overrides: Overrides = {}) {
 		maxIndex: overrides.maxIndex ?? 4,
 		isLoop: overrides.isLoop ?? false,
 		loopOffset: overrides.loopOffset ?? 0,
+		// Cached width the gesture sizes its snap/transform from (was getComputedSlideWidth).
+		slideWidth: 300,
 	});
 	const storeRef = {current: store};
 	const {result} = renderHook(() =>
 		useDragGesture({
 			trackRef: {current: track},
 			storeRef,
-			getComputedSlideWidth: () => 300,
 			snapToVisual,
 			navigateToIndex: navigate,
 		}),
