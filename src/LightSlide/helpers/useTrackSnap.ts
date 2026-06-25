@@ -17,17 +17,17 @@ type TrackSnap = {
 // Imperatively moves the track via transform: translateX.
 // `snapToVisual` works in absolute visual indices (visual = logical + loopOffset in loop mode);
 // `snapTrack` is the logical-index convenience wrapper. onComplete fires after the transition
-// ends, or immediately when animate is false.
+// ends, or immediately when animate is false. Sizes from the cached store.slideWidth so the
+// snap always lands exactly on a slide boundary (same width the slides render at).
 export function useTrackSnap(
 	trackRef: RefObject<HTMLDivElement>,
-	getComputedSlideWidth: () => number,
 	storeRef: MutableRefObject<LightSlideStore>,
 ): TrackSnap {
 	const snapToVisual = useCallback(
 		(visualIndex: number, animate: boolean, onComplete?: () => void) => {
 			const track = trackRef.current;
 			if (!track) return;
-			const sw = getComputedSlideWidth();
+			const sw = storeRef.current.slideWidth;
 
 			if (animate) {
 				track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
@@ -44,7 +44,7 @@ export function useTrackSnap(
 				onComplete?.();
 			}
 		},
-		[trackRef, getComputedSlideWidth],
+		[trackRef, storeRef],
 	);
 
 	const snapTrack = useCallback(

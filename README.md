@@ -270,7 +270,7 @@ src/
 │       ├── store.ts                #   single core-data store (LightSlideStore<T>)
 │       ├── slideData.ts            #   collectSlideData (+ test)
 │       ├── loopClones.ts           #   buildLoopChildren (+ test)
-│       ├── useSlideMetrics.ts      #   measure container → slide px width
+│       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
 │       ├── useDragGesture.ts       #   pointer/drag handlers (+ test)

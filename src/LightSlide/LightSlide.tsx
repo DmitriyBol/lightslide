@@ -125,14 +125,12 @@ export function LightSlide<T = unknown>({
 		setIsReady(true);
 	}, []);
 
-	const {slideWidth, measureSlideWidth, getComputedSlideWidth} =
-		useSlideMetrics(containerRef, storeRef);
-
-	const {snapToVisual, snapTrack} = useTrackSnap(
-		trackRef,
-		getComputedSlideWidth,
+	const {slideWidth, measureSlideWidth} = useSlideMetrics(
+		containerRef,
 		storeRef,
 	);
+
+	const {snapToVisual, snapTrack} = useTrackSnap(trackRef, storeRef);
 
 	// Re-derive maxIndex, clamp the index, and re-snap (no animation) when the layout
 	// shape changes — slidesPerView, loop mode, or loading clearing. Runs as a *layout*
@@ -251,7 +249,6 @@ export function LightSlide<T = unknown>({
 	const dragHandlers = useDragGesture({
 		trackRef,
 		storeRef,
-		getComputedSlideWidth,
 		snapToVisual,
 		navigateToIndex,
 	});
@@ -262,7 +259,6 @@ export function LightSlide<T = unknown>({
 		resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
 		trackRef,
 		storeRef,
-		getComputedSlideWidth,
 	});
 
 	// In flow mode the flow owns the track (continuous drift + auto-resume);
