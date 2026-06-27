@@ -323,13 +323,30 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 125 tests across 14 suites
+npm test             # 125 integration tests (Jest + jsdom) across 14 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
 npm run build        # Rollup CJS + ESM + d.ts
 npm run size         # bundle size check (after build)
 npm run playground   # Vite dev server (playground/)
+```
+
+### Tests
+
+Two layers:
+
+- **Integration** (`npm test`) — Jest + Testing Library in jsdom; the fast inner loop over
+  component logic.
+- **End-to-end** (`npm run test:e2e`) — Playwright (Chromium) driving the live playground in a
+  real browser. Covers what jsdom can't: pointer drag/snap, layout-measured slide widths, and
+  loop/flow motion. See [`e2e/`](e2e/).
+
+```bash
+npx playwright install chromium   # one-time: browser
+npm install --prefix playground   # one-time: playground deps
+npm run test:e2e                  # headless; boots the playground automatically
+npm run test:e2e:ui               # interactive UI mode
 ```
 
 ## License
