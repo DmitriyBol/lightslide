@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsHandlers} from 'lightslide';
+import type {AnalyticsConfig} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Controls, Demo, Well} from '../components/Demo';
@@ -21,10 +21,13 @@ export function LoopExample() {
 	const [isLoop, setIsLoop] = useState(true);
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsHandlers = {
-		onSlide: p =>
-			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
-		onReachedEnd: () => log('end', 'fires only without isLoop'),
+	const analytics: AnalyticsConfig = {
+		onEvent: e => {
+			if (e.event === 'carousel_slide')
+				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+			else if (e.event === 'carousel_reached_end')
+				log('end', 'fires only without isLoop');
+		},
 	};
 
 	return (
@@ -37,7 +40,7 @@ export function LoopExample() {
 				<>
 					With <code>isLoop</code>, edge slides are cloned so wrap-around is
 					continuous and the nav arrows never disable. Toggle to compare —{' '}
-					<code>onReachedEnd</code> never fires in loop mode.
+					<code>carousel_reached_end</code> never fires in loop mode.
 				</>
 			}>
 			<Controls>

@@ -1,7 +1,8 @@
 export {LightSlide} from './LightSlide/LightSlide';
 export {Slide} from './Slide/Slide';
 export type {
-	AnalyticsHandlers,
+	AnalyticsConfig,
+	AnalyticsEvent,
 	AutoScrollConfig,
 	FlowConfig,
 	InViewportPayload,

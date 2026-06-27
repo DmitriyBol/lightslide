@@ -9,11 +9,6 @@ import {
 
 import type {DragEvent} from 'react';
 
-import {
-	buildNavButtonPayload,
-	buildPaginationClickPayload,
-	buildSlidePayload,
-} from '../analytics/analytics';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import {Navigation} from '../Navigation/Navigation';
@@ -61,15 +56,15 @@ export function LightSlide<T = unknown>({
 	// the navigate fn) live in their own refs below. See helpers/store.ts.
 	const storeRef = useRef(createStore<T>());
 
-	// Latest-ref of the raw analytics prop. Handlers are called optionally at each fire
-	// site (analytics?.onX?.(payload)) — no merging, no noop layer.
+	// Latest-ref of the raw analytics prop. The single onEvent handler is called optionally at
+	// each fire site (analytics?.onEvent?.(payload)) — no merging, no noop layer.
 	const analyticsRef = useRef(analytics);
 	analyticsRef.current = analytics;
 
-	// Viewed-slides tracking is opt-in: the timer only runs when the consumer actually
-	// handles onViewedSlides. Its duration knob, viewedTimeout, lives alongside the
-	// handlers inside `analytics`.
-	const viewedTrackingEnabled = analytics?.onViewedSlides !== undefined;
+	// Viewed-slides tracking is opt-in via the presence of `viewedTimeout`: the timer only runs
+	// when the consumer sets it (otherwise the carousel_reached_end terminal stays armed). Its
+	// value doubles as the duration knob (seconds), defaulting to DEFAULT_VIEWED_TIMEOUT.
+	const viewedTrackingEnabled = analytics?.viewedTimeout !== undefined;
 	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
 
 	const childArray = Children.toArray(children);
@@ -187,19 +182,27 @@ export function LightSlide<T = unknown>({
 			setCurrentIndex(clamped);
 			markViewed(clamped);
 
-			analyticsRef.current?.onSlide?.(
-				buildSlidePayload(direction, from, clamped),
-			);
+			analyticsRef.current?.onEvent?.({
+				event: 'carousel_slide',
+				direction,
+				fromIndex: from,
+				toIndex: clamped,
+			});
 
 			if (source === 'button') {
-				analyticsRef.current?.onNavButtonClick?.(
-					buildNavButtonPayload(direction, from, clamped),
-				);
+				analyticsRef.current?.onEvent?.({
+					event: 'carousel_nav_button',
+					direction,
+					fromIndex: from,
+					toIndex: clamped,
+				});
 			}
 			if (source === 'pagination') {
-				analyticsRef.current?.onPaginationClick?.(
-					buildPaginationClickPayload(from, clamped),
-				);
+				analyticsRef.current?.onEvent?.({
+					event: 'carousel_pagination_click',
+					fromIndex: from,
+					toIndex: clamped,
+				});
 			}
 
 			const isLoopWrap = isBackwardWrap || isForwardWrap;

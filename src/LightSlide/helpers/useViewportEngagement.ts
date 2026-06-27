@@ -2,22 +2,17 @@ import {useCallback, useEffect, useRef} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
-import {
-	buildInViewportPayload,
-	buildReachedEndPayload,
-	buildViewedSlidesPayload,
-} from '../../analytics/analytics';
-import type {AnalyticsHandlers, SlideData} from '../../types';
+import type {AnalyticsConfig, SlideData} from '../../types';
 import {VIEWPORT_THRESHOLD} from './constants';
 import type {LightSlideStore} from './store';
 
 type ViewportEngagementParams<T> = {
 	containerRef: RefObject<HTMLDivElement>;
 	storeRef: MutableRefObject<LightSlideStore<T>>;
-	// Latest-ref of the raw analytics prop; handlers are called optionally at fire time.
-	analyticsRef: MutableRefObject<AnalyticsHandlers<T> | undefined>;
+	// Latest-ref of the raw analytics prop; onEvent is called optionally at fire time.
+	analyticsRef: MutableRefObject<AnalyticsConfig<T> | undefined>;
 	// Whether the consumer actually wants viewed-slides tracking. When false the
-	// viewed-timeout timer is never started (the feature is opt-in via onViewedSlides).
+	// viewed-timeout timer is never started (the feature is opt-in via viewedTimeout).
 	viewedTrackingEnabled: boolean;
 	markViewed: (index: number) => void;
 	getViewedSlides: () => SlideData<T>[];
@@ -28,9 +23,10 @@ type ViewportEngagementParams<T> = {
  * Per-instance engagement lifecycle state, held in ONE ref (mirrors useDragGesture's `drag`
  * and useFlow's `flow`): imperative flags and timer handles that must never trigger a re-render.
  *
- * `terminalFired` guards the mutually-exclusive terminal pair (onReachedEnd / onViewedSlides) —
- * once either fires it is set so the other never does. `inViewportFired` makes onInViewport fire
- * only on first visibility. `viewedTimer` is the pending viewed-timeout timer (null when not
+ * `terminalFired` guards the mutually-exclusive terminal pair (carousel_reached_end /
+ * carousel_viewed_slides) — once either fires it is set so the other never does. `inViewportFired`
+ * makes carousel_in_viewport fire only on first visibility. `viewedTimer` is the pending
+ * viewed-timeout timer (null when not
  * counting); `viewedStart` is the wall-clock start of the current visible streak, for the
  * elapsed-seconds payload.
  */
@@ -48,10 +44,10 @@ const initialEngagementState = (): EngagementState => ({
 	viewedStart: null,
 });
 
-// Owns the viewport/terminal-event lifecycle: fires onInViewport once, starts the
-// viewed-timeout timer while visible, and enforces that onReachedEnd / onViewedSlides
-// are mutually exclusive for the component's lifetime (the terminalFired guard).
-// Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
+// Owns the viewport/terminal-event lifecycle: fires carousel_in_viewport once, starts the
+// viewed-timeout timer while visible, and enforces that carousel_reached_end /
+// carousel_viewed_slides are mutually exclusive for the component's lifetime (the terminalFired
+// guard). Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
 export function useViewportEngagement<T>({
 	containerRef,
 	storeRef,
@@ -74,23 +70,24 @@ export function useViewportEngagement<T>({
 				s.viewedTimer = null;
 			}
 
+			const onEvent = analyticsRef.current?.onEvent;
+			if (!onEvent) return;
+
 			if (kind === 'reachedEnd') {
-				const onReachedEnd = analyticsRef.current?.onReachedEnd;
-				if (onReachedEnd) {
-					const allSlides: SlideData<T>[] = Array.from(
-						{length: storeRef.current.slideCount},
-						(_, i) => ({index: i, data: getSlideData(i)}),
-					);
-					onReachedEnd(buildReachedEndPayload(allSlides));
-				}
+				const slides: SlideData<T>[] = Array.from(
+					{length: storeRef.current.slideCount},
+					(_, i) => ({index: i, data: getSlideData(i)}),
+				);
+				onEvent({event: 'carousel_reached_end', slides});
 			} else {
-				const onViewedSlides = analyticsRef.current?.onViewedSlides;
-				if (onViewedSlides) {
-					const elapsed = s.viewedStart
-						? Math.round((Date.now() - s.viewedStart) / 1000)
-						: storeRef.current.viewedTimeout;
-					onViewedSlides(buildViewedSlidesPayload(getViewedSlides(), elapsed));
-				}
+				const viewedSeconds = s.viewedStart
+					? Math.round((Date.now() - s.viewedStart) / 1000)
+					: storeRef.current.viewedTimeout;
+				onEvent({
+					event: 'carousel_viewed_slides',
+					slides: getViewedSlides(),
+					viewedSeconds,
+				});
 			}
 		},
 		[getSlideData, getViewedSlides, storeRef, analyticsRef],
@@ -108,7 +105,7 @@ export function useViewportEngagement<T>({
 				if (entry.isIntersecting) {
 					if (!s.inViewportFired) {
 						s.inViewportFired = true;
-						analyticsRef.current?.onInViewport?.(buildInViewportPayload());
+						analyticsRef.current?.onEvent?.({event: 'carousel_in_viewport'});
 					}
 					if (
 						viewedTrackingEnabled &&

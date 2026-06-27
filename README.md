@@ -22,7 +22,8 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
 - **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping;
   pauses on interaction and resumes after a delay.
 - **Loading fallback** — render your own placeholder node while data is fetched.
-- **Analytics** — six opt-in events (viewport, slide, navigation, pagination, engagement).
+- **Analytics** — one typed `onEvent` handler emitting six events (viewport, slide, navigation,
+  pagination, engagement).
 - **Fully typed** — generic over your slide `data` shape; no unnecessary re-renders (core data
   lives in one imperative store, context is split so navigating doesn't re-render the slides).
 
@@ -68,7 +69,7 @@ payloads.
 | `className` | `string` | — | Class for the outer wrapper |
 | `trackStyle` | `CSSProperties` | — | Styles for the inner track |
 | `trackClassName` | `string` | — | Class for the inner track |
-| `analytics` | `AnalyticsHandlers<T>` | — | Event handlers + `viewedTimeout` (see [Analytics](#analytics)) |
+| `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
 | `autoScroll` | `AutoScrollConfig` | — | Automatic slide cycling |
 | `flow` | `FlowConfig` | — | Continuous ticker scroll (supersedes `autoScroll`) |
@@ -94,7 +95,12 @@ A single slide. Width is computed as `containerWidth / slidesPerView`. Generic o
 type Product = { id: number; name: string };
 
 <LightSlide<Product>
-  analytics={{ onReachedEnd: (p) => p.slides.forEach((s) => s.data?.name) }}
+  analytics={{
+    onEvent: (e) => {
+      if (e.event === "carousel_reached_end")
+        e.slides.forEach((s) => s.data?.name);
+    },
+  }}
 >
   <Slide<Product> data={{ id: 1, name: "Widget" }}><Card /></Slide>
 </LightSlide>
@@ -122,15 +128,15 @@ client (no SSR/pre-layout flash). For a custom label or element, use `renderPrev
 | `renderPrev` / `renderNext` | `(props: NavButtonRenderProps) => ReactNode` | Render your own element (replaces the default button) |
 
 `renderPrev`/`renderNext` fully replace the `<button>` — attach the passed `onClick` (same
-handler the built-in button uses, so the `onSlide` + `onNavButtonClick` events fire identically)
-and `disabled`. Your element is wrapped in a minimal positioning slot, so it lands centered and
+handler the built-in button uses, so the `carousel_slide` + `carousel_nav_button` events fire
+identically) and `disabled`. Your element is wrapped in a minimal positioning slot, so it lands centered and
 un-clipped, and the slot dims to 50% at the boundary by default.
 
 **`NavButtonRenderProps`**
 
 | Key | Type | Description |
 |---|---|---|
-| `onClick` | `() => void` | Triggers navigation (+ `onSlide` / `onNavButtonClick`) |
+| `onClick` | `() => void` | Triggers navigation (+ `carousel_slide` / `carousel_nav_button`) |
 | `disabled` | `boolean` | Boundary state. Always `false` when `isLoop` is active |
 | `direction` | `"left" \| "right"` | Which button this is |
 
@@ -152,7 +158,7 @@ navigation type. Not tracked during a flow (continuous motion has no discrete in
 <LightSlide autoScroll={{ enabled: true, interval: 3000 }} />
 ```
 
-Loops back to 0 after the last slide; pauses during drag; does **not** fire `onReachedEnd`.
+Loops back to 0 after the last slide; pauses during drag; does **not** fire `carousel_reached_end`.
 
 **`AutoScrollConfig`**: `enabled: boolean`, `interval: number` (ms).
 
@@ -177,7 +183,7 @@ from where it stopped after `resumeDelay`. Supersedes `autoScroll` when both are
 
 `Math.ceil(slidesPerView)` slides are cloned at each end; when a snap lands on a clone, the track
 silently repositions to the matching real slide before the next interaction. Prev/next buttons
-are never disabled while looping, and `onReachedEnd` is never fired. No-op when `maxIndex === 0`.
+are never disabled while looping, and `carousel_reached_end` is never fired. No-op when `maxIndex === 0`.
 
 ## Loading fallback
 
@@ -201,38 +207,47 @@ next. Each slide fills `containerWidth / slidesPerView` px;
 
 ## Analytics
 
-Events are **silent by default** — they run only when you provide a handler. Payloads carry only
-their own fields (no timestamp — add your own in the handler if needed).
+All analytics flow through **one** handler — `analytics.onEvent`. It receives every event as a
+discriminated union (`AnalyticsEvent<T>`); `switch` on `event` and handle only what you need.
+With no `analytics` prop nothing fires. Payloads carry only their own fields (no timestamp — add
+your own in the handler if needed).
 
-| Event | Handler | When it fires | Payload |
-|---|---|---|---|
-| `carousel_in_viewport` | `onInViewport` | First time ≥50% visible (once) | `{ event }` |
-| `carousel_slide` | `onSlide` | Every navigation (drag/button/pagination/auto) | `{ event, direction, fromIndex, toIndex }` |
-| `carousel_reached_end` | `onReachedEnd` | User reaches the last position (once) | `{ event, slides }` — **all** slides |
-| `carousel_viewed_slides` | `onViewedSlides` | After `viewedTimeout` s of visibility (once, opt-in) | `{ event, slides, viewedSeconds }` — **viewed** slides |
-| `carousel_nav_button` | `onNavButtonClick` | Prev/next clicked (with `onSlide`) | `{ event, direction, fromIndex, toIndex }` |
-| `carousel_pagination_click` | `onPaginationClick` | Dot clicked (with `onSlide`) | `{ event, fromIndex, toIndex }` |
+| `event` | When it fires | Payload |
+|---|---|---|
+| `carousel_in_viewport` | First time ≥50% visible (once) | `{ event }` |
+| `carousel_slide` | Every navigation (drag/button/pagination/auto) | `{ event, direction, fromIndex, toIndex }` |
+| `carousel_reached_end` | User reaches the last position (once) | `{ event, slides }` — **all** slides |
+| `carousel_viewed_slides` | After `viewedTimeout` s of visibility (once, opt-in) | `{ event, slides, viewedSeconds }` — **viewed** slides |
+| `carousel_nav_button` | Prev/next clicked (alongside `carousel_slide`) | `{ event, direction, fromIndex, toIndex }` |
+| `carousel_pagination_click` | Dot clicked (alongside `carousel_slide`) | `{ event, fromIndex, toIndex }` |
 
 Notes:
 
-- `onReachedEnd` and `onViewedSlides` are **mutually exclusive** — whichever fires first
-  suppresses the other for the session. Together they form the engagement signal: "the user
-  reached the end, or watched long enough."
-- The viewed-slides timer is **opt-in**: it starts only when `onViewedSlides` is provided, and
-  its duration knob `viewedTimeout` (seconds, default 30) lives on the `analytics` object.
+- `carousel_reached_end` and `carousel_viewed_slides` are **mutually exclusive** — whichever
+  fires first suppresses the other for the session. Together they form the engagement signal:
+  "the user reached the end, or watched long enough."
+- Viewed-slides tracking is **opt-in via `viewedTimeout`**: the timer starts only when you set it
+  (seconds of ≥50% visibility, default knob 30). Omit `viewedTimeout` and `carousel_reached_end`
+  stays the armed terminal instead.
 - `fromIndex`/`toIndex` on `carousel_slide` may differ by more than one (a drag can cross
   several slides); `toIndex` is the slide actually landed on.
 
 ```tsx
 analytics={{
-  onViewedSlides: (p) => track("engagement", p), // p.slides = slides actually seen
-  onReachedEnd: (p) => track("complete", p),      // p.slides = every slide
-  viewedTimeout: 20,
+  onEvent: (e) => {
+    switch (e.event) {
+      case "carousel_viewed_slides":
+        return track("engagement", e); // e.slides = slides actually seen
+      case "carousel_reached_end":
+        return track("complete", e);    // e.slides = every slide
+    }
+  },
+  viewedTimeout: 20, // opt in to carousel_viewed_slides
 }}
 ```
 
-`SlideData<T>` is `{ index: number; data?: T }`. With `<LightSlide<T>>` the `slides` arrays are
-typed `SlideData<T>[]`.
+`SlideData<T>` is `{ index: number; data?: T }`. With `<LightSlide<T>>` the `slides` arrays on the
+terminal events are typed `SlideData<T>[]`.
 
 ## Styling
 
@@ -246,7 +261,7 @@ aren't clipped; an inner viewport clips the track. Use `padding` on `<Slide>` fo
 
 ```ts
 import type {
-  AnalyticsHandlers, AutoScrollConfig, FlowConfig,
+  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig, FlowConfig,
   InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
   NavigationButtonPayload, PaginationClickPayload,
   NavigationConfig, NavButtonRenderProps, PaginationConfig,
@@ -289,9 +304,6 @@ src/
 │   ├── Pagination.test.tsx
 │   ├── Pagination.types.ts         # PaginationConfig
 │   └── Pagination.module.scss
-├── analytics/
-│   ├── analytics.ts                # Payload builders (pure)
-│   └── analytics.test.ts
 ├── hooks/
 │   ├── useViewedSlides.ts          # Tracks unique viewed slide indices
 │   └── useViewedSlides.test.ts
@@ -310,13 +322,13 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 110 tests across 12 suites
+npm test             # 113 tests across 13 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
 npm run build        # Rollup CJS + ESM + d.ts
 npm run size         # bundle size check (after build)
-npm run playground   # Vite dev server (playground/ is gitignored)
+npm run playground   # Vite dev server (playground/)
 ```
 
 ## License

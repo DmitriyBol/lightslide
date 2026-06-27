@@ -1,6 +1,5 @@
 import {useState} from 'react';
 import {LightSlide, Slide} from 'lightslide';
-import type {ViewedSlidesPayload} from 'lightslide';
 
 import {cx} from '../components/cx';
 import {Demo, Well} from '../components/Demo';
@@ -21,9 +20,9 @@ export function CustomTimeoutExample() {
 			tag="viewedTimeout={5}"
 			description={
 				<>
-					<code>viewedTimeout=5</code> fires <code>onViewedSlides</code> after
-					5s in view. Swipe to the last slide first and{' '}
-					<code>onReachedEnd</code> wins instead — whichever fires first
+					<code>viewedTimeout=5</code> fires <code>carousel_viewed_slides</code>{' '}
+					after 5s in view. Swipe to the last slide first and{' '}
+					<code>carousel_reached_end</code> wins instead — whichever fires first
 					permanently suppresses the other.
 				</>
 			}>
@@ -32,10 +31,12 @@ export function CustomTimeoutExample() {
 					key={result ?? 'active'}
 					analytics={{
 						viewedTimeout: 5,
-						onReachedEnd: p =>
-							setResult(`reached_end fired · ${p.slides.length} slides`),
-						onViewedSlides: (p: ViewedSlidesPayload) =>
-							setResult(`viewed_slides fired · after ${p.viewedSeconds}s`),
+						onEvent: e => {
+							if (e.event === 'carousel_reached_end')
+								setResult(`reached_end fired · ${e.slides.length} slides`);
+							else if (e.event === 'carousel_viewed_slides')
+								setResult(`viewed_slides fired · after ${e.viewedSeconds}s`);
+						},
 					}}>
 					{LABELS.map((label, i) => {
 						const isLast = i === LABELS.length - 1;

@@ -1,5 +1,5 @@
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsHandlers} from 'lightslide';
+import type {AnalyticsConfig} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -12,13 +12,24 @@ const LABELS = ['Slide A', 'Slide B', 'Slide C'];
 export function MinimalExample() {
 	const {entries, log, clear} = useConsole();
 
-	// Pass only the handlers you care about; everything unhandled is completely silent.
-	const analytics: AnalyticsHandlers = {
-		onInViewport: () => log('viewport'),
-		onSlide: p =>
-			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
-		onReachedEnd: p => log('end', `${p.slides.length} slides seen`),
-		onViewedSlides: p => log('viewed', `after ${p.viewedSeconds}s`),
+	// One onEvent handler receives every event; switch on `event` and ignore what you don't need.
+	const analytics: AnalyticsConfig = {
+		onEvent: e => {
+			switch (e.event) {
+				case 'carousel_in_viewport':
+					return log('viewport');
+				case 'carousel_slide':
+					return log(
+						'slide',
+						`${e.fromIndex} → ${e.toIndex} (${e.direction})`,
+					);
+				case 'carousel_reached_end':
+					return log('end', `${e.slides.length} slides seen`);
+				case 'carousel_viewed_slides':
+					return log('viewed', `after ${e.viewedSeconds}s`);
+			}
+		},
+		viewedTimeout: 30,
 	};
 
 	return (

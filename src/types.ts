@@ -41,7 +41,7 @@ export type LightSlideProps<T = unknown> = {
 	className?: string;
 	trackStyle?: CSSProperties;
 	trackClassName?: string;
-	analytics?: AnalyticsHandlers<T>;
+	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
 	autoScroll?: AutoScrollConfig;
 	flow?: FlowConfig;
@@ -67,20 +67,25 @@ export type SlideProps<T = unknown> = {
 	data?: T;
 };
 
-// Analytics event handlers + config. All fields are optional; unhandled events are
-// completely silent. Generic over the slide `data` shape `T`, which flows into the
-// terminal-event payloads (onReachedEnd / onViewedSlides). The viewed-slides config lives
-// here too, so everything analytics related sits in one place.
-export type AnalyticsHandlers<T = unknown> = {
-	onInViewport?: (payload: InViewportPayload) => void;
-	onSlide?: (payload: SlidePayload) => void;
-	onReachedEnd?: (payload: ReachedEndPayload<T>) => void;
-	onViewedSlides?: (payload: ViewedSlidesPayload<T>) => void;
-	onNavButtonClick?: (payload: NavigationButtonPayload) => void;
-	onPaginationClick?: (payload: PaginationClickPayload) => void;
-	// Seconds of ≥50% viewport visibility before onViewedSlides fires. Only has any
-	// effect when an onViewedSlides handler is provided (the timer is otherwise never
-	// started). Default 30.
+// Every analytics event the carousel emits, as one discriminated union — narrow on `event`
+// to handle a specific one. Generic over the slide `data` shape `T`, which flows into the
+// terminal-event payloads (carousel_reached_end / carousel_viewed_slides).
+export type AnalyticsEvent<T = unknown> =
+	| InViewportPayload
+	| SlidePayload
+	| ReachedEndPayload<T>
+	| ViewedSlidesPayload<T>
+	| NavigationButtonPayload
+	| PaginationClickPayload;
+
+// Analytics config: one universal handler plus its knobs. `onEvent` receives every event as the
+// discriminated union above (switch on `payload.event`); events you don't handle are silent.
+// Generic over the slide `data` shape `T`, carried through to the terminal-event payloads.
+export type AnalyticsConfig<T = unknown> = {
+	onEvent?: (payload: AnalyticsEvent<T>) => void;
+	// Opt-in switch for viewed-slides tracking: the timer starts only when this is set, and its
+	// value is the seconds of ≥50% visibility before carousel_viewed_slides fires (default 30).
+	// Omit it and the carousel_reached_end terminal stays armed instead.
 	viewedTimeout?: number;
 };
 
@@ -112,7 +117,7 @@ export type ViewedSlidesPayload<T = unknown> = {
 	viewedSeconds: number;
 };
 
-// Fired when a prev/next button is clicked, in addition to onSlide.
+// Fired when a prev/next button is clicked, in addition to carousel_slide.
 export type NavigationButtonPayload = {
 	event: 'carousel_nav_button';
 	direction: 'left' | 'right';
@@ -120,7 +125,7 @@ export type NavigationButtonPayload = {
 	toIndex: number;
 };
 
-// Fired when a pagination dot is clicked, in addition to onSlide.
+// Fired when a pagination dot is clicked, in addition to carousel_slide.
 export type PaginationClickPayload = {
 	event: 'carousel_pagination_click';
 	fromIndex: number;

@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsHandlers} from 'lightslide';
+import type {AnalyticsConfig} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Controls, Demo, Well} from '../components/Demo';
@@ -28,10 +28,12 @@ export function AutoScrollExample() {
 	const [intervalMs, setIntervalMs] = useState(2000);
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsHandlers = {
-		onInViewport: () => log('viewport'),
-		onSlide: p =>
-			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
+	const analytics: AnalyticsConfig = {
+		onEvent: e => {
+			if (e.event === 'carousel_in_viewport') log('viewport');
+			else if (e.event === 'carousel_slide')
+				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+		},
 	};
 
 	return (
@@ -44,7 +46,7 @@ export function AutoScrollExample() {
 				<>
 					<code>autoScroll</code> cycles slides on an interval and pauses while
 					you drag. It loops back to the first slide after the last —{' '}
-					<code>onReachedEnd</code> never fires on wrap-around.
+					<code>carousel_reached_end</code> never fires on wrap-around.
 				</>
 			}>
 			<Controls>

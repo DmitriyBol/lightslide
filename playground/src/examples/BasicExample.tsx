@@ -1,5 +1,5 @@
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsHandlers} from 'lightslide';
+import type {AnalyticsConfig} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -19,13 +19,26 @@ const PRODUCTS: Product[] = [
 export function BasicExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsHandlers<Product> = {
-		onInViewport: () => log('viewport'),
-		onSlide: p =>
-			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
-		onReachedEnd: p => log('end', `${p.slides.length} slides seen`),
-		onViewedSlides: p =>
-			log('viewed', `after ${p.viewedSeconds}s · ${p.slides.length} seen`),
+	const analytics: AnalyticsConfig<Product> = {
+		onEvent: e => {
+			switch (e.event) {
+				case 'carousel_in_viewport':
+					return log('viewport');
+				case 'carousel_slide':
+					return log(
+						'slide',
+						`${e.fromIndex} → ${e.toIndex} (${e.direction})`,
+					);
+				case 'carousel_reached_end':
+					return log('end', `${e.slides.length} slides seen`);
+				case 'carousel_viewed_slides':
+					return log(
+						'viewed',
+						`after ${e.viewedSeconds}s · ${e.slides.length} seen`,
+					);
+			}
+		},
+		viewedTimeout: 30,
 	};
 
 	return (
@@ -37,7 +50,9 @@ export function BasicExample() {
 			description={
 				<>
 					Swipe or drag the cards. All four analytics events are wired to the
-					console. <code>onReachedEnd</code> and <code>onViewedSlides</code> are
+					console via one <code>onEvent</code> handler.{' '}
+						<code>carousel_reached_end</code> and{' '}
+						<code>carousel_viewed_slides</code> are
 					mutually exclusive — only one ever fires.
 				</>
 			}>

@@ -1,5 +1,5 @@
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsHandlers} from 'lightslide';
+import type {AnalyticsConfig} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -50,13 +50,22 @@ const PRODUCTS: Product[] = [
 export function ProductCardsExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsHandlers<Product> = {
-		onSlide: p =>
-			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
-		onReachedEnd: () => log('end', 'last card reached'),
-		onNavButtonClick: p =>
-			log('nav', `${p.direction} · ${p.fromIndex} → ${p.toIndex}`),
-		onPaginationClick: p => log('pagination', `${p.fromIndex} → ${p.toIndex}`),
+	const analytics: AnalyticsConfig<Product> = {
+		onEvent: e => {
+			switch (e.event) {
+				case 'carousel_slide':
+					return log(
+						'slide',
+						`${e.fromIndex} → ${e.toIndex} (${e.direction})`,
+					);
+				case 'carousel_reached_end':
+					return log('end', 'last card reached');
+				case 'carousel_nav_button':
+					return log('nav', `${e.direction} · ${e.fromIndex} → ${e.toIndex}`);
+				case 'carousel_pagination_click':
+					return log('pagination', `${e.fromIndex} → ${e.toIndex}`);
+			}
+		},
 	};
 
 	return (
