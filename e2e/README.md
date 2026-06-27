@@ -28,5 +28,6 @@ npm run test:e2e:report   # open the last HTML report
 - `support/carousel.ts` — page object for one carousel in a demo section. Addresses controls by
   role/aria only (`Next slide`, `Go to slide N`, `aria-current`); never by CSS-module class.
 - `support/gestures.ts` — `dragX`, a real pointer drag via `page.mouse`.
-- `*.spec.ts` — smoke, navigation, pagination, drag, loop (wrap-around), flow (drift). Natural
-  next specs: flow pause/resume on drag, slidesPerView; then firefox/webkit projects in the config.
+- `*.spec.ts` — smoke, navigation, pagination, drag, loop (wrap-around), flow (drift +
+  pause/resume), slidesPerView (width scaling). Natural next step: firefox/webkit projects in the
+  config.

@@ -24,4 +24,42 @@ test.describe('flow ticker', () => {
 		// ~40 px/s × 0.7 s ≈ 28 px of drift; require a delta comfortably above measurement noise.
 		expect(Math.abs(after.x - before.x)).toBeGreaterThan(10);
 	});
+
+	test('a drag pauses the drift; it resumes after resumeDelay', async ({
+		page,
+	}) => {
+		await page.goto('/');
+		const section = page.locator('#flow');
+		await section.scrollIntoViewIfNeeded();
+		const chip = section.getByText('React', {exact: true}).first();
+
+		// Drag across the ticker row. We build the coordinates by hand: the chips drift, so we can't
+		// aim at a moving target, but their row Y is constant and the section's horizontal centre is
+		// always over the full-width track. pointerdown pauses the drift at once; pointerup arms the
+		// resume timer (FlowExample sets resumeDelay: 1500).
+		const chipBox = await chip.boundingBox();
+		const sectionBox = await section.boundingBox();
+		if (!chipBox || !sectionBox) throw new Error('flow has no bounding box');
+		const y = chipBox.y + chipBox.height / 2;
+		const x = sectionBox.x + sectionBox.width / 2;
+		await page.mouse.move(x, y);
+		await page.mouse.down();
+		for (let i = 1; i <= 10; i++) await page.mouse.move(x - i * 6, y);
+		await page.mouse.up();
+
+		// Frozen well inside the resume window.
+		const p1 = await chip.boundingBox();
+		await page.waitForTimeout(250);
+		const p2 = await chip.boundingBox();
+		if (!p1 || !p2) throw new Error('flow chip has no bounding box');
+		expect(Math.abs(p2.x - p1.x)).toBeLessThan(2);
+
+		// Past the delay, the drift picks back up on its own.
+		await page.waitForTimeout(1600);
+		const p3 = await chip.boundingBox();
+		await page.waitForTimeout(400);
+		const p4 = await chip.boundingBox();
+		if (!p3 || !p4) throw new Error('flow chip has no bounding box');
+		expect(Math.abs(p4.x - p3.x)).toBeGreaterThan(8);
+	});
 });
