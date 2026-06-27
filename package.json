@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Lightweight, fully-typed React carousel & slider with built-in analytics, infinite loop, and a continuous flow (ticker) mode. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -21,6 +21,9 @@
     "test": "jest --config jest.config.js",
     "test:watch": "jest --config jest.config.js --watch",
     "test:coverage": "jest --config jest.config.js --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,scss}\"",
@@ -54,6 +57,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.7.0",
+    "@playwright/test": "^1.49.1",
     "@rollup/plugin-typescript": "^11.1.6",
     "@size-limit/preset-small-lib": "^11.1.4",
     "@testing-library/jest-dom": "^6.4.2",
