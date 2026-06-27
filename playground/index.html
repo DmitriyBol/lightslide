@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>LightSlide — playground</title>
+		<meta
+			name="description"
+			content="Interactive playground for LightSlide, a tiny, fully-typed, zero-dependency React carousel & slider." />
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+			rel="stylesheet" />
+
+		<style>
+			/* Paint the dark canvas before the bundle (and its tokens) load, to avoid a flash. */
+			html {
+				background: #08080a;
+				color-scheme: dark;
+			}
+			html[data-theme='light'] {
+				background: #f7f7f9;
+				color-scheme: light;
+			}
+		</style>
+
+		<script>
+			// Resolve the saved/preferred theme before first paint so there is no flash
+			// (mirrors useTheme: same storage key + prefers-color-scheme fallback).
+			(function () {
+				try {
+					var t = localStorage.getItem('lightslide-theme');
+					if (t !== 'light' && t !== 'dark')
+						t = matchMedia('(prefers-color-scheme: light)').matches
+							? 'light'
+							: 'dark';
+					document.documentElement.dataset.theme = t;
+				} catch (e) {}
+			})();
+		</script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module" src="/src/main.tsx"></script>
+	</body>
+</html>

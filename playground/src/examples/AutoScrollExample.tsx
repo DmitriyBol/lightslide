@@ -1,0 +1,93 @@
+import {useState} from 'react';
+import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsHandlers} from 'lightslide';
+
+import {Console} from '../components/Console';
+import {Controls, Demo, Well} from '../components/Demo';
+import {Segmented} from '../components/Segmented';
+import slides from '../components/slides.module.scss';
+import {Toggle} from '../components/Toggle';
+import {cardTone} from '../components/tones';
+import {useConsole} from '../components/useConsole';
+
+const ITEMS = [
+	{label: 'New Arrivals', sub: 'Spring 2026'},
+	{label: 'Best Sellers', sub: 'All time'},
+	{label: 'Sale', sub: 'Up to 50% off'},
+	{label: 'Exclusive', sub: 'Members only'},
+];
+
+const INTERVALS = [
+	{label: '1s', value: 1000},
+	{label: '2s', value: 2000},
+	{label: '4s', value: 4000},
+];
+
+export function AutoScrollExample() {
+	const [enabled, setEnabled] = useState(true);
+	const [intervalMs, setIntervalMs] = useState(2000);
+	const {entries, log, clear} = useConsole();
+
+	const analytics: AnalyticsHandlers = {
+		onInViewport: () => log('viewport'),
+		onSlide: p =>
+			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
+	};
+
+	return (
+		<Demo
+			id="auto-scroll"
+			number="07"
+			title="Auto-scroll"
+			tag="autoScroll"
+			description={
+				<>
+					<code>autoScroll</code> cycles slides on an interval and pauses while
+					you drag. It loops back to the first slide after the last —{' '}
+					<code>onReachedEnd</code> never fires on wrap-around.
+				</>
+			}>
+			<Controls>
+				<Toggle checked={enabled} onChange={setEnabled} label="autoplay" />
+				<Segmented
+					ariaLabel="interval"
+					options={INTERVALS}
+					value={intervalMs}
+					onChange={setIntervalMs}
+				/>
+			</Controls>
+
+			<Well>
+				<LightSlide
+					key={`${enabled}-${intervalMs}`}
+					analytics={analytics}
+					autoScroll={{enabled, interval: intervalMs}}
+					navigation={{}}
+					pagination={{
+						dotStyle: {background: 'var(--border-strong)'},
+						activeDotStyle: {background: 'var(--accent)'},
+					}}>
+					{ITEMS.map((item, i) => (
+						<Slide key={item.label}>
+							<div
+								className={slides.tile}
+								style={{height: 190, background: cardTone(i)}}>
+								<span className={slides.eyebrow}>{item.sub}</span>
+								<span
+									style={{
+										fontSize: 24,
+										fontWeight: 800,
+										letterSpacing: '-0.02em',
+									}}>
+									{item.label}
+								</span>
+							</div>
+						</Slide>
+					))}
+				</LightSlide>
+			</Well>
+
+			<Console entries={entries} onClear={clear} />
+		</Demo>
+	);
+}

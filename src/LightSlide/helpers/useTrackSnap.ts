@@ -4,6 +4,7 @@ import type {MutableRefObject, RefObject} from 'react';
 
 import {SNAP_DURATION_MS, SNAP_EASING} from './constants';
 import type {LightSlideStore} from './store';
+import {trackOffset} from './trackOffset';
 
 type TrackSnap = {
 	snapToVisual: (
@@ -17,8 +18,9 @@ type TrackSnap = {
 // Imperatively moves the track via transform: translateX.
 // `snapToVisual` works in absolute visual indices (visual = logical + loopOffset in loop mode);
 // `snapTrack` is the logical-index convenience wrapper. onComplete fires after the transition
-// ends, or immediately when animate is false. Sizes from the cached store.slideWidth so the
-// snap always lands exactly on a slide boundary (same width the slides render at).
+// ends, or immediately when animate is false. The offset comes from trackOffset (cached
+// store.slideWidth), so the snap lands on a slide boundary — and on the flush right edge for the
+// last index when slidesPerView is fractional.
 export function useTrackSnap(
 	trackRef: RefObject<HTMLDivElement>,
 	storeRef: MutableRefObject<LightSlideStore>,
@@ -27,11 +29,11 @@ export function useTrackSnap(
 		(visualIndex: number, animate: boolean, onComplete?: () => void) => {
 			const track = trackRef.current;
 			if (!track) return;
-			const sw = storeRef.current.slideWidth;
+			const offset = trackOffset(visualIndex, storeRef.current);
 
 			if (animate) {
 				track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
-				track.style.transform = `translateX(${-visualIndex * sw}px)`;
+				track.style.transform = `translateX(${-offset}px)`;
 				const onEnd = () => {
 					track.style.transition = '';
 					track.removeEventListener('transitionend', onEnd);
@@ -40,7 +42,7 @@ export function useTrackSnap(
 				track.addEventListener('transitionend', onEnd, {once: true});
 			} else {
 				track.style.transition = '';
-				track.style.transform = `translateX(${-visualIndex * sw}px)`;
+				track.style.transform = `translateX(${-offset}px)`;
 				onComplete?.();
 			}
 		},

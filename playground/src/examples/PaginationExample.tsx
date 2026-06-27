@@ -1,0 +1,90 @@
+import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsHandlers} from 'lightslide';
+
+import {Console} from '../components/Console';
+import {Demo, Well} from '../components/Demo';
+import slides from '../components/slides.module.scss';
+import {cardTone} from '../components/tones';
+import {useConsole} from '../components/useConsole';
+
+const ITEMS = ['Mountains', 'Ocean', 'Sunset', 'Forest', 'Desert'];
+
+export function PaginationExample() {
+	const {entries, log, clear} = useConsole();
+
+	const analytics: AnalyticsHandlers = {
+		onPaginationClick: p => log('pagination', `${p.fromIndex} → ${p.toIndex}`),
+		onSlide: p =>
+			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
+	};
+
+	return (
+		<Demo
+			id="pagination"
+			number="06"
+			title="Pagination dots"
+			tag="pagination"
+			description={
+				<>
+					Pass <code>pagination</code> to render dots below the track — one per
+					scroll position (<code>maxIndex + 1</code>). The active dot tracks
+					every navigation type, and <code>dotStyle</code>/
+					<code>activeDotStyle</code> restyle them entirely.
+				</>
+			}>
+			<Well>
+				<LightSlide
+					analytics={analytics}
+					pagination={{
+						dotStyle: {background: 'var(--border-strong)'},
+						activeDotStyle: {background: 'var(--accent)'},
+					}}>
+					{ITEMS.map((label, i) => (
+						<Slide key={label}>
+							<div
+								className={slides.tile}
+								style={{height: 170, background: cardTone(i)}}>
+								<span style={{fontSize: 17, fontWeight: 600}}>{label}</span>
+							</div>
+						</Slide>
+					))}
+				</LightSlide>
+			</Well>
+
+			<Well>
+				<LightSlide
+					slidesPerView={2}
+					pagination={{
+						style: {gap: 8, padding: '14px 0 4px'},
+						dotStyle: {
+							width: 10,
+							height: 4,
+							borderRadius: 2,
+							background: 'var(--border-strong)',
+						},
+						activeDotStyle: {
+							width: 24,
+							background: 'var(--accent)',
+							transform: 'none',
+						},
+					}}>
+					{ITEMS.map((label, i) => (
+						<Slide key={label} style={{padding: '0 5px'}}>
+							<div
+								className={slides.tile}
+								style={{height: 118, background: cardTone(i)}}>
+								<span style={{fontSize: 14, fontWeight: 600}}>{label}</span>
+							</div>
+						</Slide>
+					))}
+				</LightSlide>
+			</Well>
+
+			<Console
+				entries={entries}
+				onClear={clear}
+				emptyHint="click a dot to log…"
+			/>
+		</Demo>
+	);
+}

@@ -1,0 +1,33 @@
+// Ghost-square nav button matching the control language elsewhere.
+.btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	color: var(--text);
+	background: var(--surface-glass);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid var(--border-strong);
+	border-radius: 50%;
+	cursor: pointer;
+	transition:
+		border-color 140ms var(--ease-out),
+		transform 140ms var(--ease-spring),
+		opacity 140ms var(--ease-out);
+
+	&:hover:not(:disabled) {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	&:active:not(:disabled) {
+		transform: scale(0.94);
+	}
+
+	&:disabled {
+		opacity: 0.35;
+		cursor: default;
+	}
+}
