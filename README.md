@@ -288,8 +288,9 @@ src/
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
-│       ├── useDragGesture.ts       #   pointer/drag handlers (+ test)
-│       ├── useFlow.ts              #   continuous ticker scroll (+ test)
+│       ├── usePointerGesture.ts    #   shared drag mechanics: lock/capture/click (+ test)
+│       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
+│       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
 │       └── useViewportEngagement.ts#   IntersectionObserver + terminal events
 ├── Slide/
 │   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
@@ -322,7 +323,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 113 tests across 13 suites
+npm test             # 124 tests across 14 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

@@ -67,7 +67,7 @@ export function LightSlide<T = unknown>({
 	const viewedTrackingEnabled = analytics?.viewedTimeout !== undefined;
 	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
 
-	const childArray = Children.toArray(children);
+	const childArray = useMemo(() => Children.toArray(children), [children]);
 	const slideCount = childArray.length;
 	// ceil, not floor: a fractional slidesPerView (e.g. 1.5) needs one extra reachable
 	// position so the last slide can scroll flush to the right edge instead of stopping
@@ -85,6 +85,10 @@ export function LightSlide<T = unknown>({
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
+	// Collected once per children change, not on every navigation re-render — the store sync
+	// below just points the store at it.
+	const slideData = useMemo(() => collectSlideData<T>(childArray), [childArray]);
+
 	// Sync the render-derived core data into the store every render. currentIndex and
 	// autoScrollPaused are owned by the imperative path (navigation / drag) and never
 	// overwritten here.
@@ -96,7 +100,7 @@ export function LightSlide<T = unknown>({
 	store.effectiveFlow = effectiveFlow;
 	store.isLoop = effectiveLoop;
 	store.loopOffset = loopOffset;
-	store.slideData = collectSlideData<T>(childArray);
+	store.slideData = slideData;
 
 	const getSlideData = useCallback(
 		(index: number) => storeRef.current.slideData[index],
@@ -278,7 +282,10 @@ export function LightSlide<T = unknown>({
 		e.preventDefault();
 	}, []);
 
-	const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
+	const displayChildren = useMemo(
+		() => buildLoopChildren(childArray, slideCount, loopOffset),
+		[childArray, slideCount, loopOffset],
+	);
 
 	return (
 		<SlideMetricsContext.Provider value={metricsValue}>
