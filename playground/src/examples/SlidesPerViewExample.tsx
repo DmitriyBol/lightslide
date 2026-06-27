@@ -30,7 +30,7 @@ export function SlidesPerViewExample() {
 	const [spv, setSpv] = useState(1.5);
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig = {
+	const analytics: AnalyticsConfig<{index: number}> = {
 		onEvent: e => {
 			if (e.event === 'carousel_slide')
 				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
@@ -65,7 +65,7 @@ export function SlidesPerViewExample() {
 			</Controls>
 
 			<Well>
-				<LightSlide analytics={analytics} slidesPerView={spv}>
+				<LightSlide<{index: number}> analytics={analytics} slidesPerView={spv}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label} data={{index: i}} style={{padding: '0 5px'}}>
 							<div
