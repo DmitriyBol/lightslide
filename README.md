@@ -323,7 +323,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 124 tests across 14 suites
+npm test             # 125 tests across 14 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

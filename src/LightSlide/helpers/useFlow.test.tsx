@@ -132,6 +132,23 @@ describe('useFlow', () => {
 		expect(track.style.transform).toBe('translateX(-450px)');
 	});
 
+	it('aborts on pointer cancel without committing the drift, then resumes after the delay', () => {
+		const {result, track} = setup({speed: 100, resumeDelay: 2000});
+		frame(0);
+		frame(1000); // offset 100 → -400
+		result.current.onPointerDown(downEvent(500)); // offsetAtStart = 100
+		result.current.onPointerMove(moveEvent(450)); // dx -50 → -(300 + 100) - 50
+		expect(track.style.transform).toBe('translateX(-450px)');
+		result.current.onPointerCancel(); // cancel: must NOT commit, only schedule resume
+		frame(2000); // still interacting → no advance, transform unchanged
+		expect(track.style.transform).toBe('translateX(-450px)');
+		jest.advanceTimersByTime(2000); // resume timer fires → interacting false
+		// Resumes from the UNCOMMITTED offset (100, not the dragged 150): 100 + 100 → -(300 + 200).
+		// A committed cancel would land at offset 150 → -550, so -500 proves no commit happened.
+		frame(3000);
+		expect(track.style.transform).toBe('translateX(-500px)');
+	});
+
 	it('does not schedule any frame when disabled', () => {
 		const {track} = setup({enabled: false});
 		expect(window.requestAnimationFrame).not.toHaveBeenCalled();
