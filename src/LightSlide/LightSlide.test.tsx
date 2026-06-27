@@ -3,7 +3,7 @@ import React from 'react';
 import {act, render, screen} from '@testing-library/react';
 
 import {Slide} from '../Slide/Slide';
-import type {AnalyticsHandlers} from '../types';
+import type {AnalyticsEvent} from '../types';
 import {LightSlide} from './LightSlide';
 
 import '@testing-library/jest-dom';
@@ -46,27 +46,29 @@ beforeAll(() => {
 
 // ──────────────────────────────────────────────────────────────────────────
 
-function makeHandlers(): jest.Mocked<
-	Required<Omit<AnalyticsHandlers, 'viewedTimeout'>>
-> {
-	return {
-		onInViewport: jest.fn(),
-		onSlide: jest.fn(),
-		onReachedEnd: jest.fn(),
-		onViewedSlides: jest.fn(),
-		onNavButtonClick: jest.fn(),
-		onPaginationClick: jest.fn(),
-	};
+// All analytics now flows through one onEvent handler. A typed mock plus this filter let
+// each test pull out the events of a given kind (and read their narrowed payload fields).
+function makeOnEvent() {
+	return jest.fn<void, [AnalyticsEvent]>();
+}
+
+function eventsOfType<E extends AnalyticsEvent['event']>(
+	onEvent: ReturnType<typeof makeOnEvent>,
+	event: E,
+): Extract<AnalyticsEvent, {event: E}>[] {
+	return onEvent.mock.calls
+		.map(([payload]) => payload)
+		.filter((p): p is Extract<AnalyticsEvent, {event: E}> => p.event === event);
 }
 
 function renderLightSlide(
-	handlers: Partial<AnalyticsHandlers>,
-	viewedTimeout = 30,
+	onEvent?: (payload: AnalyticsEvent) => void,
+	viewedTimeout: number | undefined = 30,
 	slidesPerView = 1,
 ) {
 	return render(
 		<LightSlide
-			analytics={{...handlers, viewedTimeout}}
+			analytics={onEvent ? {onEvent, viewedTimeout} : undefined}
 			slidesPerView={slidesPerView}>
 			<Slide data={{id: 1, name: 'Slide 1'}}>
 				<div>Slide 1</div>
@@ -89,62 +91,59 @@ describe('LightSlide', () => {
 	});
 
 	it('renders all slides', () => {
-		renderLightSlide({});
+		renderLightSlide();
 		expect(screen.getByText('Slide 1')).toBeInTheDocument();
 		expect(screen.getByText('Slide 2')).toBeInTheDocument();
 		expect(screen.getByText('Slide 3')).toBeInTheDocument();
 	});
 
-	it('fires onInViewport once when carousel enters viewport', () => {
-		const handlers = makeHandlers();
-		renderLightSlide(handlers);
+	it('fires carousel_in_viewport once when carousel enters viewport', () => {
+		const onEvent = makeOnEvent();
+		renderLightSlide(onEvent);
 
 		act(() => triggerIO(true));
 
-		expect(handlers.onInViewport).toHaveBeenCalledTimes(1);
-		expect(handlers.onInViewport.mock.calls[0][0].event).toBe(
-			'carousel_in_viewport',
-		);
+		const inViewport = eventsOfType(onEvent, 'carousel_in_viewport');
+		expect(inViewport).toHaveLength(1);
+		expect(inViewport[0].event).toBe('carousel_in_viewport');
 	});
 
-	it('fires onInViewport only once even on repeated IO triggers', () => {
-		const handlers = makeHandlers();
-		renderLightSlide(handlers);
+	it('fires carousel_in_viewport only once even on repeated IO triggers', () => {
+		const onEvent = makeOnEvent();
+		renderLightSlide(onEvent);
 
 		act(() => triggerIO(true));
 		act(() => triggerIO(false));
 		act(() => triggerIO(true));
 
-		expect(handlers.onInViewport).toHaveBeenCalledTimes(1);
+		expect(eventsOfType(onEvent, 'carousel_in_viewport')).toHaveLength(1);
 	});
 
-	it('fires onViewedSlides after timeout and not onReachedEnd', () => {
-		const handlers = makeHandlers();
-		renderLightSlide(handlers, 30);
+	it('fires carousel_viewed_slides after timeout and not carousel_reached_end', () => {
+		const onEvent = makeOnEvent();
+		renderLightSlide(onEvent, 30);
 
 		act(() => triggerIO(true));
 		act(() => jest.advanceTimersByTime(30_000));
 
-		expect(handlers.onViewedSlides).toHaveBeenCalledTimes(1);
-		expect(handlers.onReachedEnd).not.toHaveBeenCalled();
-
-		const payload = handlers.onViewedSlides.mock.calls[0][0];
-		expect(payload.event).toBe('carousel_viewed_slides');
-		expect(payload.slides.length).toBeGreaterThan(0);
+		const viewed = eventsOfType(onEvent, 'carousel_viewed_slides');
+		expect(viewed).toHaveLength(1);
+		expect(eventsOfType(onEvent, 'carousel_reached_end')).toHaveLength(0);
+		expect(viewed[0].slides.length).toBeGreaterThan(0);
 	});
 
-	it('does not fire onViewedSlides before timeout elapses', () => {
-		const handlers = makeHandlers();
-		renderLightSlide(handlers, 30);
+	it('does not fire carousel_viewed_slides before timeout elapses', () => {
+		const onEvent = makeOnEvent();
+		renderLightSlide(onEvent, 30);
 
 		act(() => triggerIO(true));
 		act(() => jest.advanceTimersByTime(10_000));
 
-		expect(handlers.onViewedSlides).not.toHaveBeenCalled();
+		expect(eventsOfType(onEvent, 'carousel_viewed_slides')).toHaveLength(0);
 	});
 
 	it('renders correct number of slides regardless of slidesPerView', () => {
-		renderLightSlide({}, 30, 2);
+		renderLightSlide(undefined, 30, 2);
 		expect(screen.getByText('Slide 1')).toBeInTheDocument();
 		expect(screen.getByText('Slide 2')).toBeInTheDocument();
 		expect(screen.getByText('Slide 3')).toBeInTheDocument();
@@ -184,17 +183,17 @@ describe('LightSlide — isLoop', () => {
 		expect(screen.getByLabelText('Next slide')).not.toBeDisabled();
 	});
 
-	it('does not fire onReachedEnd when isLoop is active', () => {
-		const handlers = makeHandlers();
+	it('does not fire carousel_reached_end when isLoop is active', () => {
+		const onEvent = makeOnEvent();
 		render(
-			<LightSlide isLoop analytics={handlers} navigation={{}}>
+			<LightSlide isLoop analytics={{onEvent}} navigation={{}}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
 			</LightSlide>,
 		);
-		// At maxIndex with isLoop, onReachedEnd must never fire (loop wrap suppresses it).
-		expect(handlers.onReachedEnd).not.toHaveBeenCalled();
+		// At maxIndex with isLoop, the reached-end terminal must never fire (loop wrap suppresses it).
+		expect(eventsOfType(onEvent, 'carousel_reached_end')).toHaveLength(0);
 	});
 });
 
@@ -286,12 +285,11 @@ describe('LightSlide — viewed-slides opt-in', () => {
 		spyError.mockRestore();
 	});
 
-	it('does not fire onViewedSlides when no handler is provided (timer never starts)', () => {
-		const onInViewport = jest.fn();
-		const onViewedSlides = jest.fn();
-		// Provide onInViewport but NOT onViewedSlides — tracking must stay off.
+	it('does not fire carousel_viewed_slides when viewedTimeout is omitted (timer never starts)', () => {
+		const onEvent = makeOnEvent();
+		// Provide onEvent but NOT viewedTimeout — viewed tracking must stay off.
 		render(
-			<LightSlide analytics={{onInViewport, viewedTimeout: 30}}>
+			<LightSlide analytics={{onEvent}}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 			</LightSlide>,
@@ -300,9 +298,9 @@ describe('LightSlide — viewed-slides opt-in', () => {
 		act(() => triggerIO(true));
 		act(() => jest.advanceTimersByTime(60_000));
 
-		expect(onViewedSlides).not.toHaveBeenCalled();
-		// onInViewport still fires — it is independent of viewed tracking.
-		expect(onInViewport).toHaveBeenCalledTimes(1);
+		expect(eventsOfType(onEvent, 'carousel_viewed_slides')).toHaveLength(0);
+		// carousel_in_viewport still fires — it is independent of viewed tracking.
+		expect(eventsOfType(onEvent, 'carousel_in_viewport')).toHaveLength(1);
 	});
 });
 
@@ -326,16 +324,16 @@ describe('LightSlide — flow', () => {
 		expect(screen.getAllByText('Gamma').length).toBeGreaterThanOrEqual(1);
 	});
 
-	it('does not fire onReachedEnd while the flow is running', () => {
-		const handlers = makeHandlers();
+	it('does not fire carousel_reached_end while the flow is running', () => {
+		const onEvent = makeOnEvent();
 		render(
-			<LightSlide flow={{enabled: true}} analytics={handlers}>
+			<LightSlide flow={{enabled: true}} analytics={{onEvent}}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
 			</LightSlide>,
 		);
-		expect(handlers.onReachedEnd).not.toHaveBeenCalled();
+		expect(eventsOfType(onEvent, 'carousel_reached_end')).toHaveLength(0);
 	});
 });
 
@@ -347,13 +345,15 @@ describe('LightSlide — typed data chain', () => {
 		render(
 			<LightSlide<Product>
 				analytics={{
-					// `p.slides[i].data` is `Product | undefined` here — `.name` only
-					// compiles because the type parameter flows through the chain.
-					onReachedEnd: p => {
-						for (const s of p.slides) if (s.data) names.push(s.data.name);
-					},
-					onViewedSlides: p => {
-						for (const s of p.slides) if (s.data) names.push(s.data.name);
+					// Narrowing on `event` gives `slides: SlideData<Product>[]`, so `s.data.name`
+					// only compiles because the type parameter flows through the chain.
+					onEvent: e => {
+						if (
+							e.event === 'carousel_reached_end' ||
+							e.event === 'carousel_viewed_slides'
+						) {
+							for (const s of e.slides) if (s.data) names.push(s.data.name);
+						}
 					},
 				}}>
 				<Slide<Product> data={{id: 1, name: 'A'}}>A</Slide>

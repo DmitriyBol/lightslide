@@ -9,11 +9,6 @@ import {
 
 import type {DragEvent} from 'react';
 
-import {
-	buildNavButtonPayload,
-	buildPaginationClickPayload,
-	buildSlidePayload,
-} from '../analytics/analytics';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import {Navigation} from '../Navigation/Navigation';
@@ -61,18 +56,18 @@ export function LightSlide<T = unknown>({
 	// the navigate fn) live in their own refs below. See helpers/store.ts.
 	const storeRef = useRef(createStore<T>());
 
-	// Latest-ref of the raw analytics prop. Handlers are called optionally at each fire
-	// site (analytics?.onX?.(payload)) — no merging, no noop layer.
+	// Latest-ref of the raw analytics prop. The single onEvent handler is called optionally at
+	// each fire site (analytics?.onEvent?.(payload)) — no merging, no noop layer.
 	const analyticsRef = useRef(analytics);
 	analyticsRef.current = analytics;
 
-	// Viewed-slides tracking is opt-in: the timer only runs when the consumer actually
-	// handles onViewedSlides. Its duration knob, viewedTimeout, lives alongside the
-	// handlers inside `analytics`.
-	const viewedTrackingEnabled = analytics?.onViewedSlides !== undefined;
+	// Viewed-slides tracking is opt-in via the presence of `viewedTimeout`: the timer only runs
+	// when the consumer sets it (otherwise the carousel_reached_end terminal stays armed). Its
+	// value doubles as the duration knob (seconds), defaulting to DEFAULT_VIEWED_TIMEOUT.
+	const viewedTrackingEnabled = analytics?.viewedTimeout !== undefined;
 	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
 
-	const childArray = Children.toArray(children);
+	const childArray = useMemo(() => Children.toArray(children), [children]);
 	const slideCount = childArray.length;
 	// ceil, not floor: a fractional slidesPerView (e.g. 1.5) needs one extra reachable
 	// position so the last slide can scroll flush to the right edge instead of stopping
@@ -90,6 +85,10 @@ export function LightSlide<T = unknown>({
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
+	// Collected once per children change, not on every navigation re-render — the store sync
+	// below just points the store at it.
+	const slideData = useMemo(() => collectSlideData<T>(childArray), [childArray]);
+
 	// Sync the render-derived core data into the store every render. currentIndex and
 	// autoScrollPaused are owned by the imperative path (navigation / drag) and never
 	// overwritten here.
@@ -101,7 +100,7 @@ export function LightSlide<T = unknown>({
 	store.effectiveFlow = effectiveFlow;
 	store.isLoop = effectiveLoop;
 	store.loopOffset = loopOffset;
-	store.slideData = collectSlideData<T>(childArray);
+	store.slideData = slideData;
 
 	const getSlideData = useCallback(
 		(index: number) => storeRef.current.slideData[index],
@@ -187,19 +186,27 @@ export function LightSlide<T = unknown>({
 			setCurrentIndex(clamped);
 			markViewed(clamped);
 
-			analyticsRef.current?.onSlide?.(
-				buildSlidePayload(direction, from, clamped),
-			);
+			analyticsRef.current?.onEvent?.({
+				event: 'carousel_slide',
+				direction,
+				fromIndex: from,
+				toIndex: clamped,
+			});
 
 			if (source === 'button') {
-				analyticsRef.current?.onNavButtonClick?.(
-					buildNavButtonPayload(direction, from, clamped),
-				);
+				analyticsRef.current?.onEvent?.({
+					event: 'carousel_nav_button',
+					direction,
+					fromIndex: from,
+					toIndex: clamped,
+				});
 			}
 			if (source === 'pagination') {
-				analyticsRef.current?.onPaginationClick?.(
-					buildPaginationClickPayload(from, clamped),
-				);
+				analyticsRef.current?.onEvent?.({
+					event: 'carousel_pagination_click',
+					fromIndex: from,
+					toIndex: clamped,
+				});
 			}
 
 			const isLoopWrap = isBackwardWrap || isForwardWrap;
@@ -275,7 +282,10 @@ export function LightSlide<T = unknown>({
 		e.preventDefault();
 	}, []);
 
-	const displayChildren = buildLoopChildren(childArray, slideCount, loopOffset);
+	const displayChildren = useMemo(
+		() => buildLoopChildren(childArray, slideCount, loopOffset),
+		[childArray, slideCount, loopOffset],
+	);
 
 	return (
 		<SlideMetricsContext.Provider value={metricsValue}>

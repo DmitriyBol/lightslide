@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsHandlers} from 'lightslide';
+import type {AnalyticsConfig} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Controls, Demo, Well} from '../components/Demo';
@@ -30,10 +30,13 @@ export function SlidesPerViewExample() {
 	const [spv, setSpv] = useState(1.5);
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsHandlers = {
-		onSlide: p =>
-			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
-		onReachedEnd: p => log('end', `${p.slides.length} slides seen`),
+	const analytics: AnalyticsConfig<{index: number}> = {
+		onEvent: e => {
+			if (e.event === 'carousel_slide')
+				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+			else if (e.event === 'carousel_reached_end')
+				log('end', `${e.slides.length} slides seen`);
+		},
 	};
 
 	const maxIndex = Math.max(0, Math.ceil(ITEMS.length - spv));
@@ -62,7 +65,7 @@ export function SlidesPerViewExample() {
 			</Controls>
 
 			<Well>
-				<LightSlide analytics={analytics} slidesPerView={spv}>
+				<LightSlide<{index: number}> analytics={analytics} slidesPerView={spv}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label} data={{index: i}} style={{padding: '0 5px'}}>
 							<div

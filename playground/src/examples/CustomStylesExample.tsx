@@ -1,5 +1,5 @@
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsHandlers} from 'lightslide';
+import type {AnalyticsConfig} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -13,9 +13,11 @@ const SHOES = ['Trail Boot', 'Court Low', 'Flip Pro'];
 export function CustomStylesExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsHandlers = {
-		onSlide: p =>
-			log('slide', `${p.fromIndex} → ${p.toIndex} (${p.direction})`),
+	const analytics: AnalyticsConfig = {
+		onEvent: e => {
+			if (e.event === 'carousel_slide')
+				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+		},
 	};
 
 	return (
