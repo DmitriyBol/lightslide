@@ -1,0 +1,147 @@
+.console {
+	background: var(--well);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-well);
+	font-family: var(--font-mono);
+	overflow: hidden;
+}
+
+.bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 12px;
+	border-bottom: 1px solid var(--border);
+}
+
+.dots {
+	display: inline-flex;
+	gap: 6px;
+
+	i {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		border: 1px solid var(--border-strong);
+	}
+}
+
+.label {
+	font-size: 0.6875rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.count {
+	font-size: 0.6875rem;
+	color: var(--text-faint);
+	background: var(--surface-alt);
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	padding: 1px 7px;
+}
+
+.clear {
+	margin-left: auto;
+	font-family: var(--font-mono);
+	font-size: 0.6875rem;
+	letter-spacing: 0.04em;
+	color: var(--text-faint);
+	background: none;
+	border: none;
+	cursor: pointer;
+	transition: color 140ms ease;
+
+	&:hover {
+		color: var(--text);
+	}
+}
+
+.feed {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px 14px;
+	min-height: 84px;
+	max-height: 172px;
+	overflow-y: auto;
+	font-size: 0.75rem;
+	line-height: 1.7;
+}
+
+.row {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	padding-left: 8px;
+	border-left: 2px solid transparent;
+	transition: opacity 400ms var(--ease-out);
+	animation: rowLand 600ms var(--ease-out);
+}
+
+@keyframes rowLand {
+	from {
+		border-left-color: var(--accent);
+		transform: translateY(-2px);
+	}
+
+	to {
+		border-left-color: transparent;
+		transform: none;
+	}
+}
+
+.time {
+	flex-shrink: 0;
+	color: var(--text-faint);
+}
+
+.glyph {
+	flex-shrink: 0;
+}
+
+.token {
+	flex-shrink: 0;
+	font-weight: 600;
+}
+
+.payload {
+	color: var(--text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.empty {
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-faint);
+	font-size: 0.75rem;
+}
+
+.caret {
+	display: inline-block;
+	width: 7px;
+	height: 14px;
+	margin-left: 4px;
+	background: var(--text-faint);
+	animation: blink 1.1s steps(1) infinite;
+}
+
+@keyframes blink {
+	50% {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.row {
+		animation: none;
+	}
+
+	.caret {
+		animation: none;
+	}
+}

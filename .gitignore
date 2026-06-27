@@ -35,8 +35,8 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 
-# Local playground (not tracked — run: npm run playground)
-playground/
+# The playground itself is tracked; only its installed deps / build output are not
+# (covered by the node_modules/ and dist/ rules above, which match at any depth).
 
 # Local-only docs/context for Claude (kept out of the published repo)
 .context/

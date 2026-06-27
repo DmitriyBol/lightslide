@@ -1,0 +1,32 @@
+.phase {
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	gap: 16px;
+	align-items: center;
+	padding: 40px 0 4px;
+}
+
+.tick {
+	grid-column: 1;
+	justify-self: end;
+	width: 12px;
+	height: 1px;
+	background: var(--text-faint);
+}
+
+.label {
+	grid-column: 2;
+	font-family: var(--font-mono);
+	font-size: 0.6875rem;
+	font-weight: 500;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--text-faint);
+}
+
+@media (max-width: 560px) {
+	.phase {
+		grid-template-columns: 28px 1fr;
+		gap: 12px;
+	}
+}

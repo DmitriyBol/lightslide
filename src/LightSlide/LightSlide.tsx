@@ -74,7 +74,11 @@ export function LightSlide<T = unknown>({
 
 	const childArray = Children.toArray(children);
 	const slideCount = childArray.length;
-	const maxIndex = Math.max(0, Math.floor(slideCount - slidesPerView));
+	// ceil, not floor: a fractional slidesPerView (e.g. 1.5) needs one extra reachable
+	// position so the last slide can scroll flush to the right edge instead of stopping
+	// half-cut. The track offset for that final index is clamped to the flush max by
+	// trackOffset. For an integer slidesPerView ceil === floor, so nothing changes.
+	const maxIndex = Math.max(0, Math.ceil(slideCount - slidesPerView));
 
 	// While loading we render the fallback, not the track — so all auto motion
 	// (flow / auto-scroll) must stay off until the real slides mount.
@@ -139,7 +143,7 @@ export function LightSlide<T = unknown>({
 	useLayoutEffect(() => {
 		measureSlideWidth();
 		const s = storeRef.current;
-		const newMax = Math.max(0, Math.floor(s.slideCount - s.slidesPerView));
+		const newMax = Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));
 		s.maxIndex = newMax;
 		const corrected = Math.min(s.currentIndex, newMax);
 		s.currentIndex = corrected;

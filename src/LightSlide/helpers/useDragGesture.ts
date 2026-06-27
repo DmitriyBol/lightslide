@@ -11,6 +11,7 @@ import {getSnapIndex} from '../../utils/swipe';
 import {DRAG_DIRECTION_LOCK_PX, RUBBER_BAND_DIVISOR} from './constants';
 import type {NavigateFn} from './navigation';
 import type {LightSlideStore} from './store';
+import {trackOffset} from './trackOffset';
 
 type DragGestureParams = {
 	trackRef: RefObject<HTMLDivElement>;
@@ -142,9 +143,10 @@ export function useDragGesture({
 			const delta = atStart || atEnd ? dx / RUBBER_BAND_DIVISOR : dx;
 
 			if (trackRef.current) {
-				const sw = storeRef.current.slideWidth;
-				const visualIndex = visualIndexOf(currentIndex);
-				trackRef.current.style.transform = `translateX(${-visualIndex * sw + delta}px)`;
+				// Same clamped base offset the resting snap uses, so a fractional
+				// slidesPerView never jumps half a slide when the gesture starts.
+				const base = trackOffset(visualIndexOf(currentIndex), storeRef.current);
+				trackRef.current.style.transform = `translateX(${-base + delta}px)`;
 			}
 		},
 		[visualIndexOf, trackRef, storeRef],

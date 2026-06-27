@@ -14,7 +14,9 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  *
  * Most fields are self-describing; the non-obvious ones: `currentIndex` is the active logical
  * index, mutated by navigation and mirrored to React state for rendering. `maxIndex` is the last
- * reachable position, max(0, floor(slideCount - slidesPerView)). `isLoop` is true when looping is
+ * reachable position, max(0, ceil(slideCount - slidesPerView)) — ceil so a fractional
+ * slidesPerView still has a final index that scrolls the last slide flush (see trackOffset).
+ * `isLoop` is true when looping is
  * active (the isLoop prop or flow, with more than one position); `loopOffset` is how many clones
  * are prepended/appended (0 when not looping). `slideWidth` is the cached per-slide px width,
  * floor(containerWidth / slidesPerView), written by useSlideMetrics on mount/resize and read by

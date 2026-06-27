@@ -1,0 +1,58 @@
+// Shared slide-card styling so every demo's cards read as the same material: a neutral
+// tonal-staircase tile (background set per-card via cardTone) with a hairline border and a
+// top-edge inner light. Each card carries at most one accent element (eyebrow / bar / chip).
+
+.tile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: 100%;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-sm);
+	color: var(--text);
+	user-select: none;
+	overflow: hidden;
+}
+
+.eyebrow {
+	font-family: var(--font-mono);
+	font-size: 0.625rem;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--accent);
+}
+
+.title {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.meta {
+	font-size: 0.8125rem;
+	color: var(--text-muted);
+}
+
+.accentBar {
+	width: 26px;
+	height: 2px;
+	border-radius: 2px;
+	background: var(--accent-gradient);
+}
+
+// Interactive (clickable / link) cards lift their border + inner light on hover.
+.interactive {
+	cursor: pointer;
+	transition:
+		border-color 160ms var(--ease-out),
+		box-shadow 160ms var(--ease-out);
+
+	&:hover {
+		border-color: var(--border-strong);
+		box-shadow: var(--shadow-lg);
+	}
+}

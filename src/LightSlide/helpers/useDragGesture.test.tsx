@@ -9,6 +9,9 @@ type Overrides = {
 	maxIndex?: number;
 	isLoop?: boolean;
 	loopOffset?: number;
+	slidesPerView?: number;
+	slideCount?: number;
+	slideWidth?: number;
 };
 
 function setupDrag(overrides: Overrides = {}) {
@@ -22,8 +25,10 @@ function setupDrag(overrides: Overrides = {}) {
 		maxIndex: overrides.maxIndex ?? 4,
 		isLoop: overrides.isLoop ?? false,
 		loopOffset: overrides.loopOffset ?? 0,
+		slidesPerView: overrides.slidesPerView ?? 1,
+		slideCount: overrides.slideCount ?? 5,
 		// Cached width the gesture sizes its snap/transform from (was getComputedSlideWidth).
-		slideWidth: 300,
+		slideWidth: overrides.slideWidth ?? 300,
 	});
 	const storeRef = {current: store};
 	const {result} = renderHook(() =>
@@ -144,6 +149,22 @@ describe('useDragGesture', () => {
 		const {result, navigate} = setupDrag({currentIndex: 1});
 		result.current.onPointerLeave(moveEvent(500));
 		expect(navigate).not.toHaveBeenCalled();
+	});
+
+	it('drags from the clamped flush offset at the last index of a fractional slidesPerView', () => {
+		// 6 slides, 1.5 per view, 300px each → maxIndex ceil(4.5) = 5, flush offset
+		// (6 - 1.5) * 300 = 1350px (not 5 * 300 = 1500, which would cut the last slide).
+		const {result, track} = setupDrag({
+			currentIndex: 5,
+			maxIndex: 5,
+			slidesPerView: 1.5,
+			slideCount: 6,
+			slideWidth: 300,
+		});
+		result.current.onPointerDown(downEvent(500));
+		// Drag right (dx +30) so no rubber-band kicks in — isolates the base offset.
+		result.current.onPointerMove(moveEvent(530));
+		expect(track.style.transform).toBe('translateX(-1320px)'); // -1350 + 30
 	});
 
 	it('snaps to the current visual position (logical + loopOffset) on cancel', () => {

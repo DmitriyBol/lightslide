@@ -1,0 +1,52 @@
+.toggle {
+	position: relative;
+	width: 46px;
+	height: 26px;
+	border-radius: 999px;
+	background: var(--surface-alt);
+	border: 1px solid var(--border);
+	cursor: pointer;
+	padding: 0;
+	transition: border-color 160ms var(--ease-out);
+
+	&:hover {
+		border-color: var(--border-strong);
+	}
+
+	&:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 2px var(--accent-soft);
+	}
+}
+
+.icons {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 6px;
+	color: var(--text-faint);
+}
+
+.knob {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: var(--text);
+	opacity: 0.92;
+	transition: transform 200ms var(--ease-spring);
+}
+
+.light .knob {
+	transform: translateX(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.knob {
+		transition: none;
+	}
+}

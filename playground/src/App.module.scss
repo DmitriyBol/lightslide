@@ -1,0 +1,102 @@
+.rule {
+	max-width: 760px;
+	margin: 0 auto;
+	border: none;
+	border-top: 1px solid var(--border);
+}
+
+.demos {
+	--col-pad: clamp(20px, 5vw, 32px);
+	position: relative;
+	display: block;
+	max-width: 760px;
+	margin: 0 auto;
+	padding: 0 var(--col-pad) 32px;
+
+	// The spine: a faint vertical hairline between the section-number column and the content,
+	// running the full height of the demo stack.
+	&::before {
+		content: '';
+		position: absolute;
+		left: calc(var(--col-pad) + 47px);
+		top: 0;
+		bottom: 32px;
+		width: 1px;
+		background: var(--hairline);
+	}
+
+	// Full-width hairline rules between every block (demos and phase labels alike).
+	> * + * {
+		border-top: 1px solid var(--border);
+	}
+}
+
+@media (max-width: 560px) {
+	.demos::before {
+		left: calc(var(--col-pad) + 35px);
+	}
+}
+
+.footer {
+	border-top: 1px solid var(--border);
+	padding: 28px clamp(20px, 5vw, 32px);
+}
+
+.footerInner {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 16px;
+	max-width: 760px;
+	margin: 0 auto;
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	color: var(--text-faint);
+}
+
+.footerBrand {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-family: var(--font-sans);
+	font-weight: 600;
+	color: var(--text);
+}
+
+.footerMark {
+	display: inline-flex;
+	color: var(--accent);
+}
+
+.footerCmd {
+	color: var(--text-muted);
+	background: var(--surface-alt);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	padding: 3px 9px;
+}
+
+.footerMeta {
+	color: var(--text-faint);
+}
+
+.footerLinks {
+	display: inline-flex;
+	gap: 16px;
+	margin-left: auto;
+
+	a {
+		color: var(--text-muted);
+		transition: color 140ms var(--ease-out);
+
+		&:hover {
+			color: var(--text);
+		}
+	}
+}
+
+@media (max-width: 560px) {
+	.footerLinks {
+		margin-left: 0;
+	}
+}

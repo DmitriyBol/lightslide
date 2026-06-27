@@ -1,0 +1,106 @@
+// Base reset + element styling + cross-cutting utilities (reveal-on-scroll, scrollbar,
+// the left spine, hairline rules). Component-specific styling lives in *.module.scss files.
+
+@use './tokens';
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font-sans);
+	font-feature-settings: 'cv11', 'ss01';
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	line-height: 1.5;
+	// Crossfade the whole token set when the theme flips.
+	transition:
+		background 200ms ease,
+		color 200ms ease;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+button {
+	font-family: inherit;
+}
+
+code {
+	font-family: var(--font-mono);
+	font-size: 0.875em;
+	color: var(--text);
+	background: var(--surface-alt);
+	border: 1px solid var(--border);
+	border-radius: 5px;
+	padding: 1px 5px;
+}
+
+::selection {
+	background: var(--accent-soft);
+	color: #fff;
+}
+
+// Tabular figures everywhere a value ticks, so numbers never jitter.
+.tnum {
+	font-variant-numeric: tabular-nums;
+}
+
+// Reveal-on-scroll: blocks start dimmed + nudged down, then settle once seen (one-shot).
+.reveal {
+	opacity: 0;
+	transform: translateY(12px);
+	transition:
+		opacity 480ms var(--ease-out),
+		transform 480ms var(--ease-out);
+	will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+	opacity: 1;
+	transform: none;
+}
+
+// Thin custom scrollbars to match the recessed wells.
+* {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.12);
+	border-radius: 8px;
+}
+
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	.reveal {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}
