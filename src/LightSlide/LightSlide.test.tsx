@@ -409,6 +409,40 @@ describe('LightSlide a11y', () => {
 		}
 	});
 
+	it('lets a per-slide aria-label name the card, overriding "N of M"', () => {
+		render(
+			<LightSlide label="Shop">
+				<Slide aria-label="Ray-Ban Wayfarer, $89">
+					<div>content</div>
+				</Slide>
+				<Slide>
+					<div>b</div>
+				</Slide>
+			</LightSlide>,
+		);
+		// the named slide keeps the consumer's name and is still a "slide" group
+		expect(
+			screen.getByRole('group', {name: 'Ray-Ban Wayfarer, $89'}),
+		).toHaveAttribute('aria-roledescription', 'slide');
+		// the un-named slide still gets the automatic position label
+		expect(screen.getByRole('group', {name: '2 of 2'})).toBeInTheDocument();
+	});
+
+	it('formats the automatic slide name via slideLabel', () => {
+		render(
+			<LightSlide label="Shop" slideLabel={(i, n) => `${i + 1} sur ${n}`}>
+				<Slide>
+					<div>a</div>
+				</Slide>
+				<Slide>
+					<div>b</div>
+				</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByRole('group', {name: '1 sur 2'})).toBeInTheDocument();
+		expect(screen.getByRole('group', {name: '2 sur 2'})).toBeInTheDocument();
+	});
+
 	it('hides loop clones from assistive tech and the tab order', () => {
 		const {container} = renderA11y({isLoop: true});
 		const clones = container.querySelectorAll('[aria-hidden="true"]');

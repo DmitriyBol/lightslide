@@ -1,4 +1,4 @@
-import type {CSSProperties, ReactNode} from 'react';
+import type {AriaAttributes, AriaRole, CSSProperties, ReactNode} from 'react';
 
 import type {NavigationConfig} from './Navigation/Navigation.types';
 import type {PaginationConfig} from './Pagination/Pagination.types';
@@ -44,6 +44,9 @@ export type LightSlideProps<T = unknown> = {
 	// Accessible name for the carousel region. When set, the container is a labelled `region`
 	// landmark (else a plain `group`); either way it is announced as a carousel.
 	label?: string;
+	// Formats each slide's automatic accessible name (default `${index + 1} of ${count}`). A
+	// per-slide `aria-label` on `<Slide>` overrides this for that slide.
+	slideLabel?: (index: number, count: number) => string;
 	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
 	autoScroll?: AutoScrollConfig;
@@ -62,15 +65,17 @@ export type LightSlideProps<T = unknown> = {
 	fallback?: ReactNode;
 };
 
-// Individual slide props. Generic over the `data` shape so `<Slide<Product> data={…} />`
-// is fully typed; defaults to unknown, so untyped usage keeps working.
-// `children` is `ReactNode` — the precise React type for renderable content: a single
-// element, several elements, an array, text, or a fragment are all valid slide contents.
-export type SlideProps<T = unknown> = {
+// Individual slide props. Generic over the `data` shape so `<Slide<Product> data={…} />` is fully
+// typed; defaults to unknown, so untyped usage keeps working. `children` is `ReactNode`. Also
+// accepts ARIA attributes (`aria-label`, `aria-labelledby`, …), `role`, and `id`, forwarded to the
+// slide's DOM node — a per-slide `aria-label`/`aria-labelledby` overrides the automatic "N of M".
+export type SlideProps<T = unknown> = AriaAttributes & {
 	children: ReactNode;
 	style?: CSSProperties;
 	className?: string;
 	data?: T;
+	role?: AriaRole;
+	id?: string;
 };
 
 // Every analytics event the carousel emits, as one discriminated union — narrow on `event`

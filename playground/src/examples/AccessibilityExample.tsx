@@ -138,7 +138,7 @@ export function AccessibilityExample() {
 
 			<Row
 				tag="slidesPerView"
-				note="three slides at once — focus-guard keeps exactly the visible slides interactive">
+				note="three slides at once — focus-guard keeps exactly the visible slides interactive; each Slide carries an aria-label so a screen reader names the card instead of just 'N of M'">
 				<LightSlide
 					label="Gallery — 3 up"
 					slidesPerView={3}
@@ -147,7 +147,10 @@ export function AccessibilityExample() {
 					pagination={{}}
 					a11y={<A11y />}>
 					{MORE.map((label, i) => (
-						<Slide key={label} style={{padding: '0 5px'}}>
+						<Slide
+							key={label}
+							aria-label={`${label} sneaker`}
+							style={{padding: '0 5px'}}>
 							<Tile label={label} i={i} height={120} link />
 						</Slide>
 					))}

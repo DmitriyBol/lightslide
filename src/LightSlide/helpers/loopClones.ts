@@ -2,15 +2,29 @@ import {cloneElement, isValidElement} from 'react';
 
 import type {ReactElement, ReactNode} from 'react';
 
-// Per-slide ARIA (WAI-ARIA APG "carousel" pattern): every real slide is a labelled group so a
-// screen reader announces "slide, N of M". Injected via cloneElement so it lands on the slide's
-// own DOM node (<Slide> spreads it through) — no extra wrapper element, so flex layout is
-// untouched. Non-element children (raw text) can't carry attributes and pass through as-is.
-const slideAria = (index: number, count: number) => ({
-	role: 'group',
-	'aria-roledescription': 'slide',
-	'aria-label': `${index + 1} of ${count}`,
-});
+type SlideLabeler = (index: number, count: number) => string;
+
+// Per-slide ARIA (WAI-ARIA APG "carousel" pattern): every real slide becomes a `group` announced as
+// a slide. Consumer naming wins — when the child already sets `aria-label` or `aria-labelledby`, the
+// automatic "N of M" name (from `slideLabel`) is skipped and the consumer's name is left untouched.
+// Injected via cloneElement so it lands on the slide's own DOM node (<Slide> spreads it through) —
+// no extra wrapper element, so flex layout is untouched. Non-element children (raw text) can't carry
+// attributes and pass through as-is.
+function slideAria(
+	child: ReactElement,
+	index: number,
+	count: number,
+	slideLabel: SlideLabeler,
+): Record<string, unknown> {
+	const props = child.props as Record<string, unknown>;
+	const named =
+		props['aria-label'] != null || props['aria-labelledby'] != null;
+	return {
+		role: 'group',
+		'aria-roledescription': 'slide',
+		...(named ? null : {'aria-label': slideLabel(index, count)}),
+	};
+}
 
 // Loop clones are pixel-duplicates of real slides, so they must be invisible to assistive tech:
 // aria-hidden keeps a screen reader from announcing the content twice, and inert removes their
@@ -32,9 +46,15 @@ export function buildDisplayChildren(
 	childArray: ReactNode[],
 	slideCount: number,
 	loopOffset: number,
+	slideLabel: SlideLabeler,
 ): ReactNode[] {
 	const real = childArray.map((child, i) =>
-		decorate(child, slideAria(i, slideCount)),
+		isValidElement(child)
+			? cloneElement(
+					child as ReactElement,
+					slideAria(child as ReactElement, i, slideCount, slideLabel),
+				)
+			: child,
 	);
 
 	if (loopOffset <= 0 || slideCount <= 0) return real;

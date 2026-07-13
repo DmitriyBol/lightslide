@@ -20,6 +20,7 @@ import {cx} from '../utils/cx';
 import {
 	DEFAULT_FLOW_RESUME_DELAY,
 	DEFAULT_FLOW_SPEED,
+	DEFAULT_SLIDE_LABEL,
 	DEFAULT_VIEWED_TIMEOUT,
 } from './helpers/constants';
 import {buildDisplayChildren} from './helpers/loopClones';
@@ -41,6 +42,7 @@ export function LightSlide<T = unknown>({
 	trackStyle,
 	trackClassName,
 	label,
+	slideLabel = DEFAULT_SLIDE_LABEL,
 	analytics,
 	slidesPerView = 1,
 	autoScroll,
@@ -307,8 +309,8 @@ export function LightSlide<T = unknown>({
 	}, []);
 
 	const displayChildren = useMemo(
-		() => buildDisplayChildren(childArray, slideCount, loopOffset),
-		[childArray, slideCount, loopOffset],
+		() => buildDisplayChildren(childArray, slideCount, loopOffset, slideLabel),
+		[childArray, slideCount, loopOffset, slideLabel],
 	);
 
 	return (

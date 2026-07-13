@@ -1,6 +1,11 @@
 // Default seconds of ≥50% viewport visibility before onViewedSlides fires.
 export const DEFAULT_VIEWED_TIMEOUT = 30;
 
+// Default per-slide accessible name — the WAI-ARIA APG position label. Module-level so its identity
+// is stable (the display-children memo depends on it).
+export const DEFAULT_SLIDE_LABEL = (index: number, count: number) =>
+	`${index + 1} of ${count}`;
+
 // Snap animation tuning (used by the track transform).
 export const SNAP_EASING = 'cubic-bezier(0.25, 1, 0.5, 1)';
 export const SNAP_DURATION_MS = 300;

@@ -75,6 +75,7 @@ payloads.
 | `trackStyle` | `CSSProperties` | — | Styles for the inner track |
 | `trackClassName` | `string` | — | Class for the inner track |
 | `label` | `string` | — | Accessible name — makes the carousel a labelled `region` landmark (see [Accessibility](#accessibility)) |
+| `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
 | `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
 | `autoScroll` | `AutoScrollConfig` | — | Automatic slide cycling |
@@ -97,6 +98,7 @@ A single slide. Width is computed as `containerWidth / slidesPerView`. Generic o
 | `style` | `CSSProperties` | — | Additional styles for the slide |
 | `className` | `string` | — | Class for the slide |
 | `data` | `T` | — | Arbitrary data attached to this slide — surfaced in analytics payloads |
+| `aria-*` / `role` / `id` | — | — | ARIA attributes forwarded to the slide's node; `aria-label`/`aria-labelledby` name the card (overriding the automatic "N of M") |
 
 ```tsx
 type Product = { id: number; name: string };
@@ -267,7 +269,15 @@ out of the box — no configuration required:
 - **Per-slide labels** — every slide is a `group` with `aria-roledescription="slide"` and an
   `aria-label` of `"N of M"`, so a screen reader announces position as it moves. These are
   injected onto the slide's own node (via `<Slide>`), so there is no extra wrapper and flex
-  layout is unchanged.
+  layout is unchanged. To name a card for a screen reader, set `aria-label` (or `aria-labelledby`)
+  on the `<Slide>` — it overrides the automatic "N of M" for that slide; `slideLabel` on
+  `<LightSlide>` reshapes the automatic name globally (e.g. to localise it).
+
+```tsx
+<Slide aria-label="Ray-Ban Wayfarer, $89">
+  <ProductCard … />
+</Slide>
+```
 - **Loop clones hidden** — the duplicate slides added for seamless looping are `aria-hidden` and
   `inert`, so a screen reader never reads them twice and Tab never lands on an off-screen copy.
 - **Linked controls** — prev/next buttons and pagination dots set `aria-controls` to the slides
@@ -394,7 +404,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 152 integration tests (Jest + jsdom) across 19 suites
+npm test             # 157 integration tests (Jest + jsdom) across 19 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
