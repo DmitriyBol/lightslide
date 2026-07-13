@@ -47,3 +47,4 @@ Thumbs.db
 # Local-only docs/context for Claude (kept out of the published repo)
 .context/
 CLAUDE.md
+.claude/
