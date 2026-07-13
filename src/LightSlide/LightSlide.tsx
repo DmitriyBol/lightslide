@@ -10,6 +10,7 @@ import {
 
 import type {DragEvent} from 'react';
 
+import {A11yContext} from '../a11ySeam';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import {Navigation} from '../Navigation/Navigation';
@@ -46,6 +47,7 @@ export function LightSlide<T = unknown>({
 	flow,
 	navigation,
 	pagination,
+	a11y,
 	isLoop = false,
 	loading = false,
 	fallback,
@@ -85,9 +87,15 @@ export function LightSlide<T = unknown>({
 	// (flow / auto-scroll) must stay off until the real slides mount.
 	const isLoading = loading;
 
+	// Auto-motion gate. Defaults on; the opt-in reduced-motion plugin flips it off (via the a11y
+	// seam) when the user prefers reduced motion, which stops flow / auto-scroll reactively. Base
+	// consumers never touch it, so it stays true and adds no behaviour.
+	const [motionAllowed, setMotionAllowed] = useState(true);
+
 	// The flow needs the loop-clone structure to wrap seamlessly, so it also
 	// turns on effectiveLoop (whether or not the consumer set isLoop).
-	const effectiveFlow = flow?.enabled === true && maxIndex > 0 && !isLoading;
+	const effectiveFlow =
+		flow?.enabled === true && maxIndex > 0 && !isLoading && motionAllowed;
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
@@ -257,12 +265,21 @@ export function LightSlide<T = unknown>({
 	const navigateToIndexRef = useRef(navigateToIndex);
 	navigateToIndexRef.current = navigateToIndex;
 
-	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs
-	// while loading (no track to move).
-	useAutoScroll(effectiveFlow || isLoading ? undefined : autoScroll, {
-		storeRef,
-		navigateToIndexRef,
-	});
+	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs while loading
+	// (no track to move) nor when the reduced-motion gate is closed.
+	useAutoScroll(
+		effectiveFlow || isLoading || !motionAllowed ? undefined : autoScroll,
+		{
+			storeRef,
+			navigateToIndexRef,
+		},
+	);
+
+	// Whether any automatic movement is currently active — the live-region plugin reads this to
+	// stay quiet during auto-motion. effectiveFlow already implies motionAllowed; the auto-scroll
+	// term needs the gate applied explicitly.
+	const autoMotion =
+		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
 
 	const dragHandlers = useDragGesture({
 		trackRef,
@@ -329,6 +346,26 @@ export function LightSlide<T = unknown>({
 					</div>
 
 					{!isLoading && pagination && <Pagination config={pagination} />}
+
+					{/* Opt-in a11y layer. The provider (and its value object) only materialise when
+					    the consumer passes an `a11y` node, so base consumers pay nothing here. */}
+					{a11y && (
+						<A11yContext.Provider
+							value={{
+								containerRef,
+								trackRef,
+								storeRef,
+								currentIndex,
+								slideCount,
+								maxIndex,
+								isLoop: effectiveLoop,
+								autoMotion,
+								goToIndex,
+								setMotionAllowed,
+							}}>
+							{a11y}
+						</A11yContext.Provider>
+					)}
 				</div>
 			</NavContext.Provider>
 		</SlideMetricsContext.Provider>

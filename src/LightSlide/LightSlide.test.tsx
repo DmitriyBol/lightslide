@@ -2,6 +2,7 @@ import React from 'react';
 
 import {act, render, screen} from '@testing-library/react';
 
+import {A11y} from '../a11y';
 import {Slide} from '../Slide/Slide';
 import type {AnalyticsEvent} from '../types';
 import {LightSlide} from './LightSlide';
@@ -427,5 +428,20 @@ describe('LightSlide a11y', () => {
 		// pagination dots point at the same container
 		const dot = screen.getByLabelText('Go to slide 2');
 		expect(dot).toHaveAttribute('aria-controls', String(controls));
+	});
+
+	it('wires the opt-in a11y layer through the seam (live region announces)', () => {
+		render(
+			<LightSlide label="Featured" a11y={<A11y />}>
+				<Slide>
+					<div>One</div>
+				</Slide>
+				<Slide>
+					<div>Two</div>
+				</Slide>
+			</LightSlide>,
+		);
+		// The LiveRegion resolves the seam context and announces the active slide.
+		expect(screen.getByText('Slide 1 of 2')).toBeInTheDocument();
 	});
 });

@@ -51,6 +51,10 @@ export type LightSlideProps<T = unknown> = {
 	flow?: FlowConfig;
 	navigation?: NavigationConfig;
 	pagination?: PaginationConfig;
+	// Opt-in accessibility layer. Pass the node(s) from `lightslide/a11y` (e.g. `a11y={<A11y />}`)
+	// to add keyboard navigation, focus-guarding, live announcements and reduced-motion handling.
+	// Omit it and none of that code is pulled into your bundle — it lives in a separate entry.
+	a11y?: ReactNode;
 	isLoop?: boolean;
 	// When true, the carousel renders `fallback` instead of the slides — useful while
 	// async slide data is still being fetched. With no `fallback` it renders nothing.
