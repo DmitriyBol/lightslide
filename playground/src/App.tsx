@@ -5,6 +5,7 @@ import {PhaseLabel} from './components/PhaseLabel';
 import {ScrollProgress} from './components/ScrollProgress';
 import {useReveal} from './components/useReveal';
 import {useTheme} from './components/useTheme';
+import {AccessibilityExample} from './examples/AccessibilityExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
 import {BasicExample} from './examples/BasicExample';
 import {CustomStylesExample} from './examples/CustomStylesExample';
@@ -56,6 +57,9 @@ export function App() {
 				<LinkCardsExample />
 				<CustomTimeoutExample />
 				<LoadingExample />
+
+				<PhaseLabel label="Accessibility" />
+				<AccessibilityExample />
 			</main>
 
 			<footer className={styles.footer}>

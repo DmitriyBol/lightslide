@@ -358,6 +358,7 @@ export function LightSlide<T = unknown>({
 								currentIndex,
 								slideCount,
 								maxIndex,
+								slidesPerView,
 								isLoop: effectiveLoop,
 								autoMotion,
 								goToIndex,

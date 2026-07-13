@@ -15,6 +15,7 @@ function makeContext(overrides?: Partial<A11yContextType>): A11yContextType {
 		currentIndex: 0,
 		slideCount: 4,
 		maxIndex: 3,
+		slidesPerView: 1,
 		isLoop: false,
 		autoMotion: false,
 		goToIndex: jest.fn(),

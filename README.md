@@ -81,6 +81,7 @@ payloads.
 | `flow` | `FlowConfig` | — | Continuous ticker scroll (supersedes `autoScroll`) |
 | `navigation` | `NavigationConfig` | — | Prev/next buttons. Pass `{}` for defaults |
 | `pagination` | `PaginationConfig` | — | Pagination dots. Pass `{}` for defaults |
+| `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
 | `fallback` | `ReactNode` | — | Placeholder shown while `loading` (omit → renders nothing) |
@@ -278,11 +279,37 @@ out of the box — no configuration required:
 > Custom nav elements from `renderPrev`/`renderNext` own their own markup — attach your own
 > `aria-label` there. The `<Slide>` node forwards any native attribute you set on it.
 
-### Opt-in behaviors (`lightslide/a11y`)
+### Opt-in layer (`lightslide/a11y`)
 
-Keyboard navigation (arrows / Home / End), focus-guarding of off-screen slides, live-region
-announcements, and stopping auto-motion under reduced-motion ship as a **tree-shakeable** opt-in
-layer so consumers who don't need them pay nothing. See [the a11y layer](#) below. <!-- filled in by the plugin PR -->
+Keyboard navigation, focus-guarding, live-region announcements and reduced-motion handling for
+auto-motion ship as a separate entry, so **consumers who don't import it pay nothing** (the whole
+layer is ~1 kB). Import it and pass it to the `a11y` prop:
+
+```tsx
+import { LightSlide, Slide } from "lightslide";
+import { A11y } from "lightslide/a11y";
+
+<LightSlide label="Product highlights" navigation={{}} pagination={{}} a11y={<A11y />}>
+  {/* … */}
+</LightSlide>;
+```
+
+`<A11y>` bundles four independent behaviours, each toggleable:
+
+| Behaviour | Prop (default `true`) | What it does |
+|---|---|---|
+| Keyboard | `keyboard` | `←`/`→` step a slide, `Home`/`End` jump to the first/last, once focus is inside the carousel. Ignores keys typed into form fields. |
+| Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. |
+| Live region | `liveRegion` | A polite live region announcing `"Slide N of M"` on manual navigation; silent during auto-motion. Customise via `announce={(i, n) => …}`. |
+| Reduced motion | `respectReducedMotion` | Stops **flow**/**auto-scroll** while the user prefers reduced motion (slide-snap is already instant — handled by the core). |
+
+```tsx
+<LightSlide a11y={<A11y keyboard focusGuard={false} announce={(i, n) => `${i + 1} / ${n}`} />} />
+```
+
+Each behaviour is also exported on its own (`Keyboard`, `FocusGuard`, `LiveRegion`, `ReducedMotion`)
+to cherry-pick: `a11y={<><Keyboard /><LiveRegion /></>}`. They must be rendered through the `a11y`
+prop — they read the carousel's state through an internal context and throw if used elsewhere.
 
 ## Styling
 
@@ -327,6 +354,14 @@ src/
 │       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
 │       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
 │       └── useViewportEngagement.ts#   IntersectionObserver + terminal events
+├── a11y/                           # Opt-in `lightslide/a11y` entry (tree-shakeable)
+│   ├── index.ts                    #   subpath barrel
+│   ├── A11y.tsx                    #   umbrella component (toggles the four behaviours)
+│   ├── Keyboard.tsx                #   arrow / Home / End navigation
+│   ├── FocusGuard.tsx              #   inert off-screen slides
+│   ├── LiveRegion.tsx              #   polite "Slide N of M" announcements
+│   └── ReducedMotion.tsx           #   stop flow/auto-scroll under prefers-reduced-motion
+├── a11ySeam.ts                     # Context seam between the core and the a11y plugins
 ├── Slide/
 │   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
 │   └── Slide.module.scss
@@ -359,7 +394,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 131 integration tests (Jest + jsdom) across 14 suites
+npm test             # 152 integration tests (Jest + jsdom) across 19 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
@@ -375,8 +410,9 @@ Two layers:
 - **Integration** (`npm test`) — Jest + Testing Library in jsdom; the fast inner loop over
   component logic.
 - **End-to-end** (`npm run test:e2e`) — Playwright (Chromium) driving the live playground in a
-  real browser. Covers what jsdom can't: pointer drag/snap, layout-measured slide widths, and
-  loop/flow motion. See [`e2e/`](e2e/).
+  real browser. Covers what jsdom can't: pointer drag/snap, layout-measured slide widths,
+  loop/flow motion, and the a11y layer's real keyboard focus flow + `inert` guarding. See
+  [`e2e/`](e2e/).
 
 ```bash
 npx playwright install chromium   # one-time: browser

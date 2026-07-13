@@ -26,6 +26,8 @@ export type A11yContextType = {
 	currentIndex: number;
 	slideCount: number;
 	maxIndex: number;
+	// Slides visible at once (floats allowed) — focus-guarding derives the visible range from it.
+	slidesPerView: number;
 	isLoop: boolean;
 	// True while flow or auto-scroll is running — the live region goes quiet (aria-live off) so
 	// automatic movement doesn't spam the screen reader.
