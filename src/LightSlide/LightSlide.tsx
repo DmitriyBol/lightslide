@@ -1,6 +1,7 @@
 import {
 	Children,
 	useCallback,
+	useId,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -20,7 +21,7 @@ import {
 	DEFAULT_FLOW_SPEED,
 	DEFAULT_VIEWED_TIMEOUT,
 } from './helpers/constants';
-import {buildLoopChildren} from './helpers/loopClones';
+import {buildDisplayChildren} from './helpers/loopClones';
 import type {NavigateSource} from './helpers/navigation';
 import {collectSlideData} from './helpers/slideData';
 import {createStore} from './helpers/store';
@@ -38,6 +39,7 @@ export function LightSlide<T = unknown>({
 	className,
 	trackStyle,
 	trackClassName,
+	label,
 	analytics,
 	slidesPerView = 1,
 	autoScroll,
@@ -50,6 +52,10 @@ export function LightSlide<T = unknown>({
 }: LightSlideProps<T>) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
+
+	// Stable, SSR-safe id for the slides container (the track). Nav buttons and pagination dots
+	// point aria-controls at it, so assistive tech knows which region they drive.
+	const slidesId = useId();
 
 	// Single mutable store for all core data — read/written imperatively by the gesture
 	// and animation hooks (zero re-renders). The "functional" pieces (analytics handlers,
@@ -242,9 +248,10 @@ export function LightSlide<T = unknown>({
 			maxIndex,
 			isLoop: effectiveLoop,
 			isReady,
+			slidesId,
 			goToIndex,
 		}),
-		[currentIndex, maxIndex, effectiveLoop, isReady, goToIndex],
+		[currentIndex, maxIndex, effectiveLoop, isReady, slidesId, goToIndex],
 	);
 
 	const navigateToIndexRef = useRef(navigateToIndex);
@@ -283,7 +290,7 @@ export function LightSlide<T = unknown>({
 	}, []);
 
 	const displayChildren = useMemo(
-		() => buildLoopChildren(childArray, slideCount, loopOffset),
+		() => buildDisplayChildren(childArray, slideCount, loopOffset),
 		[childArray, slideCount, loopOffset],
 	);
 
@@ -292,6 +299,11 @@ export function LightSlide<T = unknown>({
 			<NavContext.Provider value={navValue}>
 				<div
 					ref={containerRef}
+					// Carousel landmark (WAI-ARIA APG): a labelled region when `label` is given,
+					// otherwise a plain group; either way announced as a "carousel".
+					role={label ? 'region' : 'group'}
+					aria-roledescription="carousel"
+					aria-label={label}
 					className={cx(styles.container, className)}
 					style={style}>
 					{/* Stage height tracks the viewport only, so the controls anchored to it
@@ -303,6 +315,7 @@ export function LightSlide<T = unknown>({
 							) : (
 								<div
 									ref={trackRef}
+									id={slidesId}
 									className={cx(styles.track, trackClassName)}
 									style={trackStyle}
 									onDragStart={preventNativeDrag}

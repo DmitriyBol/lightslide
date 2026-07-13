@@ -41,6 +41,10 @@ export type LightSlideProps<T = unknown> = {
 	className?: string;
 	trackStyle?: CSSProperties;
 	trackClassName?: string;
+	// Accessible name for the carousel region. When set, the container becomes a labelled
+	// landmark (role="region"); without it, it stays a plain role="group". Either way it carries
+	// aria-roledescription="carousel" so assistive tech announces it as a carousel.
+	label?: string;
 	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
 	autoScroll?: AutoScrollConfig;

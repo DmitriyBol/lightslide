@@ -21,6 +21,11 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
 - **Auto-scroll** — optional step cycling at a configurable interval; pauses during drag.
 - **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping;
   pauses on interaction and resumes after a delay.
+- **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
+  `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
+  order, controls are linked via `aria-controls`, and slide snapping respects
+  `prefers-reduced-motion`. (Keyboard, focus-guarding and live announcements ship opt-in — see
+  [Accessibility](#accessibility).)
 - **Loading fallback** — render your own placeholder node while data is fetched.
 - **Analytics** — one typed `onEvent` handler emitting six events (viewport, slide, navigation,
   pagination, engagement).
@@ -35,7 +40,7 @@ npm install lightslide
 npm install react react-dom
 ```
 
-Requires React ≥ 17.
+Requires React ≥ 18 (the accessible id wiring uses `useId`).
 
 ## Quick start
 
@@ -69,6 +74,7 @@ payloads.
 | `className` | `string` | — | Class for the outer wrapper |
 | `trackStyle` | `CSSProperties` | — | Styles for the inner track |
 | `trackClassName` | `string` | — | Class for the inner track |
+| `label` | `string` | — | Accessible name — makes the carousel a labelled `region` landmark (see [Accessibility](#accessibility)) |
 | `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
 | `autoScroll` | `AutoScrollConfig` | — | Automatic slide cycling |
@@ -249,6 +255,35 @@ analytics={{
 `SlideData<T>` is `{ index: number; data?: T }`. With `<LightSlide<T>>` the `slides` arrays on the
 terminal events are typed `SlideData<T>[]`.
 
+## Accessibility
+
+The core follows the [WAI-ARIA APG carousel pattern](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/)
+out of the box — no configuration required:
+
+- **Carousel region** — the container carries `aria-roledescription="carousel"`. Pass `label` to
+  give it an accessible name and promote it to a `region` landmark; without a label it stays a
+  plain `group` (announced as a carousel, but not a landmark).
+- **Per-slide labels** — every slide is a `group` with `aria-roledescription="slide"` and an
+  `aria-label` of `"N of M"`, so a screen reader announces position as it moves. These are
+  injected onto the slide's own node (via `<Slide>`), so there is no extra wrapper and flex
+  layout is unchanged.
+- **Loop clones hidden** — the duplicate slides added for seamless looping are `aria-hidden` and
+  `inert`, so a screen reader never reads them twice and Tab never lands on an off-screen copy.
+- **Linked controls** — prev/next buttons and pagination dots set `aria-controls` to the slides
+  container, and dots expose `aria-current`. Built-in buttons/dots already carry `aria-label`s.
+- **Reduced motion** — when the user requests `prefers-reduced-motion: reduce`, slide snapping is
+  instant (no animated transform). Continuous **flow**/**auto-scroll** motion is left to the
+  opt-in layer below.
+
+> Custom nav elements from `renderPrev`/`renderNext` own their own markup — attach your own
+> `aria-label` there. The `<Slide>` node forwards any native attribute you set on it.
+
+### Opt-in behaviors (`lightslide/a11y`)
+
+Keyboard navigation (arrows / Home / End), focus-guarding of off-screen slides, live-region
+announcements, and stopping auto-motion under reduced-motion ship as a **tree-shakeable** opt-in
+layer so consumers who don't need them pay nothing. See [the a11y layer](#) below. <!-- filled in by the plugin PR -->
+
 ## Styling
 
 The base look ships as scoped CSS-module (SCSS) classes injected on import — no separate CSS file,
@@ -284,7 +319,7 @@ src/
 │       ├── navigation.ts           #   navigation source/fn types
 │       ├── store.ts                #   single core-data store (LightSlideStore<T>)
 │       ├── slideData.ts            #   collectSlideData (+ test)
-│       ├── loopClones.ts           #   buildLoopChildren (+ test)
+│       ├── loopClones.ts           #   buildDisplayChildren: per-slide ARIA + loop clones (+ test)
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
@@ -312,7 +347,8 @@ src/
 │   ├── cx.ts                       # tiny className combiner (clsx-style)
 │   ├── cx.test.ts
 │   ├── swipe.ts                    # getSnapIndex — threshold + velocity + multi-slide
-│   └── swipe.test.ts
+│   ├── swipe.test.ts
+│   └── reducedMotion.ts            # prefers-reduced-motion check (SSR-safe)
 ├── lightSlideContext.ts            # Split contexts: SlideMetricsContext + NavContext
 ├── types.ts                        # Shared + public types
 ├── styles.d.ts                     # Ambient declaration for *.module.scss imports
@@ -323,7 +359,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 125 integration tests (Jest + jsdom) across 14 suites
+npm test             # 131 integration tests (Jest + jsdom) across 14 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

@@ -10,7 +10,8 @@ type PaginationProps = {
 };
 
 export function Pagination({config}: PaginationProps) {
-	const {currentIndex, maxIndex, isReady, goToIndex} = useNavContext();
+	const {currentIndex, maxIndex, isReady, slidesId, goToIndex} =
+		useNavContext();
 
 	// Number of dots = number of scrollable positions
 	const dotCount = maxIndex + 1;
@@ -36,6 +37,7 @@ export function Pagination({config}: PaginationProps) {
 					<button
 						key={i}
 						aria-label={`Go to slide ${i + 1}`}
+						aria-controls={slidesId || undefined}
 						aria-current={isActive ? 'true' : undefined}
 						className={cx(
 							styles.dot,

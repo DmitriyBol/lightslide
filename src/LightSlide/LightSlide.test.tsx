@@ -363,3 +363,69 @@ describe('LightSlide — typed data chain', () => {
 		expect(screen.getByText('A')).toBeInTheDocument();
 	});
 });
+
+describe('LightSlide a11y', () => {
+	function renderA11y(props: Partial<React.ComponentProps<typeof LightSlide>> = {}) {
+		return render(
+			<LightSlide label="Featured products" navigation={{}} pagination={{}} {...props}>
+				<Slide>
+					<div>One</div>
+				</Slide>
+				<Slide>
+					<div>Two</div>
+				</Slide>
+				<Slide>
+					<div>Three</div>
+				</Slide>
+			</LightSlide>,
+		);
+	}
+
+	it('exposes the container as a labelled carousel region', () => {
+		renderA11y();
+		const region = screen.getByRole('region', {name: 'Featured products'});
+		expect(region).toHaveAttribute('aria-roledescription', 'carousel');
+	});
+
+	it('falls back to role=group (no landmark) when no label is given', () => {
+		render(
+			<LightSlide>
+				<Slide>
+					<div>Only</div>
+				</Slide>
+			</LightSlide>,
+		);
+		const group = screen.getByRole('group', {name: ''});
+		expect(group).toHaveAttribute('aria-roledescription', 'carousel');
+		expect(group).not.toHaveAttribute('aria-label');
+	});
+
+	it('labels each slide as "N of M"', () => {
+		renderA11y();
+		for (const name of ['1 of 3', '2 of 3', '3 of 3']) {
+			const slide = screen.getByRole('group', {name});
+			expect(slide).toHaveAttribute('aria-roledescription', 'slide');
+		}
+	});
+
+	it('hides loop clones from assistive tech and the tab order', () => {
+		const {container} = renderA11y({isLoop: true});
+		const clones = container.querySelectorAll('[aria-hidden="true"]');
+		// isLoop at slidesPerView 1 clones one slide at each end
+		expect(clones).toHaveLength(2);
+		clones.forEach(el => expect(el).toHaveAttribute('inert'));
+	});
+
+	it('links nav buttons and dots to the slides container via aria-controls', () => {
+		renderA11y();
+		const controls = screen
+			.getByLabelText('Next slide')
+			.getAttribute('aria-controls');
+		expect(controls).toBeTruthy();
+		expect(document.getElementById(String(controls))).toBeInTheDocument();
+
+		// pagination dots point at the same container
+		const dot = screen.getByLabelText('Go to slide 2');
+		expect(dot).toHaveAttribute('aria-controls', String(controls));
+	});
+});

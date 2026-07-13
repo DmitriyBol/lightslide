@@ -10,7 +10,8 @@ type NavigationProps = {
 };
 
 export function Navigation({config}: NavigationProps) {
-	const {currentIndex, maxIndex, isLoop, isReady, goToIndex} = useNavContext();
+	const {currentIndex, maxIndex, isLoop, isReady, slidesId, goToIndex} =
+		useNavContext();
 
 	const handlePrev = useCallback(() => {
 		goToIndex(currentIndex - 1, 'button');
@@ -50,6 +51,7 @@ export function Navigation({config}: NavigationProps) {
 			) : (
 				<button
 					aria-label="Previous slide"
+					aria-controls={slidesId || undefined}
 					disabled={prevDisabled}
 					className={cx(
 						styles.button,
@@ -81,6 +83,7 @@ export function Navigation({config}: NavigationProps) {
 			) : (
 				<button
 					aria-label="Next slide"
+					aria-controls={slidesId || undefined}
 					disabled={nextDisabled}
 					className={cx(
 						styles.button,

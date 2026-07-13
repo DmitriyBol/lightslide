@@ -20,6 +20,9 @@ export type NavContextType = {
 	maxIndex: number;
 	isLoop: boolean;
 	isReady: boolean;
+	// Stable id of the slides container (the track), so Navigation and Pagination can point
+	// aria-controls at the region they operate on.
+	slidesId: string;
 	goToIndex: (index: number, source: 'button' | 'pagination') => void;
 };
 
@@ -28,6 +31,7 @@ export const NavContext = createContext<NavContextType>({
 	maxIndex: 0,
 	isLoop: false,
 	isReady: false,
+	slidesId: '',
 	goToIndex: () => {},
 });
 
