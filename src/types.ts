@@ -41,9 +41,8 @@ export type LightSlideProps<T = unknown> = {
 	className?: string;
 	trackStyle?: CSSProperties;
 	trackClassName?: string;
-	// Accessible name for the carousel region. When set, the container becomes a labelled
-	// landmark (role="region"); without it, it stays a plain role="group". Either way it carries
-	// aria-roledescription="carousel" so assistive tech announces it as a carousel.
+	// Accessible name for the carousel region. When set, the container is a labelled `region`
+	// landmark (else a plain `group`); either way it is announced as a carousel.
 	label?: string;
 	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
@@ -51,9 +50,8 @@ export type LightSlideProps<T = unknown> = {
 	flow?: FlowConfig;
 	navigation?: NavigationConfig;
 	pagination?: PaginationConfig;
-	// Opt-in accessibility layer. Pass the node(s) from `lightslide/a11y` (e.g. `a11y={<A11y />}`)
-	// to add keyboard navigation, focus-guarding, live announcements and reduced-motion handling.
-	// Omit it and none of that code is pulled into your bundle — it lives in a separate entry.
+	// Opt-in accessibility layer — pass the node(s) from `lightslide/a11y` (e.g. `<A11y />`). Omit
+	// it and none of that code enters your bundle (it lives in a separate entry).
 	a11y?: ReactNode;
 	isLoop?: boolean;
 	// When true, the carousel renders `fallback` instead of the slides — useful while

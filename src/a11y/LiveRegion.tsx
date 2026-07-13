@@ -16,8 +16,9 @@ const visuallyHidden: CSSProperties = {
 	whiteSpace: 'nowrap',
 };
 
+// Props for the live-region announcer. `announce` overrides the default
+// "Slide {index + 1} of {count}" text.
 export type LiveRegionProps = {
-	// Custom announcement text. Defaults to "Slide {index + 1} of {count}".
 	announce?: (index: number, count: number) => string;
 };
 

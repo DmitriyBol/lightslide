@@ -3,16 +3,15 @@ import {Keyboard} from './Keyboard';
 import {LiveRegion} from './LiveRegion';
 import {ReducedMotion} from './ReducedMotion';
 
+// Per-behaviour toggles for the bundled a11y plugins (all default true), plus a custom live-region
+// formatter. keyboard: arrow / Home / End nav; focusGuard: inert off-screen slides; liveRegion:
+// polite "Slide N of M" announcements; respectReducedMotion: stop flow / auto-scroll under
+// prefers-reduced-motion; announce: overrides the live-region text.
 export type A11yProps = {
-	// Arrow-key / Home / End navigation when the carousel has focus (default true).
 	keyboard?: boolean;
-	// Make off-screen slides inert so keyboard focus can't land on them (default true).
 	focusGuard?: boolean;
-	// Announce the active slide via a polite live region (default true).
 	liveRegion?: boolean;
-	// Stop flow / auto-scroll under prefers-reduced-motion (default true).
 	respectReducedMotion?: boolean;
-	// Custom live-region text; defaults to "Slide {index + 1} of {count}".
 	announce?: (index: number, count: number) => string;
 };
 

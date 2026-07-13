@@ -15,25 +15,24 @@ import type {LightSlideStore} from './LightSlide/helpers/store';
  * Lives in its own module so it is the single chunk shared between the base and the `a11y` entry;
  * that keeps the runtime context a single instance across the two bundles (a duplicated context
  * would silently fail to match Provider ↔ consumer).
+ *
+ * Most fields are refs or plain nav state; the non-obvious ones: `containerRef` is where keyboard
+ * binds its listener, `trackRef`'s children are what focus-guarding walks, `storeRef` is the
+ * imperative core store, `slidesPerView` gives focus-guarding its visible range, `autoMotion` is
+ * true while flow / auto-scroll runs (the live region falls silent then), and `setMotionAllowed`
+ * lets the reduced-motion plugin stop auto-motion reactively.
  */
 export type A11yContextType = {
-	// The outer carousel element — keyboard binds its listener here.
 	containerRef: RefObject<HTMLDivElement>;
-	// The slides track — focus-guarding walks its slide children.
 	trackRef: RefObject<HTMLDivElement>;
-	// The imperative core-data store (currentIndex, slidesPerView, loopOffset, …).
 	storeRef: MutableRefObject<LightSlideStore>;
 	currentIndex: number;
 	slideCount: number;
 	maxIndex: number;
-	// Slides visible at once (floats allowed) — focus-guarding derives the visible range from it.
 	slidesPerView: number;
 	isLoop: boolean;
-	// True while flow or auto-scroll is running — the live region goes quiet (aria-live off) so
-	// automatic movement doesn't spam the screen reader.
 	autoMotion: boolean;
 	goToIndex: (index: number, source: 'button' | 'pagination') => void;
-	// Lets the reduced-motion plugin switch off auto-motion (flow / auto-scroll) reactively.
 	setMotionAllowed: (allowed: boolean) => void;
 };
 

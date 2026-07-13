@@ -14,14 +14,13 @@ export const useSlideMetricsContext = () => useContext(SlideMetricsContext);
 
 // Navigation state. Consumed by Navigation and Pagination; changes on every navigation.
 // `isReady` is false until the carousel has laid out on the client (controls stay hidden
-// until then to avoid an un-positioned SSR/first-paint flash).
+// until then to avoid an un-positioned SSR/first-paint flash). `slidesId` is the id of the
+// slides container (the track), which the controls point aria-controls at.
 export type NavContextType = {
 	currentIndex: number;
 	maxIndex: number;
 	isLoop: boolean;
 	isReady: boolean;
-	// Stable id of the slides container (the track), so Navigation and Pagination can point
-	// aria-controls at the region they operate on.
 	slidesId: string;
 	goToIndex: (index: number, source: 'button' | 'pagination') => void;
 };
