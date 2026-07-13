@@ -8,14 +8,19 @@ import {cx} from '../utils/cx';
 import styles from './Slide.module.scss';
 
 function SlideInner<T>(
-	{children, style, className}: SlideProps<T>,
+	{children, style, className, data, ...rest}: SlideProps<T>,
 	ref: ForwardedRef<HTMLDivElement>,
 ) {
 	const {slideWidth} = useSlideMetricsContext();
 
+	// `data` is read by the parent (analytics), never rendered — kept out of the DOM props.
+	// `...rest` forwards anything else onto the slide node: the per-slide ARIA the carousel
+	// injects via cloneElement (role / aria-roledescription / aria-label, or the hidden+inert
+	// markers on loop clones), and any native attribute a consumer sets on <Slide>.
 	return (
 		<div
 			ref={ref}
+			{...rest}
 			className={cx(styles.slide, className)}
 			style={{
 				width: slideWidth > 0 ? `${slideWidth}px` : '100%',

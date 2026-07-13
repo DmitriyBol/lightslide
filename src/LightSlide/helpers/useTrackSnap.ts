@@ -2,6 +2,7 @@ import {useCallback} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
+import {prefersReducedMotion} from '../../utils/reducedMotion';
 import {SNAP_DURATION_MS, SNAP_EASING} from './constants';
 import type {LightSlideStore} from './store';
 import {trackOffset} from './trackOffset';
@@ -31,7 +32,13 @@ export function useTrackSnap(
 			if (!track) return;
 			const offset = trackOffset(visualIndex, storeRef.current);
 
-			if (animate) {
+			// Honour prefers-reduced-motion by snapping instantly. Crucially we route through the
+			// no-transition branch (not just transition: none) so onComplete still fires — the loop
+			// wrap-around depends on it, and a forced CSS transition:none would never emit
+			// transitionend, stalling the re-snap.
+			const doAnimate = animate && !prefersReducedMotion();
+
+			if (doAnimate) {
 				track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
 				track.style.transform = `translateX(${-offset}px)`;
 				const onEnd = () => {

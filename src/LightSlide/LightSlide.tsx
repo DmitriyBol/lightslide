@@ -1,6 +1,7 @@
 import {
 	Children,
 	useCallback,
+	useId,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -9,6 +10,7 @@ import {
 
 import type {DragEvent} from 'react';
 
+import {A11yContext} from '../a11ySeam';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import {Navigation} from '../Navigation/Navigation';
@@ -18,9 +20,10 @@ import {cx} from '../utils/cx';
 import {
 	DEFAULT_FLOW_RESUME_DELAY,
 	DEFAULT_FLOW_SPEED,
+	DEFAULT_SLIDE_LABEL,
 	DEFAULT_VIEWED_TIMEOUT,
 } from './helpers/constants';
-import {buildLoopChildren} from './helpers/loopClones';
+import {buildDisplayChildren} from './helpers/loopClones';
 import type {NavigateSource} from './helpers/navigation';
 import {collectSlideData} from './helpers/slideData';
 import {createStore} from './helpers/store';
@@ -38,18 +41,25 @@ export function LightSlide<T = unknown>({
 	className,
 	trackStyle,
 	trackClassName,
+	label,
+	slideLabel = DEFAULT_SLIDE_LABEL,
 	analytics,
 	slidesPerView = 1,
 	autoScroll,
 	flow,
 	navigation,
 	pagination,
+	a11y,
 	isLoop = false,
 	loading = false,
 	fallback,
 }: LightSlideProps<T>) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
+
+	// Stable, SSR-safe id for the slides container (the track). Nav buttons and pagination dots
+	// point aria-controls at it, so assistive tech knows which region they drive.
+	const slidesId = useId();
 
 	// Single mutable store for all core data — read/written imperatively by the gesture
 	// and animation hooks (zero re-renders). The "functional" pieces (analytics handlers,
@@ -79,9 +89,15 @@ export function LightSlide<T = unknown>({
 	// (flow / auto-scroll) must stay off until the real slides mount.
 	const isLoading = loading;
 
+	// Auto-motion gate. Defaults on; the opt-in reduced-motion plugin flips it off (via the a11y
+	// seam) when the user prefers reduced motion, which stops flow / auto-scroll reactively. Base
+	// consumers never touch it, so it stays true and adds no behaviour.
+	const [motionAllowed, setMotionAllowed] = useState(true);
+
 	// The flow needs the loop-clone structure to wrap seamlessly, so it also
 	// turns on effectiveLoop (whether or not the consumer set isLoop).
-	const effectiveFlow = flow?.enabled === true && maxIndex > 0 && !isLoading;
+	const effectiveFlow =
+		flow?.enabled === true && maxIndex > 0 && !isLoading && motionAllowed;
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
@@ -242,20 +258,30 @@ export function LightSlide<T = unknown>({
 			maxIndex,
 			isLoop: effectiveLoop,
 			isReady,
+			slidesId,
 			goToIndex,
 		}),
-		[currentIndex, maxIndex, effectiveLoop, isReady, goToIndex],
+		[currentIndex, maxIndex, effectiveLoop, isReady, slidesId, goToIndex],
 	);
 
 	const navigateToIndexRef = useRef(navigateToIndex);
 	navigateToIndexRef.current = navigateToIndex;
 
-	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs
-	// while loading (no track to move).
-	useAutoScroll(effectiveFlow || isLoading ? undefined : autoScroll, {
-		storeRef,
-		navigateToIndexRef,
-	});
+	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs while loading
+	// (no track to move) nor when the reduced-motion gate is closed.
+	useAutoScroll(
+		effectiveFlow || isLoading || !motionAllowed ? undefined : autoScroll,
+		{
+			storeRef,
+			navigateToIndexRef,
+		},
+	);
+
+	// Whether any automatic movement is currently active — the live-region plugin reads this to
+	// stay quiet during auto-motion. effectiveFlow already implies motionAllowed; the auto-scroll
+	// term needs the gate applied explicitly.
+	const autoMotion =
+		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
 
 	const dragHandlers = useDragGesture({
 		trackRef,
@@ -283,8 +309,8 @@ export function LightSlide<T = unknown>({
 	}, []);
 
 	const displayChildren = useMemo(
-		() => buildLoopChildren(childArray, slideCount, loopOffset),
-		[childArray, slideCount, loopOffset],
+		() => buildDisplayChildren(childArray, slideCount, loopOffset, slideLabel),
+		[childArray, slideCount, loopOffset, slideLabel],
 	);
 
 	return (
@@ -292,6 +318,11 @@ export function LightSlide<T = unknown>({
 			<NavContext.Provider value={navValue}>
 				<div
 					ref={containerRef}
+					// Carousel landmark (WAI-ARIA APG): a labelled region when `label` is given,
+					// otherwise a plain group; either way announced as a "carousel".
+					role={label ? 'region' : 'group'}
+					aria-roledescription="carousel"
+					aria-label={label}
 					className={cx(styles.container, className)}
 					style={style}>
 					{/* Stage height tracks the viewport only, so the controls anchored to it
@@ -303,6 +334,7 @@ export function LightSlide<T = unknown>({
 							) : (
 								<div
 									ref={trackRef}
+									id={slidesId}
 									className={cx(styles.track, trackClassName)}
 									style={trackStyle}
 									onDragStart={preventNativeDrag}
@@ -316,6 +348,27 @@ export function LightSlide<T = unknown>({
 					</div>
 
 					{!isLoading && pagination && <Pagination config={pagination} />}
+
+					{/* Opt-in a11y layer. The provider (and its value object) only materialise when
+					    the consumer passes an `a11y` node, so base consumers pay nothing here. */}
+					{a11y && (
+						<A11yContext.Provider
+							value={{
+								containerRef,
+								trackRef,
+								storeRef,
+								currentIndex,
+								slideCount,
+								maxIndex,
+								slidesPerView,
+								isLoop: effectiveLoop,
+								autoMotion,
+								goToIndex,
+								setMotionAllowed,
+							}}>
+							{a11y}
+						</A11yContext.Provider>
+					)}
 				</div>
 			</NavContext.Provider>
 		</SlideMetricsContext.Provider>

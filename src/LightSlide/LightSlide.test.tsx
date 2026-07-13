@@ -2,6 +2,7 @@ import React from 'react';
 
 import {act, render, screen} from '@testing-library/react';
 
+import {A11y} from '../a11y';
 import {Slide} from '../Slide/Slide';
 import type {AnalyticsEvent} from '../types';
 import {LightSlide} from './LightSlide';
@@ -361,5 +362,120 @@ describe('LightSlide — typed data chain', () => {
 			</LightSlide>,
 		);
 		expect(screen.getByText('A')).toBeInTheDocument();
+	});
+});
+
+describe('LightSlide a11y', () => {
+	function renderA11y(props: Partial<React.ComponentProps<typeof LightSlide>> = {}) {
+		return render(
+			<LightSlide label="Featured products" navigation={{}} pagination={{}} {...props}>
+				<Slide>
+					<div>One</div>
+				</Slide>
+				<Slide>
+					<div>Two</div>
+				</Slide>
+				<Slide>
+					<div>Three</div>
+				</Slide>
+			</LightSlide>,
+		);
+	}
+
+	it('exposes the container as a labelled carousel region', () => {
+		renderA11y();
+		const region = screen.getByRole('region', {name: 'Featured products'});
+		expect(region).toHaveAttribute('aria-roledescription', 'carousel');
+	});
+
+	it('falls back to role=group (no landmark) when no label is given', () => {
+		render(
+			<LightSlide>
+				<Slide>
+					<div>Only</div>
+				</Slide>
+			</LightSlide>,
+		);
+		const group = screen.getByRole('group', {name: ''});
+		expect(group).toHaveAttribute('aria-roledescription', 'carousel');
+		expect(group).not.toHaveAttribute('aria-label');
+	});
+
+	it('labels each slide as "N of M"', () => {
+		renderA11y();
+		for (const name of ['1 of 3', '2 of 3', '3 of 3']) {
+			const slide = screen.getByRole('group', {name});
+			expect(slide).toHaveAttribute('aria-roledescription', 'slide');
+		}
+	});
+
+	it('lets a per-slide aria-label name the card, overriding "N of M"', () => {
+		render(
+			<LightSlide label="Shop">
+				<Slide aria-label="Ray-Ban Wayfarer, $89">
+					<div>content</div>
+				</Slide>
+				<Slide>
+					<div>b</div>
+				</Slide>
+			</LightSlide>,
+		);
+		// the named slide keeps the consumer's name and is still a "slide" group
+		expect(
+			screen.getByRole('group', {name: 'Ray-Ban Wayfarer, $89'}),
+		).toHaveAttribute('aria-roledescription', 'slide');
+		// the un-named slide still gets the automatic position label
+		expect(screen.getByRole('group', {name: '2 of 2'})).toBeInTheDocument();
+	});
+
+	it('formats the automatic slide name via slideLabel', () => {
+		render(
+			<LightSlide label="Shop" slideLabel={(i, n) => `${i + 1} sur ${n}`}>
+				<Slide>
+					<div>a</div>
+				</Slide>
+				<Slide>
+					<div>b</div>
+				</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByRole('group', {name: '1 sur 2'})).toBeInTheDocument();
+		expect(screen.getByRole('group', {name: '2 sur 2'})).toBeInTheDocument();
+	});
+
+	it('hides loop clones from assistive tech and the tab order', () => {
+		const {container} = renderA11y({isLoop: true});
+		const clones = container.querySelectorAll('[aria-hidden="true"]');
+		// isLoop at slidesPerView 1 clones one slide at each end
+		expect(clones).toHaveLength(2);
+		clones.forEach(el => expect(el).toHaveAttribute('inert'));
+	});
+
+	it('links nav buttons and dots to the slides container via aria-controls', () => {
+		renderA11y();
+		const controls = screen
+			.getByLabelText('Next slide')
+			.getAttribute('aria-controls');
+		expect(controls).toBeTruthy();
+		expect(document.getElementById(String(controls))).toBeInTheDocument();
+
+		// pagination dots point at the same container
+		const dot = screen.getByLabelText('Go to slide 2');
+		expect(dot).toHaveAttribute('aria-controls', String(controls));
+	});
+
+	it('wires the opt-in a11y layer through the seam (live region announces)', () => {
+		render(
+			<LightSlide label="Featured" a11y={<A11y />}>
+				<Slide>
+					<div>One</div>
+				</Slide>
+				<Slide>
+					<div>Two</div>
+				</Slide>
+			</LightSlide>,
+		);
+		// The LiveRegion resolves the seam context and announces the active slide.
+		expect(screen.getByText('Slide 1 of 2')).toBeInTheDocument();
 	});
 });

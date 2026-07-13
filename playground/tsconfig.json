@@ -10,7 +10,8 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "paths": {
-      "lightslide": ["../src/index.ts"]
+      "lightslide": ["../src/index.ts"],
+      "lightslide/a11y": ["../src/a11y/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

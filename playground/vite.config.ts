@@ -6,8 +6,17 @@ import {defineConfig} from 'vite';
 export default defineConfig({
 	plugins: [react()],
 	resolve: {
-		alias: {
-			lightslide: path.resolve(__dirname, '../src/index.ts'),
-		},
+		// Order matters: the more specific subpath alias must come first, otherwise the bare
+		// `lightslide` alias would swallow `lightslide/a11y` and mis-resolve it.
+		alias: [
+			{
+				find: 'lightslide/a11y',
+				replacement: path.resolve(__dirname, '../src/a11y/index.ts'),
+			},
+			{
+				find: 'lightslide',
+				replacement: path.resolve(__dirname, '../src/index.ts'),
+			},
+		],
 	},
 });

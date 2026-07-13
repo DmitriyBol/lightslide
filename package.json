@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "0.6.1",
+  "version": "0.8.0",
   "description": "Lightweight, fully-typed React carousel & slider with built-in analytics, infinite loop, and a continuous flow (ticker) mode. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -11,8 +11,14 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.js"
     },
+    "./a11y": {
+      "types": "./dist/a11y.d.ts",
+      "import": "./dist/a11y.esm.js",
+      "require": "./dist/a11y.js"
+    },
     "./package.json": "./package.json"
   },
+  "sideEffects": ["**/*.scss", "**/*.css"],
   "files": ["dist"],
   "scripts": {
     "prebuild": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
@@ -38,6 +44,11 @@
     {
       "path": "dist/index.esm.js",
       "limit": "5.5 kB"
+    },
+    {
+      "name": "lightslide/a11y (with shared core chunk)",
+      "path": "dist/a11y.esm.js",
+      "limit": "2 kB"
     }
   ],
   "repository": {
@@ -52,8 +63,8 @@
     "node": ">=18"
   },
   "peerDependencies": {
-    "react": ">=17.0.0",
-    "react-dom": ">=17.0.0"
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.7.0",

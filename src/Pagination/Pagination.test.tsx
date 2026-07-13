@@ -15,6 +15,7 @@ function makeContext(overrides?: Partial<NavContextType>): NavContextType {
 		maxIndex: 4,
 		isLoop: false,
 		isReady: true,
+		slidesId: 'slides-test',
 		goToIndex: jest.fn(),
 		...overrides,
 	};
