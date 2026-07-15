@@ -60,6 +60,26 @@ describe('useSlideMetrics', () => {
 		expect(storeRef.current.slideWidth).toBe(333);
 	});
 
+	it('subtracts the visible gaps before dividing when gap is set', () => {
+		/** 2 per view shows 1 gap: (620 − 20) / 2 = 300. */
+		const storeRef = {current: createStore({slidesPerView: 2, gap: 20})};
+		renderHook(() => useSlideMetrics({current: container(620)}, storeRef));
+		expect(storeRef.current.slideWidth).toBe(300);
+	});
+
+	it('counts ceil(slidesPerView) − 1 gaps for a fractional view', () => {
+		/** 1.5 per view still shows the full gap before the half slide: (620 − 20) / 1.5 = 400. */
+		const storeRef = {current: createStore({slidesPerView: 1.5, gap: 20})};
+		renderHook(() => useSlideMetrics({current: container(620)}, storeRef));
+		expect(storeRef.current.slideWidth).toBe(400);
+	});
+
+	it('never goes below zero when the gaps exceed the container', () => {
+		const storeRef = {current: createStore({slidesPerView: 2, gap: 700})};
+		renderHook(() => useSlideMetrics({current: container(600)}, storeRef));
+		expect(storeRef.current.slideWidth).toBe(0);
+	});
+
 	it('re-measures into the store and state when the ResizeObserver fires', () => {
 		const el = container(600);
 		const storeRef = {current: createStore({slidesPerView: 2})};

@@ -19,8 +19,10 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  * `isLoop` is true when looping is
  * active (the isLoop prop or flow, with more than one position); `loopOffset` is how many clones
  * are prepended/appended (0 when not looping). `slideWidth` is the cached per-slide px width,
- * floor(containerWidth / slidesPerView), written by useSlideMetrics on mount/resize and read by
- * every motion/gesture/snap path so the hot loop never touches layout (offsetWidth).
+ * floor((containerWidth − visible gaps) / slidesPerView), written by useSlideMetrics on
+ * mount/resize and read by every motion/gesture/snap path so the hot loop never touches layout
+ * (offsetWidth). `gap` is the px space between adjacent slides (CSS column-gap on the track);
+ * every offset computation steps by the stride `slideWidth + gap`.
  * `autoScrollPaused` is set while a drag is in progress so auto motion (auto-scroll/flow) pauses.
  */
 export type LightSlideStore<T = unknown> = {
@@ -28,6 +30,7 @@ export type LightSlideStore<T = unknown> = {
 	slideCount: number;
 	maxIndex: number;
 	slidesPerView: number;
+	gap: number;
 	viewedTimeout: number;
 	effectiveFlow: boolean;
 	isLoop: boolean;
@@ -46,6 +49,7 @@ export function createStore<T = unknown>(
 		slideCount: 0,
 		maxIndex: 0,
 		slidesPerView: 1,
+		gap: 0,
 		viewedTimeout: DEFAULT_VIEWED_TIMEOUT,
 		effectiveFlow: false,
 		isLoop: false,

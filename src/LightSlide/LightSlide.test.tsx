@@ -103,6 +103,33 @@ describe('LightSlide', () => {
 		expect(screen.getByText('Slide 3')).toBeInTheDocument();
 	});
 
+	it('applies gap as column-gap on the track and omits it by default', () => {
+		const {rerender} = render(
+			<LightSlide gap={16}>
+				<Slide>
+					<div>Slide 1</div>
+				</Slide>
+				<Slide>
+					<div>Slide 2</div>
+				</Slide>
+			</LightSlide>,
+		);
+		const track = screen.getByRole('group', {name: '1 of 2'}).parentElement;
+		expect(track).toHaveStyle({columnGap: '16px'});
+
+		rerender(
+			<LightSlide>
+				<Slide>
+					<div>Slide 1</div>
+				</Slide>
+				<Slide>
+					<div>Slide 2</div>
+				</Slide>
+			</LightSlide>,
+		);
+		expect(track?.style.columnGap).toBe('');
+	});
+
 	it('fires carousel_in_viewport once when carousel enters viewport', () => {
 		const onEvent = makeOnEvent();
 		renderLightSlide(onEvent);

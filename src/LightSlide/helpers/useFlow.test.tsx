@@ -101,6 +101,25 @@ describe('useFlow', () => {
 		expect(track.style.transform).toBe('translateX(-350px)');
 	});
 
+	it('sizes the home offset and wrap span by the stride when gap is set', () => {
+		/** stride = 300 + 20; base = loopOffset(1) · 320; contentWidth = 3 · 320 = 960. */
+		const {track} = setup({
+			speed: 100,
+			storeRef: {
+				current: createStore({
+					slideCount: 3,
+					loopOffset: 1,
+					slideWidth: 300,
+					gap: 20,
+				}),
+			},
+		});
+		expect(track.style.transform).toBe('translateX(-320px)');
+		frame(0);
+		frame(10000); /** +1000px → wrap at 960 → offset 40 → -(320 + 40) */
+		expect(track.style.transform).toBe('translateX(-360px)');
+	});
+
 	it('pauses on interaction and resumes from where it stopped after resumeDelay', () => {
 		const {result, track} = setup({speed: 100, resumeDelay: 2000});
 		frame(0);
