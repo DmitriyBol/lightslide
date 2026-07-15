@@ -16,6 +16,8 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
 - **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek).
 - **gap** — px spacing between slides, folded into all geometry (snap, drag, loop, flow,
   fractional views) — no padding workarounds.
+- **breakpoints** — media-query overrides of `slidesPerView`/`gap`; the carousel listens and
+  re-lays itself out, no resize code in your app.
 - **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
 - **Navigation buttons** (`lightslide/navigation`) — prev/next, fully styleable, or bring your
   own element via `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at
@@ -94,6 +96,7 @@ payloads.
 | `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
 | `gap` | `number` | `0` | Horizontal space between slides, px (see [slidesPerView & gap](#slidesperview--gap)) |
+| `breakpoints` | `Record<string, BreakpointOverrides>` | — | Media-query overrides of `slidesPerView`/`gap` (see [Responsive breakpoints](#responsive-breakpoints)) |
 | `initialIndex` | `number` | `0` | Starting position, uncontrolled (see [External control](#external-control)) |
 | `index` | `number` | — | Controlled position — the carousel navigates whenever it changes |
 | `onIndexChange` | `(index: number) => void` | — | Fires after every settled position change, from any source |
@@ -246,6 +249,33 @@ in every computation: each slide fills
 `slideWidth + gap`, a fractional view still lands the last slide flush against the right edge,
 and loop clones and the flow ticker space identically. No padding inside the slide, so card
 backgrounds and shadows span the full slide width.
+
+## Responsive breakpoints
+
+No resize listeners in your code — hand the carousel a map of media queries and it applies
+the matching overrides itself:
+
+```tsx
+<LightSlide
+  slidesPerView={1.2}
+  gap={8}
+  breakpoints={{
+    "(min-width: 768px)": { slidesPerView: 2, gap: 16 },
+    "(min-width: 1200px)": { slidesPerView: 3, gap: 24 },
+  }}
+>
+```
+
+Keys are media queries (any valid query works — width, orientation, `prefers-*`); values
+override `slidesPerView` and `gap` while their query matches. When several queries match,
+later entries win per property — so mobile-first ordering behaves like CSS. A breakpoint flip
+re-measures, re-clamps the position, and re-snaps exactly like a container resize; the
+carousel keeps its place with no jump. On the server (or any client without `matchMedia`) the
+base props render, and matches apply on hydration.
+
+Only the geometry props participate by design: everything else (plugin slots, `autoScroll`,
+`isLoop`) is plain React you can switch on your own media-query state without the carousel's
+help.
 
 ## External control
 
@@ -439,6 +469,7 @@ src/
 │       ├── useLayoutResync.ts      #   re-measure/clamp/re-snap on layout-shape changes
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
+│       ├── useBreakpoints.ts       #   media-query overrides of slidesPerView/gap (+ test)
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
 │       ├── usePointerGesture.ts    #   shared drag mechanics: lock/capture/click (+ test)
 │       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
@@ -490,7 +521,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 181 integration tests (Jest + jsdom) across 20 suites
+npm test             # 190 integration tests (Jest + jsdom) across 21 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

@@ -34,7 +34,7 @@ export function FlowExample() {
 	return (
 		<Demo
 			id="flow"
-			number="10"
+			number="11"
 			title="Flow ticker"
 			tag="flow"
 			description={
