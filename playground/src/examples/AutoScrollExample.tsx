@@ -1,6 +1,9 @@
 import {useState} from 'react';
-import {LightSlide, Slide} from 'lightslide';
+
 import type {AnalyticsConfig} from 'lightslide';
+import {LightSlide, Slide} from 'lightslide';
+import {Navigation} from 'lightslide/navigation';
+import {Pagination} from 'lightslide/pagination';
 
 import {Console} from '../components/Console';
 import {Controls, Demo, Well} from '../components/Demo';
@@ -64,11 +67,13 @@ export function AutoScrollExample() {
 					key={`${enabled}-${intervalMs}`}
 					analytics={analytics}
 					autoScroll={{enabled, interval: intervalMs}}
-					navigation={{}}
-					pagination={{
-						dotStyle: {background: 'var(--border-strong)'},
-						activeDotStyle: {background: 'var(--accent)'},
-					}}>
+					navigation={<Navigation />}
+					pagination={
+						<Pagination
+							dotStyle={{background: 'var(--border-strong)'}}
+							activeDotStyle={{background: 'var(--accent)'}}
+						/>
+					}>
 					{ITEMS.map((item, i) => (
 						<Slide key={item.label}>
 							<div

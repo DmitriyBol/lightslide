@@ -11,7 +11,10 @@
     "skipLibCheck": true,
     "paths": {
       "lightslide": ["../src/index.ts"],
-      "lightslide/a11y": ["../src/a11y/index.ts"]
+      "lightslide/a11y": ["../src/a11y/index.ts"],
+      "lightslide/navigation": ["../src/Navigation/index.ts"],
+      "lightslide/pagination": ["../src/Pagination/index.ts"],
+      "lightslide/flow": ["../src/flow/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

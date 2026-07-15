@@ -3,6 +3,9 @@ import React from 'react';
 import {act, render, screen} from '@testing-library/react';
 
 import {A11y} from '../a11y';
+import {Flow} from '../flow';
+import {Navigation} from '../Navigation';
+import {Pagination} from '../Pagination';
 import {Slide} from '../Slide/Slide';
 import type {AnalyticsEvent} from '../types';
 import {LightSlide} from './LightSlide';
@@ -176,7 +179,7 @@ describe('LightSlide — isLoop', () => {
 
 	it('does not disable navigation buttons at first or last index when isLoop is true', () => {
 		render(
-			<LightSlide isLoop navigation={{}}>
+			<LightSlide isLoop navigation={<Navigation />}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
@@ -189,7 +192,7 @@ describe('LightSlide — isLoop', () => {
 	it('does not fire carousel_reached_end when isLoop is active', () => {
 		const onEvent = makeOnEvent();
 		render(
-			<LightSlide isLoop analytics={{onEvent}} navigation={{}}>
+			<LightSlide isLoop analytics={{onEvent}} navigation={<Navigation />}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
@@ -231,7 +234,7 @@ describe('LightSlide — loading fallback', () => {
 
 	it('hides navigation and pagination while loading', () => {
 		render(
-			<LightSlide loading navigation={{}} pagination={{}}>
+			<LightSlide loading navigation={<Navigation />} pagination={<Pagination />}>
 				<Slide>Alpha</Slide>
 				<Slide>Beta</Slide>
 			</LightSlide>,
@@ -316,7 +319,7 @@ describe('LightSlide — flow', () => {
 
 	it('enables loop clones automatically when flow is on (without isLoop)', () => {
 		render(
-			<LightSlide flow={{enabled: true}}>
+			<LightSlide flow={<Flow />}>
 				<Slide>Alpha</Slide>
 				<Slide>Beta</Slide>
 				<Slide>Gamma</Slide>
@@ -330,7 +333,7 @@ describe('LightSlide — flow', () => {
 	it('does not fire carousel_reached_end while the flow is running', () => {
 		const onEvent = makeOnEvent();
 		render(
-			<LightSlide flow={{enabled: true}} analytics={{onEvent}}>
+			<LightSlide flow={<Flow />} analytics={{onEvent}}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
@@ -372,7 +375,11 @@ describe('LightSlide — typed data chain', () => {
 describe('LightSlide a11y', () => {
 	function renderA11y(props: Partial<React.ComponentProps<typeof LightSlide>> = {}) {
 		return render(
-			<LightSlide label="Featured products" navigation={{}} pagination={{}} {...props}>
+			<LightSlide
+				label="Featured products"
+				navigation={<Navigation />}
+				pagination={<Pagination />}
+				{...props}>
 				<Slide>
 					<div>One</div>
 				</Slide>

@@ -1,6 +1,9 @@
-import {LightSlide, Slide} from 'lightslide';
 import type {AnalyticsConfig} from 'lightslide';
+import {LightSlide, Slide} from 'lightslide';
 import {A11y} from 'lightslide/a11y';
+import {Flow} from 'lightslide/flow';
+import {Navigation} from 'lightslide/navigation';
+import {Pagination} from 'lightslide/pagination';
 import type {ReactNode} from 'react';
 
 import {Console} from '../components/Console';
@@ -108,8 +111,8 @@ export function AccessibilityExample() {
 				<LightSlide
 					label="Product highlights"
 					analytics={analyticsFor('drag')}
-					navigation={{}}
-					pagination={{}}
+					navigation={<Navigation />}
+					pagination={<Pagination />}
 					a11y={<A11y />}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label}>
@@ -125,7 +128,7 @@ export function AccessibilityExample() {
 				<LightSlide
 					label="Trending — loop"
 					analytics={analyticsFor('loop')}
-					navigation={{}}
+					navigation={<Navigation />}
 					isLoop
 					a11y={<A11y />}>
 					{MORE.map((label, i) => (
@@ -143,8 +146,8 @@ export function AccessibilityExample() {
 					label="Gallery — 3 up"
 					slidesPerView={3}
 					analytics={analyticsFor('gallery')}
-					navigation={{}}
-					pagination={{}}
+					navigation={<Navigation />}
+					pagination={<Pagination />}
 					a11y={<A11y />}>
 					{MORE.map((label, i) => (
 						<Slide
@@ -162,7 +165,7 @@ export function AccessibilityExample() {
 				note="continuous ticker — the live region falls silent during auto-motion, and prefers-reduced-motion stops it">
 				<LightSlide
 					label="Ticker — flow"
-					flow={{enabled: true, speed: 45}}
+					flow={<Flow speed={45} />}
 					a11y={<A11y />}>
 					{MORE.map((label, i) => (
 						<Slide key={label} style={{padding: '0 5px'}}>

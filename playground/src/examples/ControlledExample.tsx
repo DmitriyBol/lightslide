@@ -1,7 +1,9 @@
 import {useRef, useState} from 'react';
 
-import {LightSlide, Slide} from 'lightslide';
 import type {LightSlideHandle} from 'lightslide';
+import {LightSlide, Slide} from 'lightslide';
+import {Navigation} from 'lightslide/navigation';
+import {Pagination} from 'lightslide/pagination';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -72,7 +74,7 @@ export function ControlledExample() {
 
 				<LightSlide
 					ref={apiRef}
-					pagination={{}}
+					pagination={<Pagination />}
 					onIndexChange={i => {
 						setPosition(i);
 						log('slide', `onIndexChange → ${i}`);
@@ -101,7 +103,7 @@ export function ControlledExample() {
 
 				<LightSlide
 					index={index}
-					navigation={{}}
+					navigation={<Navigation />}
 					onIndexChange={setIndex}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label}>

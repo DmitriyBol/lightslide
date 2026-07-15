@@ -1,5 +1,7 @@
 import {useState} from 'react';
+
 import {LightSlide, Slide} from 'lightslide';
+import {Flow} from 'lightslide/flow';
 
 import {Controls, Demo, Well} from '../components/Demo';
 import {Segmented} from '../components/Segmented';
@@ -16,7 +18,7 @@ const ITEMS = [
 	'ESLint',
 	'Prettier',
 	'Zero deps',
-	'~5.5 kB',
+	'~4.5 kB',
 ];
 
 const SPEEDS = [
@@ -57,7 +59,7 @@ export function FlowExample() {
 				<LightSlide
 					key={`${enabled}-${speed}`}
 					slidesPerView={3.5}
-					flow={{enabled, speed, resumeDelay: 1500}}>
+					flow={enabled ? <Flow speed={speed} resumeDelay={1500} /> : undefined}>
 					{ITEMS.map(label => (
 						<Slide key={label}>
 							<div className={flow.chip}>

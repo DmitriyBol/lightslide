@@ -1,5 +1,6 @@
-import {LightSlide, Slide} from 'lightslide';
 import type {AnalyticsConfig} from 'lightslide';
+import {LightSlide, Slide} from 'lightslide';
+import {Pagination} from 'lightslide/pagination';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -38,10 +39,12 @@ export function PaginationExample() {
 			<Well>
 				<LightSlide
 					analytics={analytics}
-					pagination={{
-						dotStyle: {background: 'var(--border-strong)'},
-						activeDotStyle: {background: 'var(--accent)'},
-					}}>
+					pagination={
+						<Pagination
+							dotStyle={{background: 'var(--border-strong)'}}
+							activeDotStyle={{background: 'var(--accent)'}}
+						/>
+					}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label}>
 							<div
@@ -57,20 +60,22 @@ export function PaginationExample() {
 			<Well>
 				<LightSlide
 					slidesPerView={2}
-					pagination={{
-						style: {gap: 8, padding: '14px 0 4px'},
-						dotStyle: {
-							width: 10,
-							height: 4,
-							borderRadius: 2,
-							background: 'var(--border-strong)',
-						},
-						activeDotStyle: {
-							width: 24,
-							background: 'var(--accent)',
-							transform: 'none',
-						},
-					}}>
+					pagination={
+						<Pagination
+							style={{gap: 8, padding: '14px 0 4px'}}
+							dotStyle={{
+								width: 10,
+								height: 4,
+								borderRadius: 2,
+								background: 'var(--border-strong)',
+							}}
+							activeDotStyle={{
+								width: 24,
+								background: 'var(--accent)',
+								transform: 'none',
+							}}
+						/>
+					}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label} style={{padding: '0 5px'}}>
 							<div

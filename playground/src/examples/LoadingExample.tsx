@@ -1,5 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
+
 import {LightSlide, Slide} from 'lightslide';
+import {Navigation} from 'lightslide/navigation';
 
 import {Controls, Demo, Well} from '../components/Demo';
 import slides from '../components/slides.module.scss';
@@ -40,7 +42,7 @@ export function LoadingExample() {
 		return () => {
 			if (timer.current) clearTimeout(timer.current);
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		 
 	}, []);
 
 	return (
@@ -68,7 +70,7 @@ export function LoadingExample() {
 					slidesPerView={3}
 					loading={loading}
 					fallback={<SkeletonRow count={3} />}
-					navigation={{}}>
+					navigation={<Navigation />}>
 					{PRODUCTS.map((name, i) => (
 						<Slide key={name} style={{padding: '0 6px'}}>
 							<div

@@ -1,5 +1,6 @@
-import {LightSlide, Slide} from 'lightslide';
 import type {AnalyticsConfig} from 'lightslide';
+import {LightSlide, Slide} from 'lightslide';
+import {Navigation} from 'lightslide/navigation';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -57,7 +58,7 @@ export function NavigationExample() {
 				</>
 			}>
 			<Well>
-				<LightSlide analytics={analytics} navigation={{}}>
+				<LightSlide analytics={analytics} navigation={<Navigation />}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label}>
 							<div
@@ -73,28 +74,30 @@ export function NavigationExample() {
 			<Well>
 				<LightSlide
 					slidesPerView={2}
-					navigation={{
-						renderPrev: ({onClick, disabled}) => (
-							<button
-								type="button"
-								className={nav.btn}
-								onClick={onClick}
-								disabled={disabled}
-								aria-label="Previous slide">
-								<Arrow dir="left" />
-							</button>
-						),
-						renderNext: ({onClick, disabled}) => (
-							<button
-								type="button"
-								className={nav.btn}
-								onClick={onClick}
-								disabled={disabled}
-								aria-label="Next slide">
-								<Arrow dir="right" />
-							</button>
-						),
-					}}>
+					navigation={
+						<Navigation
+							renderPrev={({onClick, disabled}) => (
+								<button
+									type="button"
+									className={nav.btn}
+									onClick={onClick}
+									disabled={disabled}
+									aria-label="Previous slide">
+									<Arrow dir="left" />
+								</button>
+							)}
+							renderNext={({onClick, disabled}) => (
+								<button
+									type="button"
+									className={nav.btn}
+									onClick={onClick}
+									disabled={disabled}
+									aria-label="Next slide">
+									<Arrow dir="right" />
+								</button>
+							)}
+						/>
+					}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label} style={{padding: '0 5px'}}>
 							<div

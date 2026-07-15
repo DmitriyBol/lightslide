@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Lightweight, fully-typed React carousel & slider with built-in analytics, infinite loop, and a continuous flow (ticker) mode. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -15,6 +15,21 @@
       "types": "./dist/a11y.d.ts",
       "import": "./dist/a11y.esm.js",
       "require": "./dist/a11y.js"
+    },
+    "./navigation": {
+      "types": "./dist/navigation.d.ts",
+      "import": "./dist/navigation.esm.js",
+      "require": "./dist/navigation.js"
+    },
+    "./pagination": {
+      "types": "./dist/pagination.d.ts",
+      "import": "./dist/pagination.esm.js",
+      "require": "./dist/pagination.js"
+    },
+    "./flow": {
+      "types": "./dist/flow.d.ts",
+      "import": "./dist/flow.esm.js",
+      "require": "./dist/flow.js"
     },
     "./package.json": "./package.json"
   },
@@ -43,12 +58,27 @@
   "size-limit": [
     {
       "path": "dist/index.esm.js",
-      "limit": "5.75 kB"
+      "limit": "5.4 kB"
     },
     {
-      "name": "lightslide/a11y (with shared core chunk)",
+      "name": "lightslide/a11y (with shared chunks)",
       "path": "dist/a11y.esm.js",
       "limit": "2 kB"
+    },
+    {
+      "name": "lightslide/navigation (with shared chunks)",
+      "path": "dist/navigation.esm.js",
+      "limit": "1.5 kB"
+    },
+    {
+      "name": "lightslide/pagination (with shared chunks)",
+      "path": "dist/pagination.esm.js",
+      "limit": "1.5 kB"
+    },
+    {
+      "name": "lightslide/flow (with shared chunks)",
+      "path": "dist/flow.esm.js",
+      "limit": "1.5 kB"
     }
   ],
   "repository": {

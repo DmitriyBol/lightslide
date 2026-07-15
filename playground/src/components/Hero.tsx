@@ -1,4 +1,5 @@
 import {LightSlide, Slide} from 'lightslide';
+import {Flow} from 'lightslide/flow';
 
 import {GITHUB_URL, INSTALL_COMMAND} from '../meta';
 import {CopyCommand} from './CopyCommand';
@@ -31,7 +32,7 @@ export function Hero() {
 			<div className={styles.inner}>
 				<p className={styles.eyebrow}>
 					<span className={styles.dot} />
-					ZERO-DEP · ~5.5 KB · FULLY TYPED
+					ZERO-DEP · ~4.5 KB CORE · FULLY TYPED
 				</p>
 
 				<h1 className={styles.headline}>
@@ -41,7 +42,8 @@ export function Hero() {
 
 				<p className={styles.lede}>
 					A tiny, fully-typed React slider. Drag, loop, flow, paginate — no
-					dependencies, no styling opinions, ~5.5&nbsp;kB gzipped.
+					dependencies, no styling opinions, ~4.5&nbsp;kB core — arrows, dots,
+					flow and a11y ship as tree-shakeable modules.
 				</p>
 
 				<div className={styles.actions}>
@@ -63,7 +65,7 @@ export function Hero() {
 			</div>
 
 			<div className={styles.flowWrap} aria-hidden>
-				<LightSlide slidesPerView={4.5} flow={{enabled: true, speed: 26}}>
+				<LightSlide slidesPerView={4.5} flow={<Flow speed={26} />}>
 					{FLOW_ITEMS.map(label => (
 						<Slide key={label}>
 							<div className={styles.chip}>

@@ -23,11 +23,11 @@ function makeContext(overrides?: Partial<NavContextType>): NavContextType {
 
 function renderPagination(
 	ctx: NavContextType,
-	config: React.ComponentProps<typeof Pagination>['config'] = {},
+	props: React.ComponentProps<typeof Pagination> = {},
 ) {
 	return render(
 		<NavContext.Provider value={ctx}>
-			<Pagination config={config} />
+			<Pagination {...props} />
 		</NavContext.Provider>,
 	);
 }

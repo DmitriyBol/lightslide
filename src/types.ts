@@ -1,16 +1,5 @@
 import type {AriaAttributes, AriaRole, CSSProperties, ReactNode} from 'react';
 
-import type {NavigationConfig} from './Navigation/Navigation.types';
-import type {PaginationConfig} from './Pagination/Pagination.types';
-
-/**
- * Component-specific config types live with their feature. Re-exported here so the public
- * types form one cohesive surface.
- */
-export type {NavigationConfig} from './Navigation/Navigation.types';
-export type {NavButtonRenderProps} from './Navigation/Navigation.types';
-export type {PaginationConfig} from './Pagination/Pagination.types';
-
 /**
  * Slide index + the data attached to a slide, included in analytics payloads. Generic over
  * the data shape: specify it (e.g. `SlideData<Product>`) for a fully-typed `data`, or let it
@@ -31,18 +20,6 @@ export type AutoScrollConfig = {
 };
 
 /**
- * Continuous "flow"/ticker scrolling. Supersedes autoScroll when enabled and works seamlessly
- * with looping (clones are added automatically). Interacting with the carousel pauses it; it
- * resumes `resumeDelay` ms (default 2000) after the interaction ends. `speed` is in px per
- * second (default 40).
- */
-export type FlowConfig = {
-	enabled: boolean;
-	speed?: number;
-	resumeDelay?: number;
-};
-
-/**
  * Main carousel props. Generic over the slide `data` shape `T` (carried through to the
  * analytics payloads), defaulting to `unknown`. Write `<LightSlide<Product> …>` to type the
  * whole chain; omit it and everything still works with an unspecified data type.
@@ -58,9 +35,11 @@ export type FlowConfig = {
  *   `onIndexChange` to keep your state in sync. Ignored while `flow` runs.
  * - `onIndexChange` — fires after every settled position change, from any source: drag,
  *   buttons, pagination, auto-scroll, or the external API.
- * - `a11y` — opt-in accessibility layer: pass the node(s) from `lightslide/a11y` (e.g.
- *   `<A11y />`). Omit it and none of that code enters your bundle (it lives in a separate
- *   entry).
+ * - `navigation` / `pagination` / `flow` / `a11y` — the opt-in plugin slots. Each takes the
+ *   node(s) from its tree-shakeable entry (`lightslide/navigation`, `lightslide/pagination`,
+ *   `lightslide/flow`, `lightslide/a11y`), e.g. `navigation={<Navigation />}` or
+ *   `flow={<Flow speed={60} />}`. Omit a slot and none of that entry's code or styles enters
+ *   your bundle. Flow supersedes autoScroll and forces looping on while it runs.
  * - `loading` — when true, the carousel renders `fallback` instead of the slides — useful
  *   while async slide data is still being fetched. With no `fallback` it renders nothing.
  * - `fallback` — node rendered in place of the track while `loading` is true (your own
@@ -80,9 +59,9 @@ export type LightSlideProps<T = unknown> = {
 	index?: number;
 	onIndexChange?: (index: number) => void;
 	autoScroll?: AutoScrollConfig;
-	flow?: FlowConfig;
-	navigation?: NavigationConfig;
-	pagination?: PaginationConfig;
+	flow?: ReactNode;
+	navigation?: ReactNode;
+	pagination?: ReactNode;
 	a11y?: ReactNode;
 	isLoop?: boolean;
 	loading?: boolean;

@@ -3,14 +3,21 @@ import {useCallback} from 'react';
 import {useNavContext} from '../lightSlideContext';
 import {cx} from '../utils/cx';
 import styles from './Pagination.module.scss';
-import type {PaginationConfig} from './Pagination.types';
+import type {PaginationProps} from './Pagination.types';
 
-type PaginationProps = {
-	config: PaginationConfig;
-};
-
-/** Pagination dots — one per scrollable position, the active one marked aria-current. */
-export function Pagination({config}: PaginationProps) {
+/**
+ * Pagination dots — one per scrollable position, the active one marked aria-current. Shipped
+ * as the tree-shakeable `lightslide/pagination` entry — pass to
+ * `<LightSlide pagination={<Pagination />}>`.
+ */
+export function Pagination({
+	style,
+	className,
+	dotStyle,
+	dotClassName,
+	activeDotStyle,
+	activeDotClassName,
+}: PaginationProps) {
 	const {currentIndex, maxIndex, isReady, slidesId, goToIndex} =
 		useNavContext();
 
@@ -25,12 +32,8 @@ export function Pagination({config}: PaginationProps) {
 
 	return (
 		<div
-			className={cx(
-				styles.container,
-				!isReady && styles.hidden,
-				config.className,
-			)}
-			style={config.style}>
+			className={cx(styles.container, !isReady && styles.hidden, className)}
+			style={style}>
 			{Array.from({length: dotCount}, (_, i) => {
 				const isActive = i === currentIndex;
 				return (
@@ -42,12 +45,12 @@ export function Pagination({config}: PaginationProps) {
 						className={cx(
 							styles.dot,
 							isActive && styles.active,
-							config.dotClassName,
-							isActive ? config.activeDotClassName : undefined,
+							dotClassName,
+							isActive ? activeDotClassName : undefined,
 						)}
 						style={{
-							...config.dotStyle,
-							...(isActive ? config.activeDotStyle : undefined),
+							...dotStyle,
+							...(isActive ? activeDotStyle : undefined),
 						}}
 						onClick={() => handleDotClick(i)}
 					/>

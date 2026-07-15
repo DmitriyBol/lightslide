@@ -1,4 +1,4 @@
-import {useCallback, useRef} from 'react';
+import {useCallback, useMemo, useRef} from 'react';
 
 import type {MouseEvent, PointerEvent, RefObject} from 'react';
 
@@ -207,12 +207,26 @@ export function usePointerGesture({
 		e.stopPropagation();
 	}, []);
 
-	return {
-		onPointerDown,
-		onPointerMove,
-		onPointerUp,
-		onPointerCancel,
-		onPointerLeave,
-		onClickCapture,
-	};
+	/**
+	 * The bag itself is memoized (every member is already stable): the flow seam hands it
+	 * across the plugin boundary and the track spread stays diff-stable between renders.
+	 */
+	return useMemo(
+		() => ({
+			onPointerDown,
+			onPointerMove,
+			onPointerUp,
+			onPointerCancel,
+			onPointerLeave,
+			onClickCapture,
+		}),
+		[
+			onPointerDown,
+			onPointerMove,
+			onPointerUp,
+			onPointerCancel,
+			onPointerLeave,
+			onClickCapture,
+		],
+	);
 }
