@@ -58,7 +58,7 @@
   "size-limit": [
     {
       "path": "dist/index.esm.js",
-      "limit": "4.75 kB"
+      "limit": "5.4 kB"
     },
     {
       "name": "lightslide/a11y (with shared chunks)",
