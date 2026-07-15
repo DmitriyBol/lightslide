@@ -9,10 +9,12 @@ import type {LightSlideStore} from './store';
 type ViewportEngagementParams<T> = {
 	containerRef: RefObject<HTMLDivElement>;
 	storeRef: MutableRefObject<LightSlideStore<T>>;
-	// Latest-ref of the raw analytics prop; onEvent is called optionally at fire time.
+	/** Latest-ref of the raw analytics prop; onEvent is called optionally at fire time. */
 	analyticsRef: MutableRefObject<AnalyticsConfig<T> | undefined>;
-	// Whether the consumer actually wants viewed-slides tracking. When false the
-	// viewed-timeout timer is never started (the feature is opt-in via viewedTimeout).
+	/**
+	 * Whether the consumer actually wants viewed-slides tracking. When false the
+	 * viewed-timeout timer is never started (the feature is opt-in via viewedTimeout).
+	 */
 	viewedTrackingEnabled: boolean;
 	markViewed: (index: number) => void;
 	getViewedSlides: () => SlideData<T>[];
@@ -44,10 +46,12 @@ const initialEngagementState = (): EngagementState => ({
 	viewedStart: null,
 });
 
-// Owns the viewport/terminal-event lifecycle: fires carousel_in_viewport once, starts the
-// viewed-timeout timer while visible, and enforces that carousel_reached_end /
-// carousel_viewed_slides are mutually exclusive for the component's lifetime (the terminalFired
-// guard). Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
+/**
+ * Owns the viewport/terminal-event lifecycle: fires carousel_in_viewport once, starts the
+ * viewed-timeout timer while visible, and enforces that carousel_reached_end /
+ * carousel_viewed_slides are mutually exclusive for the component's lifetime (the terminalFired
+ * guard). Returns fireTerminalIfNeeded so navigateToIndex can fire "reachedEnd".
+ */
 export function useViewportEngagement<T>({
 	containerRef,
 	storeRef,
@@ -96,8 +100,10 @@ export function useViewportEngagement<T>({
 	useEffect(() => {
 		const wrapper = containerRef.current;
 		if (!wrapper) return;
-		// engagement.current is stable for the component's life — capture it once so the
-		// cleanup reads the live timer handle without an exhaustive-deps warning.
+		/**
+		 * engagement.current is stable for the component's life — capture it once so the
+		 * cleanup reads the live timer handle without an exhaustive-deps warning.
+		 */
 		const s = engagement.current;
 
 		const io = new IntersectionObserver(

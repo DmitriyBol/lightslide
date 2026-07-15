@@ -9,7 +9,7 @@ import {LightSlide} from './LightSlide';
 
 import '@testing-library/jest-dom';
 
-// ── IntersectionObserver mock ──────────────────────────────────────────────
+/** ── IntersectionObserver mock ────────────────────────────────────────────── */
 type IOCallback = (entries: IntersectionObserverEntry[]) => void;
 let triggerIO: (isIntersecting: boolean) => void = () => {};
 
@@ -24,14 +24,14 @@ class MockIntersectionObserver {
 	disconnect() {}
 }
 
-// ── ResizeObserver mock ────────────────────────────────────────────────────
+/** ── ResizeObserver mock ──────────────────────────────────────────────────── */
 class MockResizeObserver {
 	observe() {}
 	unobserve() {}
 	disconnect() {}
 }
 
-// ── Pointer-capture stubs (not implemented in jsdom) ──────────────────────
+/** ── Pointer-capture stubs (not implemented in jsdom) ────────────────────── */
 beforeAll(() => {
 	Object.defineProperty(global, 'IntersectionObserver', {
 		writable: true,
@@ -45,10 +45,12 @@ beforeAll(() => {
 	HTMLElement.prototype.releasePointerCapture = jest.fn();
 });
 
-// ──────────────────────────────────────────────────────────────────────────
+/** ────────────────────────────────────────────────────────────────────────── */
 
-// All analytics now flows through one onEvent handler. A typed mock plus this filter let
-// each test pull out the events of a given kind (and read their narrowed payload fields).
+/**
+ * All analytics now flows through one onEvent handler. A typed mock plus this filter let
+ * each test pull out the events of a given kind (and read their narrowed payload fields).
+ */
 function makeOnEvent() {
 	return jest.fn<void, [AnalyticsEvent]>();
 }
@@ -166,7 +168,7 @@ describe('LightSlide — isLoop', () => {
 				<Slide>Gamma</Slide>
 			</LightSlide>,
 		);
-		// Real slides are present (clones may add duplicates, so check getAllByText)
+		/** Real slides are present (clones may add duplicates, so check getAllByText) */
 		expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
 		expect(screen.getAllByText('Beta').length).toBeGreaterThanOrEqual(1);
 		expect(screen.getAllByText('Gamma').length).toBeGreaterThanOrEqual(1);
@@ -193,7 +195,7 @@ describe('LightSlide — isLoop', () => {
 				<Slide>C</Slide>
 			</LightSlide>,
 		);
-		// At maxIndex with isLoop, the reached-end terminal must never fire (loop wrap suppresses it).
+		/** At maxIndex with isLoop, the reached-end terminal must never fire (loop wrap suppresses it). */
 		expect(eventsOfType(onEvent, 'carousel_reached_end')).toHaveLength(0);
 	});
 });
@@ -288,7 +290,7 @@ describe('LightSlide — viewed-slides opt-in', () => {
 
 	it('does not fire carousel_viewed_slides when viewedTimeout is omitted (timer never starts)', () => {
 		const onEvent = makeOnEvent();
-		// Provide onEvent but NOT viewedTimeout — viewed tracking must stay off.
+		/** Provide onEvent but NOT viewedTimeout — viewed tracking must stay off. */
 		render(
 			<LightSlide analytics={{onEvent}}>
 				<Slide>A</Slide>
@@ -300,7 +302,7 @@ describe('LightSlide — viewed-slides opt-in', () => {
 		act(() => jest.advanceTimersByTime(60_000));
 
 		expect(eventsOfType(onEvent, 'carousel_viewed_slides')).toHaveLength(0);
-		// carousel_in_viewport still fires — it is independent of viewed tracking.
+		/** carousel_in_viewport still fires — it is independent of viewed tracking. */
 		expect(eventsOfType(onEvent, 'carousel_in_viewport')).toHaveLength(1);
 	});
 });
@@ -346,8 +348,10 @@ describe('LightSlide — typed data chain', () => {
 		render(
 			<LightSlide<Product>
 				analytics={{
-					// Narrowing on `event` gives `slides: SlideData<Product>[]`, so `s.data.name`
-					// only compiles because the type parameter flows through the chain.
+					/**
+					 * Narrowing on `event` gives `slides: SlideData<Product>[]`, so `s.data.name`
+					 * only compiles because the type parameter flows through the chain.
+					 */
 					onEvent: e => {
 						if (
 							e.event === 'carousel_reached_end' ||
@@ -420,11 +424,11 @@ describe('LightSlide a11y', () => {
 				</Slide>
 			</LightSlide>,
 		);
-		// the named slide keeps the consumer's name and is still a "slide" group
+		/** the named slide keeps the consumer's name and is still a "slide" group */
 		expect(
 			screen.getByRole('group', {name: 'Ray-Ban Wayfarer, $89'}),
 		).toHaveAttribute('aria-roledescription', 'slide');
-		// the un-named slide still gets the automatic position label
+		/** the un-named slide still gets the automatic position label */
 		expect(screen.getByRole('group', {name: '2 of 2'})).toBeInTheDocument();
 	});
 
@@ -446,7 +450,7 @@ describe('LightSlide a11y', () => {
 	it('hides loop clones from assistive tech and the tab order', () => {
 		const {container} = renderA11y({isLoop: true});
 		const clones = container.querySelectorAll('[aria-hidden="true"]');
-		// isLoop at slidesPerView 1 clones one slide at each end
+		/** isLoop at slidesPerView 1 clones one slide at each end */
 		expect(clones).toHaveLength(2);
 		clones.forEach(el => expect(el).toHaveAttribute('inert'));
 	});
@@ -459,7 +463,7 @@ describe('LightSlide a11y', () => {
 		expect(controls).toBeTruthy();
 		expect(document.getElementById(String(controls))).toBeInTheDocument();
 
-		// pagination dots point at the same container
+		/** pagination dots point at the same container */
 		const dot = screen.getByLabelText('Go to slide 2');
 		expect(dot).toHaveAttribute('aria-controls', String(controls));
 	});
@@ -475,7 +479,7 @@ describe('LightSlide a11y', () => {
 				</Slide>
 			</LightSlide>,
 		);
-		// The LiveRegion resolves the seam context and announces the active slide.
+		/** The LiveRegion resolves the seam context and announces the active slide. */
 		expect(screen.getByText('Slide 1 of 2')).toBeInTheDocument();
 	});
 });

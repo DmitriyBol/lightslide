@@ -2,7 +2,7 @@ import {getSnapIndex, SNAP_THRESHOLD_RATIO, VELOCITY_THRESHOLD} from './swipe';
 
 describe('getSnapIndex', () => {
 	const slideWidth = 300;
-	const threshold = slideWidth * SNAP_THRESHOLD_RATIO; // 150px
+	const threshold = slideWidth * SNAP_THRESHOLD_RATIO; /** 150px */
 
 	it('stays at current index when delta is below distance and velocity thresholds', () => {
 		expect(getSnapIndex(1, 4, -(threshold - 1), slideWidth, 0)).toBe(1);
@@ -26,14 +26,14 @@ describe('getSnapIndex', () => {
 	});
 
 	it('snaps forward on high velocity even with small delta', () => {
-		const smallDelta = -(threshold - 50); // below distance threshold
+		const smallDelta = -(threshold - 50); /** below distance threshold */
 		expect(
 			getSnapIndex(1, 4, smallDelta, slideWidth, -(VELOCITY_THRESHOLD + 0.1)),
 		).toBe(2);
 	});
 
 	it('snaps backward on high velocity even with small delta', () => {
-		const smallDelta = threshold - 50; // below distance threshold
+		const smallDelta = threshold - 50; /** below distance threshold */
 		expect(
 			getSnapIndex(2, 4, smallDelta, slideWidth, VELOCITY_THRESHOLD + 0.1),
 		).toBe(1);
@@ -45,12 +45,12 @@ describe('getSnapIndex', () => {
 
 	describe('multi-slide drag', () => {
 		it('advances by the number of slides dragged in one gesture', () => {
-			// 3 slide-widths to the left from index 0 → land on slide 3, not 1.
+			/** 3 slide-widths to the left from index 0 → land on slide 3, not 1. */
 			expect(getSnapIndex(0, 4, -3 * slideWidth, slideWidth, 0)).toBe(3);
 		});
 
 		it('snaps to the nearest slide boundary', () => {
-			// 2.4 widths rounds to 2; 2.6 rounds to 3.
+			/** 2.4 widths rounds to 2; 2.6 rounds to 3. */
 			expect(getSnapIndex(0, 6, -2.4 * slideWidth, slideWidth, 0)).toBe(2);
 			expect(getSnapIndex(0, 6, -2.6 * slideWidth, slideWidth, 0)).toBe(3);
 		});

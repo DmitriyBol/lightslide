@@ -16,12 +16,14 @@ type TrackSnap = {
 	snapTrack: (logicalIndex: number, animate: boolean) => void;
 };
 
-// Imperatively moves the track via transform: translateX.
-// `snapToVisual` works in absolute visual indices (visual = logical + loopOffset in loop mode);
-// `snapTrack` is the logical-index convenience wrapper. onComplete fires after the transition
-// ends, or immediately when animate is false. The offset comes from trackOffset (cached
-// store.slideWidth), so the snap lands on a slide boundary — and on the flush right edge for the
-// last index when slidesPerView is fractional.
+/**
+ * Imperatively moves the track via transform: translateX.
+ * `snapToVisual` works in absolute visual indices (visual = logical + loopOffset in loop mode);
+ * `snapTrack` is the logical-index convenience wrapper. onComplete fires after the transition
+ * ends, or immediately when animate is false. The offset comes from trackOffset (cached
+ * store.slideWidth), so the snap lands on a slide boundary — and on the flush right edge for the
+ * last index when slidesPerView is fractional.
+ */
 export function useTrackSnap(
 	trackRef: RefObject<HTMLDivElement>,
 	storeRef: MutableRefObject<LightSlideStore>,
@@ -32,10 +34,12 @@ export function useTrackSnap(
 			if (!track) return;
 			const offset = trackOffset(visualIndex, storeRef.current);
 
-			// Honour prefers-reduced-motion by snapping instantly. Crucially we route through the
-			// no-transition branch (not just transition: none) so onComplete still fires — the loop
-			// wrap-around depends on it, and a forced CSS transition:none would never emit
-			// transitionend, stalling the re-snap.
+			/**
+			 * Honour prefers-reduced-motion by snapping instantly. Crucially we route through the
+			 * no-transition branch (not just transition: none) so onComplete still fires — the loop
+			 * wrap-around depends on it, and a forced CSS transition:none would never emit
+			 * transitionend, stalling the re-snap.
+			 */
 			const doAnimate = animate && !prefersReducedMotion();
 
 			if (doAnimate) {

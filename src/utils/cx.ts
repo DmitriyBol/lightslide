@@ -1,6 +1,8 @@
-// Tiny zero-dependency className combiner (clsx-style, minimal).
-// Joins truthy class values into one string and returns undefined when empty,
-// so the className attribute is omitted rather than rendered as "".
+/**
+ * Tiny zero-dependency className combiner (clsx-style, minimal).
+ * Joins truthy class values into one string and returns undefined when empty,
+ * so the className attribute is omitted rather than rendered as "".
+ */
 export type ClassValue =
 	| string
 	| number

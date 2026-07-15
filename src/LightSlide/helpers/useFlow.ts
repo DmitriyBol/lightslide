@@ -6,10 +6,11 @@ import type {LightSlideStore} from './store';
 import type {PointerHandlers} from './usePointerGesture';
 import {usePointerGesture} from './usePointerGesture';
 
+/** `speed` is the resolved px per second, `resumeDelay` the resolved ms. */
 type FlowParams = {
 	enabled: boolean;
-	speed: number; // resolved px per second
-	resumeDelay: number; // resolved ms
+	speed: number;
+	resumeDelay: number;
 	trackRef: RefObject<HTMLDivElement>;
 	storeRef: MutableRefObject<LightSlideStore>;
 };
@@ -46,13 +47,15 @@ const initialFlowState = (): FlowState => ({
 const wrap = (value: number, span: number) =>
 	span > 0 ? ((value % span) + span) % span : 0;
 
-// Continuous ticker scroll. A requestAnimationFrame loop advances a px offset at `speed` px/s and
-// writes it straight to the track transform (no CSS transition → smooth at frame rate). The loop
-// clones make the wrap seamless: when the offset passes one full content width the modulo lands on
-// a clone that is pixel-identical to the start, so there is no visible jump. The drag mechanics are
-// shared with useDragGesture via usePointerGesture; here a drag just drifts the strip from its
-// current position, and motion resumes resumeDelay ms after the interaction ends, continuing from
-// wherever it stopped (no snap, no jank).
+/**
+ * Continuous ticker scroll. A requestAnimationFrame loop advances a px offset at `speed` px/s and
+ * writes it straight to the track transform (no CSS transition → smooth at frame rate). The loop
+ * clones make the wrap seamless: when the offset passes one full content width the modulo lands on
+ * a clone that is pixel-identical to the start, so there is no visible jump. The drag mechanics are
+ * shared with useDragGesture via usePointerGesture; here a drag just drifts the strip from its
+ * current position, and motion resumes resumeDelay ms after the interaction ends, continuing from
+ * wherever it stopped (no snap, no jank).
+ */
 export function useFlow({
 	enabled,
 	speed,
@@ -62,7 +65,7 @@ export function useFlow({
 }: FlowParams): PointerHandlers {
 	const flow = useRef<FlowState>(initialFlowState());
 
-	// Latest-refs of the prop knobs so changing speed/resumeDelay never restarts the rAF loop.
+	/** Latest-refs of the prop knobs so changing speed/resumeDelay never restarts the rAF loop. */
 	const speedRef = useRef(speed);
 	speedRef.current = speed;
 	const resumeDelayRef = useRef(resumeDelay);
@@ -94,8 +97,10 @@ export function useFlow({
 		}, resumeDelayRef.current);
 	}, [clearResumeTimer]);
 
-	// Position at the home offset before first paint, so the prepend clones never flash.
-	// useSlideMetrics' layout effect runs first and seeds store.slideWidth, so it is ready.
+	/**
+	 * Position at the home offset before first paint, so the prepend clones never flash.
+	 * useSlideMetrics' layout effect runs first and seeds store.slideWidth, so it is ready.
+	 */
 	useLayoutEffect(() => {
 		if (!enabled) return;
 		const sw = storeRef.current.slideWidth;
@@ -104,8 +109,10 @@ export function useFlow({
 
 	useEffect(() => {
 		if (!enabled) return;
-		// flow.current is stable for the component's life (never reassigned), so capturing it once
-		// is safe and lets the cleanup read the latest raf id without an exhaustive-deps warning.
+		/**
+		 * flow.current is stable for the component's life (never reassigned), so capturing it once
+		 * is safe and lets the cleanup read the latest raf id without an exhaustive-deps warning.
+		 */
 		const f = flow.current;
 
 		const step = (ts: number) => {
@@ -113,9 +120,11 @@ export function useFlow({
 			const dt = ts - f.lastTs;
 			f.lastTs = ts;
 
-			// Read the cached slide width from the store — NEVER offsetWidth — so the hot loop
-			// forces no layout/reflow per frame. The width only changes on resize, where the
-			// ResizeObserver refreshes store.slideWidth for us.
+			/**
+			 * Read the cached slide width from the store — NEVER offsetWidth — so the hot loop
+			 * forces no layout/reflow per frame. The width only changes on resize, where the
+			 * ResizeObserver refreshes store.slideWidth for us.
+			 */
 			const sw = storeRef.current.slideWidth;
 			if (!f.interacting && sw > 0) {
 				const span = storeRef.current.slideCount * sw;
@@ -164,7 +173,7 @@ export function useFlow({
 				);
 				applyTransform(sw);
 			}
-			// Resume the drift after the delay whether this was a real drag or a tap.
+			/** Resume the drift after the delay whether this was a real drag or a tap. */
 			scheduleResume();
 		},
 		[storeRef, applyTransform, scheduleResume],

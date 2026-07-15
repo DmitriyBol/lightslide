@@ -38,8 +38,10 @@ export type A11yContextType = {
 
 export const A11yContext = createContext<A11yContextType | null>(null);
 
-// Plugins must be rendered inside <LightSlide a11y={…}>; using one anywhere else is a wiring bug,
-// so fail loudly rather than silently no-op.
+/**
+ * Plugins must be rendered inside <LightSlide a11y={…}>; using one anywhere else is a wiring bug,
+ * so fail loudly rather than silently no-op.
+ */
 export function useA11yContext(): A11yContextType {
 	const ctx = useContext(A11yContext);
 	if (!ctx) {

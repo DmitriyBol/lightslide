@@ -8,14 +8,14 @@ import {LightSlide} from './LightSlide';
 
 import '@testing-library/jest-dom';
 
-// ── IntersectionObserver mock ──────────────────────────────────────────────
+/** ── IntersectionObserver mock ────────────────────────────────────────────── */
 class MockIntersectionObserver {
 	observe() {}
 	unobserve() {}
 	disconnect() {}
 }
 
-// ── ResizeObserver mock ────────────────────────────────────────────────────
+/** ── ResizeObserver mock ──────────────────────────────────────────────────── */
 class MockResizeObserver {
 	observe() {}
 	unobserve() {}
@@ -35,7 +35,7 @@ beforeAll(() => {
 	HTMLElement.prototype.releasePointerCapture = jest.fn();
 });
 
-// ──────────────────────────────────────────────────────────────────────────
+/** ────────────────────────────────────────────────────────────────────────── */
 
 function makeOnEvent() {
 	return jest.fn<void, [AnalyticsEvent]>();
@@ -50,7 +50,7 @@ function eventsOfType<E extends AnalyticsEvent['event']>(
 		.filter((p): p is Extract<AnalyticsEvent, {event: E}> => p.event === event);
 }
 
-// Three slides at slidesPerView 1 → positions 0..2 (maxIndex 2).
+/** Three slides at slidesPerView 1 → positions 0..2 (maxIndex 2). */
 type RenderOptions = {
 	initialIndex?: number;
 	index?: number;
@@ -236,7 +236,7 @@ describe('LightSlide external control', () => {
 
 			act(() => ref.current?.next());
 			expect(ref.current?.getIndex()).toBe(1);
-			// Parent echoes the change back, as a controlled consumer would.
+			/** Parent echoes the change back, as a controlled consumer would. */
 			act(() => rerender({index: 1}));
 
 			expect(ref.current?.getIndex()).toBe(1);
@@ -252,7 +252,7 @@ describe('LightSlide external control', () => {
 			act(() => ref.current?.goTo(2));
 			onIndexChange.mockClear();
 
-			// slidesPerView 3 → maxIndex 0, so position 2 no longer exists.
+			/** slidesPerView 3 → maxIndex 0, so position 2 no longer exists. */
 			act(() => rerender({slidesPerView: 3}));
 
 			expect(ref.current?.getIndex()).toBe(0);

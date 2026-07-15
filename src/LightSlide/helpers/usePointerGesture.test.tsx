@@ -9,7 +9,7 @@ function setup() {
 	const onEnd = jest.fn();
 	const onCancel = jest.fn();
 	const track = document.createElement('div');
-	// jsdom does not implement pointer capture — stub it so we can assert calls.
+	/** jsdom does not implement pointer capture — stub it so we can assert calls. */
 	track.setPointerCapture = jest.fn();
 	const {result} = renderHook(() =>
 		usePointerGesture({
@@ -59,7 +59,7 @@ describe('usePointerGesture', () => {
 	it('ignores movement below the direction-lock threshold', () => {
 		const {result, onMove, track} = setup();
 		result.current.onPointerDown(down(500));
-		result.current.onPointerMove(move(502)); // dx 2 < lock
+		result.current.onPointerMove(move(502)); /** dx 2 < lock */
 		expect(onMove).not.toHaveBeenCalled();
 		expect(track.setPointerCapture).not.toHaveBeenCalled();
 	});
@@ -67,7 +67,7 @@ describe('usePointerGesture', () => {
 	it('locks horizontal: captures the pointer and emits onMove with the signed delta', () => {
 		const {result, onMove, track} = setup();
 		result.current.onPointerDown(down(500));
-		result.current.onPointerMove(move(470)); // dx -30, horizontal
+		result.current.onPointerMove(move(470)); /** dx -30, horizontal */
 		expect(track.setPointerCapture).toHaveBeenCalledWith(1);
 		expect(onMove).toHaveBeenCalledWith(-30);
 	});
@@ -75,7 +75,7 @@ describe('usePointerGesture', () => {
 	it('abandons on vertical intent as a no-commit end (moved=false), no capture', () => {
 		const {result, onMove, onEnd, track} = setup();
 		result.current.onPointerDown(down(500, 100));
-		result.current.onPointerMove(move(495, 170)); // dy 70 > dx 5 → vertical
+		result.current.onPointerMove(move(495, 170)); /** dy 70 > dx 5 → vertical */
 		expect(onMove).not.toHaveBeenCalled();
 		expect(track.setPointerCapture).not.toHaveBeenCalled();
 		expect(onEnd).toHaveBeenCalledWith(0, 0, false);
@@ -85,7 +85,7 @@ describe('usePointerGesture', () => {
 		const {result, onEnd} = setup();
 		result.current.onPointerDown(down(500));
 		jest.setSystemTime(100);
-		result.current.onPointerMove(move(300)); // dx -200 over 100ms → velocity -2
+		result.current.onPointerMove(move(300)); /** dx -200 over 100ms → velocity -2 */
 		result.current.onPointerUp(move(300));
 		expect(onEnd).toHaveBeenCalledWith(-200, -2, true);
 	});
@@ -138,7 +138,7 @@ describe('usePointerGesture', () => {
 	it('does not suppress the click after a plain tap', () => {
 		const {result} = setup();
 		result.current.onPointerDown(down(500));
-		result.current.onPointerUp(move(500)); // no movement → tap
+		result.current.onPointerUp(move(500)); /** no movement → tap */
 
 		const {event, preventDefault} = clickEvent();
 		result.current.onClickCapture(event);

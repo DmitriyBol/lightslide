@@ -4,8 +4,10 @@ import type {MouseEvent, PointerEvent} from 'react';
 import {createStore} from './store';
 import {useFlow} from './useFlow';
 
-// Manual rAF control: capture the scheduled callback and drive it with explicit
-// timestamps so per-frame motion is deterministic. setTimeout (resume) is faked.
+/**
+ * Manual rAF control: capture the scheduled callback and drive it with explicit
+ * timestamps so per-frame motion is deterministic. setTimeout (resume) is faked.
+ */
 let frameCb: FrameRequestCallback | null = null;
 
 const downEvent = (x: number, y = 100) =>
@@ -34,15 +36,17 @@ const clickEvent = () => {
 
 function setup(overrides: Record<string, unknown> = {}) {
 	const track = document.createElement('div');
-	// jsdom does not implement pointer capture — stub it so we can assert calls.
+	/** jsdom does not implement pointer capture — stub it so we can assert calls. */
 	track.setPointerCapture = jest.fn();
 	const params = {
 		enabled: true,
 		speed: 100,
 		resumeDelay: 2000,
 		trackRef: {current: track},
-		// slideWidth is the cached width every flow path (rAF loop, drag, positioning) sizes
-		// its transform from — the single source of truth, read straight off the store.
+		/**
+		 * slideWidth is the cached width every flow path (rAF loop, drag, positioning) sizes
+		 * its transform from — the single source of truth, read straight off the store.
+		 */
 		storeRef: {
 			current: createStore({slideCount: 3, loopOffset: 1, slideWidth: 300}),
 		},
@@ -79,55 +83,55 @@ describe('useFlow', () => {
 
 	it('positions the track at the home offset before first paint (no clone flash)', () => {
 		const {track} = setup();
-		// base = loopOffset(1) * sw(300) = 300, offset 0
+		/** base = loopOffset(1) * sw(300) = 300, offset 0 */
 		expect(track.style.transform).toBe('translateX(-300px)');
 	});
 
 	it('advances the offset at `speed` px per second on each frame', () => {
 		const {track} = setup({speed: 100});
 		frame(0);
-		frame(1000); // +100px
+		frame(1000); /** +100px */
 		expect(track.style.transform).toBe('translateX(-400px)');
 	});
 
 	it('wraps seamlessly at one content width (modulo), with no jump', () => {
-		const {track} = setup({speed: 100}); // contentWidth = 3 * 300 = 900
+		const {track} = setup({speed: 100}); /** contentWidth = 3 * 300 = 900 */
 		frame(0);
-		frame(9500); // +950px → wrap → 50px (not 950)
+		frame(9500); /** +950px → wrap → 50px (not 950) */
 		expect(track.style.transform).toBe('translateX(-350px)');
 	});
 
 	it('pauses on interaction and resumes from where it stopped after resumeDelay', () => {
 		const {result, track} = setup({speed: 100, resumeDelay: 2000});
 		frame(0);
-		frame(1000); // offset 100 → -400
+		frame(1000); /** offset 100 → -400 */
 		result.current.onPointerDown(downEvent(500));
-		frame(2000); // interacting → no advance
+		frame(2000); /** interacting → no advance */
 		expect(track.style.transform).toBe('translateX(-400px)');
-		result.current.onPointerUp(moveEvent(500)); // tap, schedules resume
+		result.current.onPointerUp(moveEvent(500)); /** tap, schedules resume */
 		jest.advanceTimersByTime(2000);
-		frame(3000); // dt 1000 from 2000 → +100 → offset 200 → -500
+		frame(3000); /** dt 1000 from 2000 → +100 → offset 200 → -500 */
 		expect(track.style.transform).toBe('translateX(-500px)');
 	});
 
 	it('drifts the strip from its current position during a drag (no jump on grab)', () => {
 		const {result, track} = setup({speed: 100});
 		frame(0);
-		frame(1000); // offset 100 → -400
+		frame(1000); /** offset 100 → -400 */
 		result.current.onPointerDown(downEvent(500));
-		result.current.onPointerMove(moveEvent(450)); // dx -50 → -(300+100) + -50
+		result.current.onPointerMove(moveEvent(450)); /** dx -50 → -(300+100) + -50 */
 		expect(track.style.transform).toBe('translateX(-450px)');
-		result.current.onPointerUp(moveEvent(450)); // commit: offset = 100 - (-50) = 150
+		result.current.onPointerUp(moveEvent(450)); /** commit: offset = 100 - (-50) = 150 */
 		expect(track.style.transform).toBe('translateX(-450px)');
 	});
 
 	it('commits the drift when the pointer leaves the carousel mid-drag', () => {
 		const {result, track} = setup({speed: 100});
 		frame(0);
-		frame(1000); // offset 100 → -400
+		frame(1000); /** offset 100 → -400 */
 		result.current.onPointerDown(downEvent(500));
-		result.current.onPointerMove(moveEvent(450)); // dx -50
-		// Leaves while still held: commit offset = 100 - (-50) = 150 → -(300 + 150)
+		result.current.onPointerMove(moveEvent(450)); /** dx -50 */
+		/** Leaves while still held: commit offset = 100 - (-50) = 150 → -(300 + 150) */
 		result.current.onPointerLeave(moveEvent(450));
 		expect(track.style.transform).toBe('translateX(-450px)');
 	});
@@ -135,16 +139,18 @@ describe('useFlow', () => {
 	it('aborts on pointer cancel without committing the drift, then resumes after the delay', () => {
 		const {result, track} = setup({speed: 100, resumeDelay: 2000});
 		frame(0);
-		frame(1000); // offset 100 → -400
-		result.current.onPointerDown(downEvent(500)); // offsetAtStart = 100
-		result.current.onPointerMove(moveEvent(450)); // dx -50 → -(300 + 100) - 50
+		frame(1000); /** offset 100 → -400 */
+		result.current.onPointerDown(downEvent(500)); /** offsetAtStart = 100 */
+		result.current.onPointerMove(moveEvent(450)); /** dx -50 → -(300 + 100) - 50 */
 		expect(track.style.transform).toBe('translateX(-450px)');
-		result.current.onPointerCancel(); // cancel: must NOT commit, only schedule resume
-		frame(2000); // still interacting → no advance, transform unchanged
+		result.current.onPointerCancel(); /** cancel: must NOT commit, only schedule resume */
+		frame(2000); /** still interacting → no advance, transform unchanged */
 		expect(track.style.transform).toBe('translateX(-450px)');
-		jest.advanceTimersByTime(2000); // resume timer fires → interacting false
-		// Resumes from the UNCOMMITTED offset (100, not the dragged 150): 100 + 100 → -(300 + 200).
-		// A committed cancel would land at offset 150 → -550, so -500 proves no commit happened.
+		jest.advanceTimersByTime(2000); /** resume timer fires → interacting false */
+		/**
+		 * Resumes from the UNCOMMITTED offset (100, not the dragged 150): 100 + 100 → -(300 + 200).
+		 * A committed cancel would land at offset 150 → -550, so -500 proves no commit happened.
+		 */
 		frame(3000);
 		expect(track.style.transform).toBe('translateX(-500px)');
 	});
@@ -164,14 +170,14 @@ describe('useFlow', () => {
 	it('captures the pointer once a real horizontal drag begins', () => {
 		const {result, track} = setup();
 		result.current.onPointerDown(downEvent(500));
-		result.current.onPointerMove(moveEvent(450)); // dx -50, horizontal
+		result.current.onPointerMove(moveEvent(450)); /** dx -50, horizontal */
 		expect(track.setPointerCapture).toHaveBeenCalledWith(1);
 	});
 
 	it('suppresses the click that follows a real drag', () => {
 		const {result} = setup();
 		result.current.onPointerDown(downEvent(500));
-		result.current.onPointerMove(moveEvent(450)); // real horizontal drag
+		result.current.onPointerMove(moveEvent(450)); /** real horizontal drag */
 		result.current.onPointerUp(moveEvent(450));
 
 		const {event, preventDefault, stopPropagation} = clickEvent();
@@ -183,7 +189,7 @@ describe('useFlow', () => {
 	it('does not suppress the click after a plain tap', () => {
 		const {result} = setup();
 		result.current.onPointerDown(downEvent(500));
-		result.current.onPointerUp(moveEvent(500)); // no movement → tap
+		result.current.onPointerUp(moveEvent(500)); /** no movement → tap */
 
 		const {event, preventDefault} = clickEvent();
 		result.current.onClickCapture(event);

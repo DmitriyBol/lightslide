@@ -180,7 +180,7 @@ function LightSlideInner<T = unknown>(
 		s.currentIndex = corrected;
 		setCurrentIndex(corrected);
 		if (!s.effectiveFlow) snapTrack(corrected, false);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [slidesPerView, isLoop, flow?.enabled, loading]);
 
 	/**
