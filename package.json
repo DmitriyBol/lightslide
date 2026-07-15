@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Lightweight, fully-typed React carousel & slider with built-in analytics, infinite loop, and a continuous flow (ticker) mode. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -43,7 +43,7 @@
   "size-limit": [
     {
       "path": "dist/index.esm.js",
-      "limit": "5.5 kB"
+      "limit": "5.75 kB"
     },
     {
       "name": "lightslide/a11y (with shared core chunk)",

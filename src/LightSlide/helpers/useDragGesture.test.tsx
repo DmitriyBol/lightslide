@@ -18,7 +18,7 @@ function setupDrag(overrides: Overrides = {}) {
 	const navigate = jest.fn();
 	const snapToVisual = jest.fn();
 	const track = document.createElement('div');
-	// jsdom does not implement pointer capture — stub it so we can assert calls.
+	/** jsdom does not implement pointer capture — stub it so we can assert calls. */
 	track.setPointerCapture = jest.fn();
 	const store = createStore({
 		currentIndex: overrides.currentIndex ?? 1,
@@ -27,7 +27,7 @@ function setupDrag(overrides: Overrides = {}) {
 		loopOffset: overrides.loopOffset ?? 0,
 		slidesPerView: overrides.slidesPerView ?? 1,
 		slideCount: overrides.slideCount ?? 5,
-		// Cached width the gesture sizes its snap/transform from (was getComputedSlideWidth).
+		/** Cached width the gesture sizes its snap/transform from (was getComputedSlideWidth). */
 		slideWidth: overrides.slideWidth ?? 300,
 	});
 	const storeRef = {current: store};
@@ -79,14 +79,14 @@ describe('useDragGesture', () => {
 		const {result, store, track} = setupDrag();
 		result.current.onPointerDown(downEvent(500, 100));
 		expect(store.autoScrollPaused).toBe(true);
-		// Capture is deferred until a real drag begins, so a plain tap passes through.
+		/** Capture is deferred until a real drag begins, so a plain tap passes through. */
 		expect(track.setPointerCapture).not.toHaveBeenCalled();
 	});
 
 	it('captures the pointer once a real horizontal drag begins', () => {
 		const {result, track} = setupDrag();
 		result.current.onPointerDown(downEvent(500, 100));
-		result.current.onPointerMove(moveEvent(480, 100)); // dx -20, horizontal
+		result.current.onPointerMove(moveEvent(480, 100)); /** dx -20, horizontal */
 		expect(track.setPointerCapture).toHaveBeenCalledWith(1);
 	});
 
@@ -94,17 +94,17 @@ describe('useDragGesture', () => {
 		const {result, navigate, store} = setupDrag({currentIndex: 1});
 		result.current.onPointerDown(downEvent(500));
 		jest.setSystemTime(100);
-		result.current.onPointerMove(moveEvent(280)); // dx -220, horizontal
+		result.current.onPointerMove(moveEvent(280)); /** dx -220, horizontal */
 		result.current.onPointerUp(moveEvent(280));
 		expect(navigate).toHaveBeenCalledWith(2, 'drag');
-		expect(store.autoScrollPaused).toBe(false); // resumed on release
+		expect(store.autoScrollPaused).toBe(false); /** resumed on release */
 	});
 
 	it('advances several slides when dragged across them in one gesture', () => {
 		const {result, navigate} = setupDrag({currentIndex: 0, maxIndex: 4});
 		result.current.onPointerDown(downEvent(900));
-		jest.setSystemTime(200); // slow enough that distance, not velocity, decides
-		result.current.onPointerMove(moveEvent(0)); // dx -900 ≈ 3 slides
+		jest.setSystemTime(200); /** slow enough that distance, not velocity, decides */
+		result.current.onPointerMove(moveEvent(0)); /** dx -900 ≈ 3 slides */
 		result.current.onPointerUp(moveEvent(0));
 		expect(navigate).toHaveBeenCalledWith(3, 'drag');
 	});
@@ -112,8 +112,8 @@ describe('useDragGesture', () => {
 	it('requests a snap-back (same index) on a short, slow drag', () => {
 		const {result, navigate} = setupDrag({currentIndex: 1});
 		result.current.onPointerDown(downEvent(500));
-		jest.setSystemTime(1000); // slow → velocity below threshold
-		result.current.onPointerMove(moveEvent(470)); // dx -30, below distance threshold
+		jest.setSystemTime(1000); /** slow → velocity below threshold */
+		result.current.onPointerMove(moveEvent(470)); /** dx -30, below distance threshold */
 		result.current.onPointerUp(moveEvent(470));
 		expect(navigate).toHaveBeenCalledWith(1, 'drag');
 	});
@@ -128,7 +128,7 @@ describe('useDragGesture', () => {
 	it('cancels the drag on vertical intent and resumes auto-scroll', () => {
 		const {result, navigate, store} = setupDrag({currentIndex: 1});
 		result.current.onPointerDown(downEvent(500, 100));
-		result.current.onPointerMove(moveEvent(495, 170)); // dy 70 > dx 5 → vertical
+		result.current.onPointerMove(moveEvent(495, 170)); /** dy 70 > dx 5 → vertical */
 		result.current.onPointerUp(moveEvent(495, 170));
 		expect(navigate).not.toHaveBeenCalled();
 		expect(store.autoScrollPaused).toBe(false);
@@ -138,8 +138,8 @@ describe('useDragGesture', () => {
 		const {result, navigate, store} = setupDrag({currentIndex: 1});
 		result.current.onPointerDown(downEvent(500));
 		jest.setSystemTime(100);
-		result.current.onPointerMove(moveEvent(280)); // real horizontal drag
-		// Pointer leaves while still held (capture didn't hold) — must not get stuck.
+		result.current.onPointerMove(moveEvent(280)); /** real horizontal drag */
+		/** Pointer leaves while still held (capture didn't hold) — must not get stuck. */
 		result.current.onPointerLeave(moveEvent(280));
 		expect(navigate).toHaveBeenCalledWith(2, 'drag');
 		expect(store.autoScrollPaused).toBe(false);
@@ -152,8 +152,10 @@ describe('useDragGesture', () => {
 	});
 
 	it('drags from the clamped flush offset at the last index of a fractional slidesPerView', () => {
-		// 6 slides, 1.5 per view, 300px each → maxIndex ceil(4.5) = 5, flush offset
-		// (6 - 1.5) * 300 = 1350px (not 5 * 300 = 1500, which would cut the last slide).
+		/**
+		 * 6 slides, 1.5 per view, 300px each → maxIndex ceil(4.5) = 5, flush offset
+		 * (6 - 1.5) * 300 = 1350px (not 5 * 300 = 1500, which would cut the last slide).
+		 */
 		const {result, track} = setupDrag({
 			currentIndex: 5,
 			maxIndex: 5,
@@ -162,9 +164,9 @@ describe('useDragGesture', () => {
 			slideWidth: 300,
 		});
 		result.current.onPointerDown(downEvent(500));
-		// Drag right (dx +30) so no rubber-band kicks in — isolates the base offset.
+		/** Drag right (dx +30) so no rubber-band kicks in — isolates the base offset. */
 		result.current.onPointerMove(moveEvent(530));
-		expect(track.style.transform).toBe('translateX(-1320px)'); // -1350 + 30
+		expect(track.style.transform).toBe('translateX(-1320px)'); /** -1350 + 30 */
 	});
 
 	it('snaps to the current visual position (logical + loopOffset) on cancel', () => {
@@ -181,7 +183,7 @@ describe('useDragGesture', () => {
 		const {result} = setupDrag({currentIndex: 1});
 		result.current.onPointerDown(downEvent(500));
 		jest.setSystemTime(100);
-		result.current.onPointerMove(moveEvent(280)); // real horizontal drag
+		result.current.onPointerMove(moveEvent(280)); /** real horizontal drag */
 		result.current.onPointerUp(moveEvent(280));
 
 		const {event, preventDefault, stopPropagation} = clickEvent();
@@ -193,7 +195,7 @@ describe('useDragGesture', () => {
 	it('does not suppress the click after a plain tap', () => {
 		const {result} = setupDrag({currentIndex: 1});
 		result.current.onPointerDown(downEvent(500));
-		result.current.onPointerUp(moveEvent(500)); // no movement → tap
+		result.current.onPointerUp(moveEvent(500)); /** no movement → tap */
 
 		const {event, preventDefault, stopPropagation} = clickEvent();
 		result.current.onClickCapture(event);

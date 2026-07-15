@@ -9,7 +9,9 @@ import {useA11yContext} from '../a11ySeam';
  * `inert` on nothing else, so it never fights React over an attribute the core owns.
  *
  * The visible window is [currentIndex, currentIndex + ⌈slidesPerView⌉ − 1] — ceil so a fractional
- * `slidesPerView` keeps its partially-visible peek slide interactive.
+ * `slidesPerView` keeps its partially-visible peek slide interactive. DOM child positions map
+ * back to logical slide indices (clones sit below 0 or at ≥ slideCount and are skipped); on
+ * unmount every guard this plugin set is cleared, so slides are interactive again.
  */
 export function FocusGuard() {
 	const {trackRef, currentIndex, slideCount, slidesPerView, isLoop} =
@@ -23,7 +25,6 @@ export function FocusGuard() {
 		const lastVisible = currentIndex + Math.ceil(slidesPerView) - 1;
 		const {children} = track;
 
-		// Maps a DOM child position back to its logical slide index (clones sit at <0 or ≥count).
 		const realSlides: {el: HTMLElement; logical: number}[] = [];
 		for (let dom = 0; dom < children.length; dom++) {
 			const logical = dom - loopOffset;
@@ -38,7 +39,6 @@ export function FocusGuard() {
 			else el.setAttribute('inert', '');
 		}
 
-		// Clear the guards we set when the plugin unmounts, so slides are interactive again.
 		return () => {
 			for (const {el} of realSlides) el.removeAttribute('inert');
 		};

@@ -3,10 +3,12 @@ import {Keyboard} from './Keyboard';
 import {LiveRegion} from './LiveRegion';
 import {ReducedMotion} from './ReducedMotion';
 
-// Per-behaviour toggles for the bundled a11y plugins (all default true), plus a custom live-region
-// formatter. keyboard: arrow / Home / End nav; focusGuard: inert off-screen slides; liveRegion:
-// polite "Slide N of M" announcements; respectReducedMotion: stop flow / auto-scroll under
-// prefers-reduced-motion; announce: overrides the live-region text.
+/**
+ * Per-behaviour toggles for the bundled a11y plugins (all default true), plus a custom live-region
+ * formatter. keyboard: arrow / Home / End nav; focusGuard: inert off-screen slides; liveRegion:
+ * polite "Slide N of M" announcements; respectReducedMotion: stop flow / auto-scroll under
+ * prefers-reduced-motion; announce: overrides the live-region text.
+ */
 export type A11yProps = {
 	keyboard?: boolean;
 	focusGuard?: boolean;

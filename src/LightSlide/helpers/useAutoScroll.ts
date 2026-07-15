@@ -11,9 +11,11 @@ type AutoScrollRefs = {
 	navigateToIndexRef: MutableRefObject<NavigateFn>;
 };
 
-// Ticks navigation forward on an interval. Pauses while the store's autoScrollPaused flag
-// is set (during drag) and never fires onReachedEnd — navigation goes through source "auto".
-// Reaches navigateToIndex through a ref so the effect only restarts on config change.
+/**
+ * Ticks navigation forward on an interval. Pauses while the store's autoScrollPaused flag
+ * is set (during drag) and never fires onReachedEnd — navigation goes through source "auto".
+ * Reaches navigateToIndex through a ref so the effect only restarts on config change.
+ */
 export function useAutoScroll(
 	autoScroll: AutoScrollConfig | undefined,
 	refs: AutoScrollRefs,

@@ -18,6 +18,9 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
 - **Navigation buttons** — optional prev/next, fully styleable, or bring your own element via
   `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at the edges.
 - **Pagination dots** — optional dot indicators with active-state styling.
+- **External control** — a controlled `index` prop, `onIndexChange`, and a `ref` handle
+  (`goTo` / `next` / `prev` / `getIndex`): the building blocks for thumbnails, synced
+  carousels, and custom UIs.
 - **Auto-scroll** — optional step cycling at a configurable interval; pauses during drag.
 - **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping;
   pauses on interaction and resumes after a delay.
@@ -78,6 +81,9 @@ payloads.
 | `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
 | `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
+| `initialIndex` | `number` | `0` | Starting position, uncontrolled (see [External control](#external-control)) |
+| `index` | `number` | — | Controlled position — the carousel navigates whenever it changes |
+| `onIndexChange` | `(index: number) => void` | — | Fires after every settled position change, from any source |
 | `autoScroll` | `AutoScrollConfig` | — | Automatic slide cycling |
 | `flow` | `FlowConfig` | — | Continuous ticker scroll (supersedes `autoScroll`) |
 | `navigation` | `NavigationConfig` | — | Prev/next buttons. Pass `{}` for defaults |
@@ -214,6 +220,44 @@ Accepts any positive number, including floats — `1.5` shows one full slide plu
 next. Each slide fills `containerWidth / slidesPerView` px;
 `maxIndex = ⌊slideCount − slidesPerView⌋`.
 
+## External control
+
+Drive the carousel from outside — the building blocks for thumbnails, synced carousels, and
+custom UIs. All indices are the scroll positions pagination dots represent: `0..maxIndex`
+(one per slide when `slidesPerView` is an integer).
+
+```tsx
+const ref = useRef<LightSlideHandle>(null);
+
+<LightSlide ref={ref} initialIndex={2} onIndexChange={setPosition}>…</LightSlide>;
+
+ref.current?.goTo(4); // animate to a position (clamped into range, never wraps)
+ref.current?.next(); // one step right (wraps under isLoop)
+ref.current?.prev(); // one step left (wraps under isLoop)
+ref.current?.getIndex(); // current settled position
+```
+
+Or bind it to state — the controlled `index` prop navigates whenever the value changes:
+
+```tsx
+const [index, setIndex] = useState(0);
+
+<Thumbnails active={index} onPick={setIndex} />
+<LightSlide index={index} onIndexChange={setIndex}>…</LightSlide>
+```
+
+Semantics worth knowing:
+
+- `index` does not lock the carousel: drag and the built-in buttons still navigate. Keep your
+  state in sync with `onIndexChange` (the pattern above).
+- `onIndexChange` fires after every settled position change from any source — drag, buttons,
+  pagination, auto-scroll, the API — and also when a layout change (e.g. a new
+  `slidesPerView`) clamps the current position away.
+- Programmatic navigation fires `carousel_slide` like any other navigation, but never
+  `carousel_nav_button` / `carousel_pagination_click`.
+- While `flow` runs the track has no discrete position: the controlled prop and the navigation
+  methods are ignored, and `getIndex` reports the last settled position.
+
 ## Analytics
 
 All analytics flow through **one** handler — `analytics.onEvent`. It receives every event as a
@@ -224,7 +268,7 @@ your own in the handler if needed).
 | `event` | When it fires | Payload |
 |---|---|---|
 | `carousel_in_viewport` | First time ≥50% visible (once) | `{ event }` |
-| `carousel_slide` | Every navigation (drag/button/pagination/auto) | `{ event, direction, fromIndex, toIndex }` |
+| `carousel_slide` | Every navigation (drag/button/pagination/auto/API) | `{ event, direction, fromIndex, toIndex }` |
 | `carousel_reached_end` | User reaches the last position (once) | `{ event, slides }` — **all** slides |
 | `carousel_viewed_slides` | After `viewedTimeout` s of visibility (once, opt-in) | `{ event, slides, viewedSeconds }` — **viewed** slides |
 | `carousel_nav_button` | Prev/next clicked (alongside `carousel_slide`) | `{ event, direction, fromIndex, toIndex }` |
@@ -337,7 +381,7 @@ import type {
   InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
   NavigationButtonPayload, PaginationClickPayload,
   NavigationConfig, NavButtonRenderProps, PaginationConfig,
-  LightSlideProps, SlideProps, SlideData,
+  LightSlideProps, LightSlideHandle, SlideProps, SlideData,
 } from "lightslide";
 ```
 
@@ -350,6 +394,7 @@ src/
 ├── LightSlide/
 │   ├── LightSlide.tsx              # Main carousel (orchestrator), generic over slide data
 │   ├── LightSlide.test.tsx
+│   ├── LightSlideControl.test.tsx  # external-control API (index / onIndexChange / ref)
 │   ├── LightSlide.module.scss      # Container / stage / viewport / track styles
 │   └── helpers/                    # Internal hooks & pure helpers
 │       ├── constants.ts            #   tuning constants
@@ -357,6 +402,10 @@ src/
 │       ├── store.ts                #   single core-data store (LightSlideStore<T>)
 │       ├── slideData.ts            #   collectSlideData (+ test)
 │       ├── loopClones.ts           #   buildDisplayChildren: per-slide ARIA + loop clones (+ test)
+│       ├── useLatestRef.ts         #   latest-ref for stable callbacks
+│       ├── useNavigation.ts        #   navigateToIndex — the single navigation path
+│       ├── useExternalControl.ts   #   controlled index prop + LightSlideHandle ref
+│       ├── useLayoutResync.ts      #   re-measure/clamp/re-snap on layout-shape changes
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
@@ -404,7 +453,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 157 integration tests (Jest + jsdom) across 19 suites
+npm test             # 172 integration tests (Jest + jsdom) across 20 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

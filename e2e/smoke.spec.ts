@@ -1,7 +1,9 @@
 import {expect, test} from '@playwright/test';
 
-// Every demo section id rendered by the playground (see App.tsx). Their collective presence is the
-// cheapest guard that the page mounted and nothing threw on the way down the column.
+/**
+ * Every demo section id rendered by the playground (see App.tsx). Their collective presence is the
+ * cheapest guard that the page mounted and nothing threw on the way down the column.
+ */
 const SECTION_IDS = [
 	'basic',
 	'minimal',
@@ -25,7 +27,7 @@ test.describe('smoke', () => {
 		await expect(page.getByRole('heading', {level: 1})).toContainText(
 			'carousel',
 		);
-		// The first carousel actually rendered its slides through the library.
+		/** The first carousel actually rendered its slides through the library. */
 		await expect(
 			page.locator('#basic').getByText('Air Runner Pro'),
 		).toBeVisible();

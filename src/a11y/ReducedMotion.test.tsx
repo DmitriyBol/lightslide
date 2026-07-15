@@ -7,7 +7,7 @@ import {ReducedMotion} from './ReducedMotion';
 
 import '@testing-library/jest-dom';
 
-// Minimal controllable matchMedia: flip `matches` and fire the change listeners.
+/** Minimal controllable matchMedia: flip `matches` and fire the change listeners. */
 function installMatchMedia(initial: boolean) {
 	let matches = initial;
 	const listeners = new Set<() => void>();

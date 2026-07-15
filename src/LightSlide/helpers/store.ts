@@ -37,7 +37,7 @@ export type LightSlideStore<T = unknown> = {
 	autoScrollPaused: boolean;
 };
 
-// Creates a store seeded with safe defaults; `overrides` is a convenience for tests.
+/** Creates a store seeded with safe defaults; `overrides` is a convenience for tests. */
 export function createStore<T = unknown>(
 	overrides: Partial<LightSlideStore<T>> = {},
 ): LightSlideStore<T> {

@@ -164,7 +164,7 @@ describe('Navigation — render props', () => {
 				</button>
 			),
 		});
-		// prev sits at the boundary → its positioning slot carries the default dim class.
+		/** prev sits at the boundary → its positioning slot carries the default dim class. */
 		const slot = screen.getByTestId('custom-prev').parentElement;
 		expect(slot?.className).toContain('slotDisabled');
 	});

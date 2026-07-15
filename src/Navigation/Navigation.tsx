@@ -9,6 +9,12 @@ type NavigationProps = {
 	config: NavigationConfig;
 };
 
+/**
+ * Prev/next buttons. Hidden until the carousel has measured on the client, so they never flash
+ * in an un-positioned spot during SSR / before first layout. Custom render-prop buttons are
+ * wrapped in a positioning slot that lands them left/right of centre (outside the clipping
+ * viewport) and dims itself at the boundary, while the consumer owns the element's own markup.
+ */
 export function Navigation({config}: NavigationProps) {
 	const {currentIndex, maxIndex, isLoop, isReady, slidesId, goToIndex} =
 		useNavContext();
@@ -24,17 +30,11 @@ export function Navigation({config}: NavigationProps) {
 	const prevDisabled = !isLoop && currentIndex <= 0;
 	const nextDisabled = !isLoop && currentIndex >= maxIndex;
 
-	// Hidden until the carousel has measured on the client, so the buttons never flash in
-	// an un-positioned spot during SSR / before first layout.
 	const hidden = !isReady && styles.hidden;
 
 	return (
 		<>
 			{config.renderPrev ? (
-				// Custom JSX is wrapped in a positioning slot so it lands left-of-centre by
-				// default (and outside the clipping viewport), while the consumer still owns
-				// the element's own markup/styling. The slot dims itself at the boundary so
-				// disabled state has a sensible default even for custom buttons.
 				<div
 					className={cx(
 						styles.slot,

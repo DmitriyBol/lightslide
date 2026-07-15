@@ -10,10 +10,11 @@ const EDITABLE = /^(INPUT|TEXTAREA|SELECT)$/;
  * listener lives on the carousel container, so it only fires when focus is already inside the
  * carousel — reached by tabbing to its nav buttons, dots, or focusable slide content. Keydowns
  * originating in a form field are left alone so typing (and native caret movement) is untouched.
+ * The reactive bits are read through a latest-ref, so the listener binds once on mount and is
+ * never re-bound per navigation.
  */
 export function Keyboard() {
 	const ctx = useA11yContext();
-	// Latest-ref of the reactive bits so the listener is attached once, not re-bound each nav.
 	const latest = useRef(ctx);
 	latest.current = ctx;
 
@@ -56,7 +57,6 @@ export function Keyboard() {
 
 		el.addEventListener('keydown', onKeyDown);
 		return () => el.removeEventListener('keydown', onKeyDown);
-		// Only `latest` (a ref) is read, so binding once — on mount — is correct.
 	}, []);
 
 	return null;

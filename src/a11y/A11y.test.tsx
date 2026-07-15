@@ -7,8 +7,10 @@ import {A11y} from './A11y';
 
 import '@testing-library/jest-dom';
 
-// Null refs + no matchMedia: Keyboard / FocusGuard / ReducedMotion all no-op, leaving the
-// LiveRegion as the one observable behaviour to assert the toggle against.
+/**
+ * Null refs + no matchMedia: Keyboard / FocusGuard / ReducedMotion all no-op, leaving the
+ * LiveRegion as the one observable behaviour to assert the toggle against.
+ */
 function ctx(): A11yContextType {
 	return {
 		containerRef: {current: null},

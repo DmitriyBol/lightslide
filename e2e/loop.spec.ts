@@ -2,9 +2,11 @@ import {expect, test} from '@playwright/test';
 
 import {carousel} from './support/carousel';
 
-// #loop is a single isLoop carousel (5 slides, slidesPerView 1) with default arrows, pagination,
-// and a <Console>. In loop mode the arrows never disable and the edges wrap around via cloned
-// slides — behaviour that only reads correctly with real layout.
+/**
+ * #loop is a single isLoop carousel (5 slides, slidesPerView 1) with default arrows, pagination,
+ * and a <Console>. In loop mode the arrows never disable and the edges wrap around via cloned
+ * slides — behaviour that only reads correctly with real layout.
+ */
 test.describe('loop mode', () => {
 	test('arrows stay enabled; prev from the first slide wraps to the last', async ({
 		page,

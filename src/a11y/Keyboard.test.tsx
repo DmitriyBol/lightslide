@@ -7,7 +7,7 @@ import {Keyboard} from './Keyboard';
 
 import '@testing-library/jest-dom';
 
-// A real, attached container so the keydown listener (bound to containerRef.current) receives events.
+/** A real, attached container so the keydown listener (bound to containerRef.current) receives events. */
 function setup(overrides?: Partial<A11yContextType>) {
 	const container = document.createElement('div');
 	document.body.appendChild(container);

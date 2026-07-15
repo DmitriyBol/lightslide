@@ -6,6 +6,7 @@ export type {
 	AutoScrollConfig,
 	FlowConfig,
 	InViewportPayload,
+	LightSlideHandle,
 	LightSlideProps,
 	NavButtonRenderProps,
 	NavigationButtonPayload,

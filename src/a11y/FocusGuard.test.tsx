@@ -7,8 +7,10 @@ import {FocusGuard} from './FocusGuard';
 
 import '@testing-library/jest-dom';
 
-// Builds a track element with `total` child slides and returns it detached — FocusGuard reads
-// track.children directly, so it doesn't need to be in the document.
+/**
+ * Builds a track element with `total` child slides and returns it detached — FocusGuard reads
+ * track.children directly, so it doesn't need to be in the document.
+ */
 function makeTrack(total: number) {
 	const track = document.createElement('div');
 	for (let i = 0; i < total; i++) track.appendChild(document.createElement('div'));
@@ -52,7 +54,7 @@ describe('FocusGuard', () => {
 	it('keeps ⌈slidesPerView⌉ slides interactive (incl. a fractional peek)', () => {
 		const track = makeTrack(4);
 		mount(track, {currentIndex: 0, slideCount: 4, slidesPerView: 1.5});
-		// window is [0, ceil(1.5)-1] = [0,1]
+		/** window is [0, ceil(1.5)-1] = [0,1] */
 		expect(inert(track, 0)).toBe(false);
 		expect(inert(track, 1)).toBe(false);
 		expect(inert(track, 2)).toBe(true);
@@ -60,17 +62,17 @@ describe('FocusGuard', () => {
 	});
 
 	it('offsets by the loop clones and never un-inerts a clone', () => {
-		// loop layout at slidesPerView 1: [clonePre, real0, real1, real2, clonePost]
+		/** loop layout at slidesPerView 1: [clonePre, real0, real1, real2, clonePost] */
 		const track = makeTrack(5);
-		// pre-mark the clones inert as the core would
+		/** pre-mark the clones inert as the core would */
 		track.children[0].setAttribute('inert', '');
 		track.children[4].setAttribute('inert', '');
 		mount(track, {currentIndex: 0, slideCount: 3, slidesPerView: 1, isLoop: true});
-		expect(inert(track, 0)).toBe(true); // clone stays inert
-		expect(inert(track, 1)).toBe(false); // real0 visible
-		expect(inert(track, 2)).toBe(true); // real1 off-screen
-		expect(inert(track, 3)).toBe(true); // real2 off-screen
-		expect(inert(track, 4)).toBe(true); // clone stays inert
+		expect(inert(track, 0)).toBe(true); /** clone stays inert */
+		expect(inert(track, 1)).toBe(false); /** real0 visible */
+		expect(inert(track, 2)).toBe(true); /** real1 off-screen */
+		expect(inert(track, 3)).toBe(true); /** real2 off-screen */
+		expect(inert(track, 4)).toBe(true); /** clone stays inert */
 	});
 
 	it('clears the guards it set on unmount', () => {

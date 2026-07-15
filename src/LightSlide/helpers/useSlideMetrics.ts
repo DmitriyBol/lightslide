@@ -9,13 +9,15 @@ type SlideMetrics = {
 	measureSlideWidth: () => void;
 };
 
-// Measures the container and derives the per-slide px width, floored so the track
-// transform stays pixel-aligned with the slides. Re-measures on container resize.
-// `slideWidth` is reactive state (drives slide layout via context) and is mirrored onto
-// the shared store (store.slideWidth) — the single source of truth every motion/gesture
-// hook reads, so the hot paths size the transform from the cached value (no per-frame
-// offsetWidth read, and the transform can never drift from the slides' rendered width).
-// offsetWidth is touched only here, on mount and on each ResizeObserver callback.
+/**
+ * Measures the container and derives the per-slide px width, floored so the track
+ * transform stays pixel-aligned with the slides. Re-measures on container resize.
+ * `slideWidth` is reactive state (drives slide layout via context) and is mirrored onto
+ * the shared store (store.slideWidth) — the single source of truth every motion/gesture
+ * hook reads, so the hot paths size the transform from the cached value (no per-frame
+ * offsetWidth read, and the transform can never drift from the slides' rendered width).
+ * offsetWidth is touched only here, on mount and on each ResizeObserver callback.
+ */
 export function useSlideMetrics(
 	containerRef: RefObject<HTMLDivElement>,
 	storeRef: MutableRefObject<LightSlideStore>,

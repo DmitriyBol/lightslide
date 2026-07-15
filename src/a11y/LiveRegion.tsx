@@ -2,8 +2,10 @@ import type {CSSProperties} from 'react';
 
 import {useA11yContext} from '../a11ySeam';
 
-// Standard visually-hidden (screen-reader-only) box: present in the a11y tree, invisible on
-// screen. Inlined rather than shipped as a class so the a11y entry pulls in no CSS.
+/**
+ * Standard visually-hidden (screen-reader-only) box: present in the a11y tree, invisible on
+ * screen. Inlined rather than shipped as a class so the a11y entry pulls in no CSS.
+ */
 const visuallyHidden: CSSProperties = {
 	position: 'absolute',
 	width: 1,
@@ -16,8 +18,10 @@ const visuallyHidden: CSSProperties = {
 	whiteSpace: 'nowrap',
 };
 
-// Props for the live-region announcer. `announce` overrides the default
-// "Slide {index + 1} of {count}" text.
+/**
+ * Props for the live-region announcer. `announce` overrides the default
+ * "Slide {index + 1} of {count}" text.
+ */
 export type LiveRegionProps = {
 	announce?: (index: number, count: number) => string;
 };

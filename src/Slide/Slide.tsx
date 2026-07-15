@@ -7,16 +7,18 @@ import type {SlideProps} from '../types';
 import {cx} from '../utils/cx';
 import styles from './Slide.module.scss';
 
+/**
+ * `data` is read by the parent (analytics), never rendered — kept out of the DOM props.
+ * `...rest` forwards anything else onto the slide node: the per-slide ARIA the carousel
+ * injects via cloneElement (role / aria-roledescription / aria-label, or the hidden+inert
+ * markers on loop clones), and any native attribute a consumer sets on <Slide>.
+ */
 function SlideInner<T>(
 	{children, style, className, data, ...rest}: SlideProps<T>,
 	ref: ForwardedRef<HTMLDivElement>,
 ) {
 	const {slideWidth} = useSlideMetricsContext();
 
-	// `data` is read by the parent (analytics), never rendered — kept out of the DOM props.
-	// `...rest` forwards anything else onto the slide node: the per-slide ARIA the carousel
-	// injects via cloneElement (role / aria-roledescription / aria-label, or the hidden+inert
-	// markers on loop clones), and any native attribute a consumer sets on <Slide>.
 	return (
 		<div
 			ref={ref}
@@ -31,10 +33,12 @@ function SlideInner<T>(
 	);
 }
 
-// memo + forwardRef erase the type parameter, so the export is re-asserted with a generic
-// call signature. `data` is the only generic field and it is render-irrelevant (read by
-// the parent, not here), so the cast is purely about preserving the consumer's data type
-// at the call site — e.g. `<Slide<Product> data={product} />`.
+/**
+ * memo + forwardRef erase the type parameter, so the export is re-asserted with a generic
+ * call signature. `data` is the only generic field and it is render-irrelevant (read by
+ * the parent, not here), so the cast is purely about preserving the consumer's data type
+ * at the call site — e.g. `<Slide<Product> data={product} />`.
+ */
 export const Slide = React.memo(React.forwardRef(SlideInner)) as (<T>(
 	props: SlideProps<T> & {ref?: Ref<HTMLDivElement>},
 ) => ReactElement) & {displayName?: string};

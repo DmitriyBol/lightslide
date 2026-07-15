@@ -59,7 +59,7 @@ describe('LiveRegion', () => {
 	});
 
 	it('throws a clear error when used outside <LightSlide a11y>', () => {
-		// Silence the expected React error boundary logging for this assertion.
+		/** Silence the expected React error boundary logging for this assertion. */
 		const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
 		expect(() => render(<LiveRegion />)).toThrow(/a11y/);
 		spy.mockRestore();

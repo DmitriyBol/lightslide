@@ -35,7 +35,7 @@ function renderPagination(
 describe('Pagination', () => {
 	it('renders maxIndex + 1 dots', () => {
 		renderPagination(makeContext({maxIndex: 4}));
-		// 5 dots for maxIndex=4
+		/** 5 dots for maxIndex=4 */
 		expect(screen.getAllByRole('button')).toHaveLength(5);
 	});
 

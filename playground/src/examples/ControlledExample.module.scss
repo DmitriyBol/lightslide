@@ -1,0 +1,41 @@
+// External-API toolbar: mono ghost-pill buttons naming the exact call they make,
+// plus a muted live position readout pushed to the right edge.
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin-bottom: 14px;
+}
+
+.api {
+	padding: 6px 12px;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--text);
+	cursor: pointer;
+	background: var(--surface-glass);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid var(--border-strong);
+	border-radius: 999px;
+	transition:
+		border-color 140ms var(--ease-out),
+		transform 140ms var(--ease-spring);
+
+	&:hover {
+		color: var(--accent);
+		border-color: var(--accent);
+	}
+
+	&:active {
+		transform: scale(0.96);
+	}
+}
+
+.readout {
+	margin-left: auto;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--text-muted);
+}
