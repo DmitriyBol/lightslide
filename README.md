@@ -469,6 +469,7 @@ src/
 │       ├── useLayoutResync.ts      #   re-measure/clamp/re-snap on layout-shape changes
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
+│       ├── useBreakpoints.ts       #   media-query overrides of slidesPerView/gap (+ test)
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
 │       ├── usePointerGesture.ts    #   shared drag mechanics: lock/capture/click (+ test)
 │       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
@@ -520,7 +521,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 181 integration tests (Jest + jsdom) across 20 suites
+npm test             # 190 integration tests (Jest + jsdom) across 21 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

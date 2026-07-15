@@ -46,9 +46,9 @@ export type BreakpointOverrides = {
  * - `breakpoints` — responsive overrides: each key is a media query, its value replaces
  *   `slidesPerView`/`gap` while the query matches, e.g.
  *   `{'(min-width: 768px)': {slidesPerView: 2}, '(min-width: 1200px)': {slidesPerView: 3}}`.
- *   When several queries match, later entries win per property, so order overrides
- *   mobile-first. The server (and any client without `matchMedia`) renders with the base
- *   props; matches apply on hydration.
+ *   When several queries match, later entries win per property, so ordering them
+ *   mobile-first behaves like CSS. The server (and any client without `matchMedia`) renders
+ *   with the base props; matches apply on hydration.
  * - `initialIndex` — starting position (0..maxIndex, clamped). Uncontrolled: the carousel owns
  *   the index afterwards — read changes via `onIndexChange`, drive them via `index`/the ref.
  * - `index` — controlled position: whenever the value changes, the carousel animates to it. It

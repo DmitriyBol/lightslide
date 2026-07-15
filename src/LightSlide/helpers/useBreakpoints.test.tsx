@@ -103,7 +103,6 @@ describe('useBreakpoints', () => {
 	});
 
 	it('falls back to the base props where matchMedia is unavailable', () => {
-		 
 		// @ts-expect-error — deleting the optional global for this case
 		delete window.matchMedia;
 		const {result} = renderHook(() =>
