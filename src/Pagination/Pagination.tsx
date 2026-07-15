@@ -9,11 +9,11 @@ type PaginationProps = {
 	config: PaginationConfig;
 };
 
+/** Pagination dots — one per scrollable position, the active one marked aria-current. */
 export function Pagination({config}: PaginationProps) {
 	const {currentIndex, maxIndex, isReady, slidesId, goToIndex} =
 		useNavContext();
 
-	// Number of dots = number of scrollable positions
 	const dotCount = maxIndex + 1;
 
 	const handleDotClick = useCallback(

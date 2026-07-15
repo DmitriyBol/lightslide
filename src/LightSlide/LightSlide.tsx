@@ -38,6 +38,13 @@ import {useTrackSnap} from './helpers/useTrackSnap';
 import {useViewportEngagement} from './helpers/useViewportEngagement';
 import styles from './LightSlide.module.scss';
 
+/**
+ * The carousel orchestrator. The container is a WAI-ARIA APG carousel landmark — a labelled
+ * `region` when `label` is given, else a plain `group`. The stage's height tracks the viewport
+ * only, so the controls anchored to it centre on the track (never offset by the pagination row).
+ * The a11y provider at the bottom only materialises when the consumer passes an `a11y` node,
+ * so base consumers pay nothing for it.
+ */
 function LightSlideInner<T = unknown>(
 	{
 		children,
@@ -159,7 +166,9 @@ function LightSlideInner<T = unknown>(
 
 	/**
 	 * Re-measure, re-clamp, and re-snap (no animation) when the layout shape changes. A layout
-	 * effect so loop mode positions the track before the first paint — no clone flash.
+	 * effect so loop mode positions the track before the first paint — no clone flash. A
+	 * clamped-away position is reported to onIndexChange (a real change for synced state),
+	 * and the snap is skipped while the flow runs — the flow owns the transform.
 	 */
 	useLayoutEffect(() => {
 		measureSlideWidth();
@@ -167,11 +176,9 @@ function LightSlideInner<T = unknown>(
 		const newMax = Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));
 		s.maxIndex = newMax;
 		const corrected = Math.min(s.currentIndex, newMax);
-		// a clamped-away position is a real change — keep the consumer's synced state fresh
 		if (corrected !== s.currentIndex) onIndexChangeRef.current?.(corrected);
 		s.currentIndex = corrected;
 		setCurrentIndex(corrected);
-		// the flow owns the transform while it runs; snapping here would fight it
 		if (!s.effectiveFlow) snapTrack(corrected, false);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [slidesPerView, isLoop, flow?.enabled, loading]);
@@ -346,13 +353,11 @@ function LightSlideInner<T = unknown>(
 			<NavContext.Provider value={navValue}>
 				<div
 					ref={containerRef}
-					// APG landmark: a labelled region when `label` is given, else a plain group
 					role={label ? 'region' : 'group'}
 					aria-roledescription="carousel"
 					aria-label={label}
 					className={cx(styles.container, className)}
 					style={style}>
-					{/* Stage height tracks the viewport only, so the controls centre on the track. */}
 					<div className={styles.stage}>
 						<div className={styles.viewport}>
 							{isLoading ? (
@@ -375,7 +380,6 @@ function LightSlideInner<T = unknown>(
 
 					{!isLoading && pagination && <Pagination config={pagination} />}
 
-					{/* Opt-in a11y layer: the provider only materialises when an `a11y` node is passed. */}
 					{a11y && (
 						<A11yContext.Provider
 							value={{
