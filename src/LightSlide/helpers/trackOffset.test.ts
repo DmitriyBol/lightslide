@@ -64,6 +64,48 @@ describe('trackOffset', () => {
 		});
 	});
 
+	describe('gap (positions step by slideWidth + gap)', () => {
+		it('offsets every index by the stride, clamp still a no-op for an integer view', () => {
+			/** 6 slides, 2 per view, 300px + 20px gap → stride 320, max offset (4·300)+(4·20)=1280. */
+			const store = createStore({
+				slideCount: 6,
+				slidesPerView: 2,
+				slideWidth: 300,
+				gap: 20,
+			});
+			expect(trackOffset(1, store)).toBe(320);
+			expect(trackOffset(4, store)).toBe(1280);
+		});
+
+		it('clamps the fractional final index flush, gaps included', () => {
+			/**
+			 * 6 slides, 1.5 per view, 400px + 20px gap. Content = 6·400 + 5·20 = 2500;
+			 * viewport = 1.5·400 + 1·20 = 620 → flush max offset 1880 (raw would be 5·420 = 2100).
+			 */
+			const store = createStore({
+				slideCount: 6,
+				slidesPerView: 1.5,
+				slideWidth: 400,
+				gap: 20,
+			});
+			expect(trackOffset(4, store)).toBe(1680);
+			expect(trackOffset(5, store)).toBe(1880);
+		});
+
+		it('keeps clone indices linear in loop mode', () => {
+			const store = createStore({
+				slideCount: 6,
+				slidesPerView: 1.5,
+				slideWidth: 400,
+				gap: 20,
+				isLoop: true,
+				loopOffset: 2,
+			});
+			expect(trackOffset(5, store)).toBe(2100);
+			expect(trackOffset(8, store)).toBe(3360);
+		});
+	});
+
 	it('pins the offset at 0 when every slide already fits', () => {
 		const fits = createStore({slideCount: 3, slidesPerView: 3, slideWidth: 200});
 		expect(trackOffset(1, fits)).toBe(0);

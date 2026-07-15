@@ -58,6 +58,7 @@ function LightSlideInner<T = unknown>(
 		slideLabel = DEFAULT_SLIDE_LABEL,
 		analytics,
 		slidesPerView = 1,
+		gap = 0,
 		initialIndex = 0,
 		index,
 		onIndexChange,
@@ -137,6 +138,7 @@ function LightSlideInner<T = unknown>(
 	store.slideCount = slideCount;
 	store.maxIndex = maxIndex;
 	store.slidesPerView = slidesPerView;
+	store.gap = gap;
 	store.viewedTimeout = viewedTimeout;
 	store.effectiveFlow = effectiveFlow;
 	store.isLoop = effectiveLoop;
@@ -173,6 +175,7 @@ function LightSlideInner<T = unknown>(
 		onIndexChangeRef,
 		setCurrentIndex,
 		slidesPerView,
+		gap,
 		isLoop,
 		flowEnabled: effectiveFlow,
 		loading,
@@ -277,7 +280,7 @@ function LightSlideInner<T = unknown>(
 									ref={trackRef}
 									id={slidesId}
 									className={cx(styles.track, trackClassName)}
-									style={trackStyle}
+									style={gap > 0 ? {columnGap: gap, ...trackStyle} : trackStyle}
 									onDragStart={preventNativeDrag}
 									{...pointerHandlers}>
 									{displayChildren}

@@ -1,6 +1,7 @@
 import {useState} from 'react';
-import {LightSlide, Slide} from 'lightslide';
+
 import type {AnalyticsConfig} from 'lightslide';
+import {LightSlide, Slide} from 'lightslide';
 
 import {Console} from '../components/Console';
 import {Controls, Demo, Well} from '../components/Demo';
@@ -26,8 +27,15 @@ const OPTIONS = [
 	{label: '3', value: 3},
 ];
 
+const GAP_OPTIONS = [
+	{label: '0', value: 0},
+	{label: '12', value: 12},
+	{label: '24', value: 24},
+];
+
 export function SlidesPerViewExample() {
 	const [spv, setSpv] = useState(1.5);
+	const [gap, setGap] = useState(0);
 	const {entries, log, clear} = useConsole();
 
 	const analytics: AnalyticsConfig<{index: number}> = {
@@ -45,14 +53,16 @@ export function SlidesPerViewExample() {
 		<Demo
 			id="slides-per-view"
 			number="04"
-			title="slidesPerView"
-			tag={`slidesPerView={${spv}}`}
+			title="slidesPerView & gap"
+			tag={`slidesPerView={${spv}} gap={${gap}}`}
 			description={
 				<>
 					Show several slides at once — fractional values reveal a peek of the
-					next. With a fractional view (1.5 / 2.5) the{' '}
-					<strong>last slide now scrolls flush</strong> to the right edge
-					instead of stopping half-cut.
+					next, and with a fractional view (1.5 / 2.5) the{' '}
+					<strong>last slide scrolls flush</strong> to the right edge instead
+					of stopping half-cut. <code>gap</code> spaces the slides and is
+					folded into all the geometry — no padding workarounds, so card
+					backgrounds span the full slide.
 				</>
 			}>
 			<Controls>
@@ -62,12 +72,21 @@ export function SlidesPerViewExample() {
 					value={spv}
 					onChange={setSpv}
 				/>
+				<Segmented
+					ariaLabel="gap"
+					options={GAP_OPTIONS}
+					value={gap}
+					onChange={setGap}
+				/>
 			</Controls>
 
 			<Well>
-				<LightSlide<{index: number}> analytics={analytics} slidesPerView={spv}>
+				<LightSlide<{index: number}>
+					analytics={analytics}
+					slidesPerView={spv}
+					gap={gap}>
 					{ITEMS.map((label, i) => (
-						<Slide key={label} data={{index: i}} style={{padding: '0 5px'}}>
+						<Slide key={label} data={{index: i}}>
 							<div
 								className={slides.tile}
 								style={{height: 150, background: cardTone(i)}}>
@@ -89,7 +108,8 @@ export function SlidesPerViewExample() {
 					fontSize: '0.75rem',
 					color: 'var(--text-faint)',
 				}}>
-				slidesPerView={spv} · {ITEMS.length} slides · maxIndex {maxIndex}
+				slidesPerView={spv} · gap={gap}px · {ITEMS.length} slides · maxIndex{' '}
+				{maxIndex}
 			</p>
 
 			<Console

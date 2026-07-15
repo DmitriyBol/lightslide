@@ -12,6 +12,7 @@ type Overrides = {
 	slidesPerView?: number;
 	slideCount?: number;
 	slideWidth?: number;
+	gap?: number;
 };
 
 function setupDrag(overrides: Overrides = {}) {
@@ -29,6 +30,7 @@ function setupDrag(overrides: Overrides = {}) {
 		slideCount: overrides.slideCount ?? 5,
 		/** Cached width the gesture sizes its snap/transform from (was getComputedSlideWidth). */
 		slideWidth: overrides.slideWidth ?? 300,
+		gap: overrides.gap ?? 0,
 	});
 	const storeRef = {current: store};
 	const {result} = renderHook(() =>
@@ -107,6 +109,16 @@ describe('useDragGesture', () => {
 		result.current.onPointerMove(moveEvent(0)); /** dx -900 ≈ 3 slides */
 		result.current.onPointerUp(moveEvent(0));
 		expect(navigate).toHaveBeenCalledWith(3, 'drag');
+	});
+
+	it('counts slides by the stride (slideWidth + gap) when deciding the snap index', () => {
+		/** dx -460 over stride 320 rounds to 1 step; over a bare 300 width it would round to 2. */
+		const {result, navigate} = setupDrag({currentIndex: 0, gap: 20});
+		result.current.onPointerDown(downEvent(900));
+		jest.setSystemTime(200);
+		result.current.onPointerMove(moveEvent(440)); /** dx -460 */
+		result.current.onPointerUp(moveEvent(440));
+		expect(navigate).toHaveBeenCalledWith(1, 'drag');
 	});
 
 	it('requests a snap-back (same index) on a short, slow drag', () => {

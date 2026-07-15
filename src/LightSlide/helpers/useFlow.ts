@@ -71,11 +71,12 @@ export function useFlow({
 	const resumeDelayRef = useRef(resumeDelay);
 	resumeDelayRef.current = resumeDelay;
 
+	/** `stride` is the px distance between adjacent slide positions — slideWidth + gap. */
 	const applyTransform = useCallback(
-		(sw: number) => {
+		(stride: number) => {
 			const track = trackRef.current;
 			if (!track) return;
-			const base = storeRef.current.loopOffset * sw;
+			const base = storeRef.current.loopOffset * stride;
 			track.style.transition = '';
 			track.style.transform = `translateX(${-(base + flow.current.offset)}px)`;
 		},
@@ -103,8 +104,8 @@ export function useFlow({
 	 */
 	useLayoutEffect(() => {
 		if (!enabled) return;
-		const sw = storeRef.current.slideWidth;
-		if (sw > 0) applyTransform(sw);
+		const {slideWidth, gap} = storeRef.current;
+		if (slideWidth > 0) applyTransform(slideWidth + gap);
 	}, [enabled, applyTransform, storeRef]);
 
 	useEffect(() => {
@@ -125,11 +126,12 @@ export function useFlow({
 			 * forces no layout/reflow per frame. The width only changes on resize, where the
 			 * ResizeObserver refreshes store.slideWidth for us.
 			 */
-			const sw = storeRef.current.slideWidth;
-			if (!f.interacting && sw > 0) {
-				const span = storeRef.current.slideCount * sw;
+			const {slideWidth, gap, slideCount} = storeRef.current;
+			if (!f.interacting && slideWidth > 0) {
+				const stride = slideWidth + gap;
+				const span = slideCount * stride;
 				f.offset = wrap(f.offset + (speedRef.current * dt) / 1000, span);
-				applyTransform(sw);
+				applyTransform(stride);
 			}
 
 			f.raf = requestAnimationFrame(step);
@@ -155,8 +157,8 @@ export function useFlow({
 		(dx: number) => {
 			const track = trackRef.current;
 			if (!track) return;
-			const sw = storeRef.current.slideWidth;
-			const base = storeRef.current.loopOffset * sw;
+			const {slideWidth, gap, loopOffset} = storeRef.current;
+			const base = loopOffset * (slideWidth + gap);
 			track.style.transition = '';
 			track.style.transform = `translateX(${-(base + flow.current.offsetAtStart) + dx}px)`;
 		},
@@ -166,12 +168,13 @@ export function useFlow({
 	const onEnd = useCallback(
 		(dx: number, _velocityX: number, moved: boolean) => {
 			if (moved) {
-				const sw = storeRef.current.slideWidth;
+				const {slideWidth, gap, slideCount} = storeRef.current;
+				const stride = slideWidth + gap;
 				flow.current.offset = wrap(
 					flow.current.offsetAtStart - dx,
-					storeRef.current.slideCount * sw,
+					slideCount * stride,
 				);
-				applyTransform(sw);
+				applyTransform(stride);
 			}
 			/** Resume the drift after the delay whether this was a real drag or a tap. */
 			scheduleResume();

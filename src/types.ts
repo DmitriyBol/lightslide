@@ -28,6 +28,9 @@ export type AutoScrollConfig = {
  *   `region` landmark (else a plain `group`); either way it is announced as a carousel.
  * - `slideLabel` — formats each slide's automatic accessible name (default
  *   `${index + 1} of ${count}`); a per-slide `aria-label` on `<Slide>` overrides it.
+ * - `gap` — horizontal space between adjacent slides, px (default 0). Applied as CSS
+ *   `column-gap` on the track and folded into all geometry: slide width, snap positions,
+ *   the fractional flush of the last slide, loop clones, and flow.
  * - `initialIndex` — starting position (0..maxIndex, clamped). Uncontrolled: the carousel owns
  *   the index afterwards — read changes via `onIndexChange`, drive them via `index`/the ref.
  * - `index` — controlled position: whenever the value changes, the carousel animates to it. It
@@ -55,6 +58,7 @@ export type LightSlideProps<T = unknown> = {
 	slideLabel?: (index: number, count: number) => string;
 	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
+	gap?: number;
 	initialIndex?: number;
 	index?: number;
 	onIndexChange?: (index: number) => void;

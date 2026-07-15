@@ -72,12 +72,13 @@ export function useDragGesture({
 			storeRef.current.autoScrollPaused = false;
 			/** moved === false is a tap / vertical abandon — nothing to snap. */
 			if (!moved) return;
-			const {currentIndex, maxIndex, isLoop, slideWidth} = storeRef.current;
+			const {currentIndex, maxIndex, isLoop, slideWidth, gap} =
+				storeRef.current;
 			const nextIndex = getSnapIndex(
 				currentIndex,
 				maxIndex,
 				dx,
-				slideWidth,
+				slideWidth + gap,
 				velocityX,
 				isLoop,
 			);

@@ -14,6 +14,8 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
   through, a drag never triggers them, native image/anchor drag can't hijack the gesture, and a
   drag that leaves the carousel mid-gesture never gets stuck.
 - **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek).
+- **gap** — px spacing between slides, folded into all geometry (snap, drag, loop, flow,
+  fractional views) — no padding workarounds.
 - **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
 - **Navigation buttons** (`lightslide/navigation`) — prev/next, fully styleable, or bring your
   own element via `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at
@@ -91,6 +93,7 @@ payloads.
 | `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
 | `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
+| `gap` | `number` | `0` | Horizontal space between slides, px (see [slidesPerView & gap](#slidesperview--gap)) |
 | `initialIndex` | `number` | `0` | Starting position, uncontrolled (see [External control](#external-control)) |
 | `index` | `number` | — | Controlled position — the carousel navigates whenever it changes |
 | `onIndexChange` | `(index: number) => void` | — | Fires after every settled position change, from any source |
@@ -105,7 +108,8 @@ payloads.
 
 ### `<Slide<T>>`
 
-A single slide. Width is computed as `containerWidth / slidesPerView`. Generic over `data`, so
+A single slide. Width is computed from the container, `slidesPerView`, and `gap` (see
+[slidesPerView & gap](#slidesperview--gap)). Generic over `data`, so
 `<Slide<Product> data={…} />` is fully typed.
 
 | Prop | Type | Default | Description |
@@ -231,11 +235,17 @@ While `loading` is true the carousel renders `fallback` instead of the track, an
 navigation/pagination are hidden. The library ships **no** built-in skeleton — you supply and
 style the placeholder. With no `fallback`, the area renders empty.
 
-## slidesPerView
+## slidesPerView & gap
 
-Accepts any positive number, including floats — `1.5` shows one full slide plus a peek of the
-next. Each slide fills `containerWidth / slidesPerView` px;
-`maxIndex = ⌊slideCount − slidesPerView⌋`.
+`slidesPerView` accepts any positive number, including floats — `1.5` shows one full slide plus
+a peek of the next. `maxIndex = ⌈slideCount − slidesPerView⌉`.
+
+`gap` adds horizontal space between slides (px, CSS `column-gap` on the track) and participates
+in every computation: each slide fills
+`(containerWidth − (⌈slidesPerView⌉ − 1) × gap) / slidesPerView` px, navigation steps by
+`slideWidth + gap`, a fractional view still lands the last slide flush against the right edge,
+and loop clones and the flow ticker space identically. No padding inside the slide, so card
+backgrounds and shadows span the full slide width.
 
 ## External control
 
@@ -388,7 +398,8 @@ The base look ships as scoped CSS-module (SCSS) classes injected on import — n
 no runtime dependency beyond React. Override via `className`/`*ClassName` (appended after the
 built-in class) or `style`/`*Style` (inline, always wins). Dynamic geometry (slide width, track
 transform) is always applied inline. The outer container is `overflow: visible` so controls
-aren't clipped; an inner viewport clips the track. Use `padding` on `<Slide>` for gutters.
+aren't clipped; an inner viewport clips the track. Use the `gap` prop for gutters between
+slides.
 
 ## Exported types
 
@@ -479,7 +490,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 172 integration tests (Jest + jsdom) across 20 suites
+npm test             # 181 integration tests (Jest + jsdom) across 20 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
