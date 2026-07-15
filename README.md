@@ -402,6 +402,10 @@ src/
 │       ├── store.ts                #   single core-data store (LightSlideStore<T>)
 │       ├── slideData.ts            #   collectSlideData (+ test)
 │       ├── loopClones.ts           #   buildDisplayChildren: per-slide ARIA + loop clones (+ test)
+│       ├── useLatestRef.ts         #   latest-ref for stable callbacks
+│       ├── useNavigation.ts        #   navigateToIndex — the single navigation path
+│       ├── useExternalControl.ts   #   controlled index prop + LightSlideHandle ref
+│       ├── useLayoutResync.ts      #   re-measure/clamp/re-snap on layout-shape changes
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)

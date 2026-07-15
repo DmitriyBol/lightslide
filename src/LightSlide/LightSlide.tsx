@@ -2,9 +2,7 @@ import {
 	Children,
 	forwardRef,
 	useCallback,
-	useEffect,
 	useId,
-	useImperativeHandle,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -27,23 +25,31 @@ import {
 	DEFAULT_VIEWED_TIMEOUT,
 } from './helpers/constants';
 import {buildDisplayChildren} from './helpers/loopClones';
-import type {NavigateSource} from './helpers/navigation';
 import {collectSlideData} from './helpers/slideData';
 import {createStore} from './helpers/store';
 import {useAutoScroll} from './helpers/useAutoScroll';
 import {useDragGesture} from './helpers/useDragGesture';
+import {useExternalControl} from './helpers/useExternalControl';
 import {useFlow} from './helpers/useFlow';
+import {useLatestRef} from './helpers/useLatestRef';
+import {useLayoutResync} from './helpers/useLayoutResync';
+import {useNavigation} from './helpers/useNavigation';
 import {useSlideMetrics} from './helpers/useSlideMetrics';
 import {useTrackSnap} from './helpers/useTrackSnap';
 import {useViewportEngagement} from './helpers/useViewportEngagement';
 import styles from './LightSlide.module.scss';
 
 /**
- * The carousel orchestrator. The container is a WAI-ARIA APG carousel landmark — a labelled
- * `region` when `label` is given, else a plain `group`. The stage's height tracks the viewport
- * only, so the controls anchored to it centre on the track (never offset by the pagination row).
- * The a11y provider at the bottom only materialises when the consumer passes an `a11y` node,
- * so base consumers pay nothing for it.
+ * The carousel orchestrator — a thin composition root over the helper hooks. It reads
+ * top-to-bottom in phases: identity and imperative core, render state, geometry derived from
+ * children, store sync, engagement analytics, motion (measure → snap → resync → navigate →
+ * external control → auto motion → gestures), and finally the context values and markup.
+ *
+ * The container is a WAI-ARIA APG carousel landmark — a labelled `region` when `label` is
+ * given, else a plain `group`. The stage's height tracks the viewport only, so the controls
+ * anchored to it centre on the track (never offset by the pagination row). The a11y provider
+ * at the bottom only materialises when the consumer passes an `a11y` node, so base consumers
+ * pay nothing for it.
  */
 function LightSlideInner<T = unknown>(
 	{
@@ -76,7 +82,7 @@ function LightSlideInner<T = unknown>(
 	/** SSR-safe id for the slides container — nav buttons and dots point aria-controls at it. */
 	const slidesId = useId();
 
-	/** First-render position; only the lower bound is known here — the mount effect clamps to maxIndex. */
+	/** First-render position; only the lower bound is known here — useLayoutResync clamps to maxIndex. */
 	const startIndex = Math.max(0, index ?? initialIndex);
 
 	/**
@@ -85,25 +91,13 @@ function LightSlideInner<T = unknown>(
 	 */
 	const storeRef = useRef(createStore<T>({currentIndex: startIndex}));
 
-	/** Latest-refs of the callback props, so the navigation path stays stable across renders. */
-	const analyticsRef = useRef(analytics);
-	analyticsRef.current = analytics;
-	const onIndexChangeRef = useRef(onIndexChange);
-	onIndexChangeRef.current = onIndexChange;
+	const [currentIndex, setCurrentIndex] = useState(startIndex);
 
-	/** Viewed-slides tracking is opt-in via the presence of viewedTimeout (its value = seconds). */
-	const viewedTrackingEnabled = analytics?.viewedTimeout !== undefined;
-	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
-
-	const childArray = useMemo(() => Children.toArray(children), [children]);
-	const slideCount = childArray.length;
-	/**
-	 * ceil so a fractional slidesPerView gets one extra reachable position — the last slide
-	 * scrolls flush to the right edge (trackOffset clamps that final offset).
-	 */
-	const maxIndex = Math.max(0, Math.ceil(slideCount - slidesPerView));
-
-	const isLoading = loading;
+	/** Controls stay at opacity 0 until the first client commit — no un-positioned SSR flash. */
+	const [isReady, setIsReady] = useState(false);
+	useLayoutEffect(() => {
+		setIsReady(true);
+	}, []);
 
 	/**
 	 * Auto-motion gate. The opt-in reduced-motion plugin flips it off through the a11y seam;
@@ -111,13 +105,30 @@ function LightSlideInner<T = unknown>(
 	 */
 	const [motionAllowed, setMotionAllowed] = useState(true);
 
+	/** Latest-refs of the callback props, so the navigation path stays stable across renders. */
+	const analyticsRef = useLatestRef(analytics);
+	const onIndexChangeRef = useLatestRef(onIndexChange);
+
+	const childArray = useMemo(() => Children.toArray(children), [children]);
+	const slideCount = childArray.length;
+
+	/**
+	 * ceil so a fractional slidesPerView gets one extra reachable position — the last slide
+	 * scrolls flush to the right edge (trackOffset clamps that final offset).
+	 */
+	const maxIndex = Math.max(0, Math.ceil(slideCount - slidesPerView));
+
 	/** The flow needs the loop-clone structure to wrap seamlessly, so it forces effectiveLoop on. */
 	const effectiveFlow =
-		flow?.enabled === true && maxIndex > 0 && !isLoading && motionAllowed;
+		flow?.enabled === true && maxIndex > 0 && !loading && motionAllowed;
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
 	const slideData = useMemo(() => collectSlideData<T>(childArray), [childArray]);
+
+	/** Viewed-slides tracking is opt-in via the presence of viewedTimeout (its value = seconds). */
+	const viewedTrackingEnabled = analytics?.viewedTimeout !== undefined;
+	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
 
 	/**
 	 * Render-derived data syncs into the store every render; currentIndex and autoScrollPaused
@@ -134,7 +145,7 @@ function LightSlideInner<T = unknown>(
 	store.slideData = slideData;
 
 	const getSlideData = useCallback(
-		(index: number) => storeRef.current.slideData[index],
+		(slideIndex: number) => storeRef.current.slideData[slideIndex],
 		[],
 	);
 	const {markViewed, getViewedSlides} = useViewedSlides(getSlideData);
@@ -149,14 +160,6 @@ function LightSlideInner<T = unknown>(
 		getSlideData,
 	});
 
-	const [currentIndex, setCurrentIndex] = useState(startIndex);
-
-	/** Controls stay at opacity 0 until the first client commit — no un-positioned SSR flash. */
-	const [isReady, setIsReady] = useState(false);
-	useLayoutEffect(() => {
-		setIsReady(true);
-	}, []);
-
 	const {slideWidth, measureSlideWidth} = useSlideMetrics(
 		containerRef,
 		storeRef,
@@ -164,98 +167,69 @@ function LightSlideInner<T = unknown>(
 
 	const {snapToVisual, snapTrack} = useTrackSnap(trackRef, storeRef);
 
-	/**
-	 * Re-measure, re-clamp, and re-snap (no animation) when the layout shape changes. A layout
-	 * effect so loop mode positions the track before the first paint — no clone flash. A
-	 * clamped-away position is reported to onIndexChange (a real change for synced state),
-	 * and the snap is skipped while the flow runs — the flow owns the transform.
-	 */
-	useLayoutEffect(() => {
-		measureSlideWidth();
-		const s = storeRef.current;
-		const newMax = Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));
-		s.maxIndex = newMax;
-		const corrected = Math.min(s.currentIndex, newMax);
-		if (corrected !== s.currentIndex) onIndexChangeRef.current?.(corrected);
-		s.currentIndex = corrected;
-		setCurrentIndex(corrected);
-		if (!s.effectiveFlow) snapTrack(corrected, false);
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-	}, [slidesPerView, isLoop, flow?.enabled, loading]);
+	useLayoutResync({
+		storeRef,
+		measureSlideWidth,
+		snapTrack,
+		onIndexChangeRef,
+		setCurrentIndex,
+		slidesPerView,
+		isLoop,
+		flowEnabled: flow?.enabled === true,
+		loading,
+	});
 
-	/**
-	 * The single navigation path. `source` decides which extra analytics events fire and
-	 * whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
-	 */
-	const navigateToIndex = useCallback(
-		(nextIndex: number, source: NavigateSource) => {
-			const {
-				maxIndex: maxIdx,
-				isLoop: loopMode,
-				loopOffset: offset,
-				slideCount: count,
-				currentIndex: from,
-			} = storeRef.current;
+	const navigateToIndex = useNavigation<T>({
+		storeRef,
+		analyticsRef,
+		onIndexChangeRef,
+		setCurrentIndex,
+		markViewed,
+		fireTerminalIfNeeded,
+		snapToVisual,
+	});
+	const navigateToIndexRef = useLatestRef(navigateToIndex);
 
-			const isBackwardWrap = loopMode && nextIndex < 0;
-			const isForwardWrap = loopMode && nextIndex > maxIdx;
+	useExternalControl({ref, index, storeRef, navigateToIndexRef});
 
-			let clamped: number;
-			if (isBackwardWrap) clamped = maxIdx;
-			else if (isForwardWrap) clamped = 0;
-			else clamped = Math.max(0, Math.min(maxIdx, nextIndex));
-
-			if (clamped === from && !isBackwardWrap && !isForwardWrap) {
-				if (source === 'drag')
-					snapToVisual(from + (loopMode ? offset : 0), true);
-				return;
-			}
-
-			const direction: 'left' | 'right' =
-				isForwardWrap || clamped > from ? 'right' : 'left';
-
-			storeRef.current.currentIndex = clamped;
-			setCurrentIndex(clamped);
-			onIndexChangeRef.current?.(clamped);
-			markViewed(clamped);
-
-			analyticsRef.current?.onEvent?.({
-				event: 'carousel_slide',
-				direction,
-				fromIndex: from,
-				toIndex: clamped,
-			});
-
-			if (source === 'button') {
-				analyticsRef.current?.onEvent?.({
-					event: 'carousel_nav_button',
-					direction,
-					fromIndex: from,
-					toIndex: clamped,
-				});
-			}
-			if (source === 'pagination') {
-				analyticsRef.current?.onEvent?.({
-					event: 'carousel_pagination_click',
-					fromIndex: from,
-					toIndex: clamped,
-				});
-			}
-
-			const isLoopWrap = isBackwardWrap || isForwardWrap;
-			if (source !== 'auto' && !isLoopWrap && clamped === maxIdx) {
-				fireTerminalIfNeeded('reachedEnd');
-			}
-
-			if (isBackwardWrap) {
-				snapToVisual(0, true, () => snapToVisual(maxIdx + offset, false));
-			} else if (isForwardWrap) {
-				snapToVisual(count + offset, true, () => snapToVisual(offset, false));
-			} else {
-				snapToVisual(clamped + (loopMode ? offset : 0), true);
-			}
+	/** Flow supersedes step auto-scroll; neither runs while loading or with the motion gate closed. */
+	useAutoScroll(
+		effectiveFlow || loading || !motionAllowed ? undefined : autoScroll,
+		{
+			storeRef,
+			navigateToIndexRef,
 		},
-		[markViewed, fireTerminalIfNeeded, snapToVisual],
+	);
+
+	const dragHandlers = useDragGesture({
+		trackRef,
+		storeRef,
+		snapToVisual,
+		navigateToIndex,
+	});
+
+	const flowHandlers = useFlow({
+		enabled: effectiveFlow,
+		speed: flow?.speed ?? DEFAULT_FLOW_SPEED,
+		resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
+		trackRef,
+		storeRef,
+	});
+
+	const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
+
+	/** True while any auto motion runs — the live-region plugin stays quiet then. */
+	const autoMotion =
+		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
+
+	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */
+	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+	}, []);
+
+	const displayChildren = useMemo(
+		() => buildDisplayChildren(childArray, slideCount, loopOffset, slideLabel),
+		[childArray, slideCount, loopOffset, slideLabel],
 	);
 
 	/**
@@ -275,79 +249,6 @@ function LightSlideInner<T = unknown>(
 		[currentIndex, maxIndex, effectiveLoop, isReady, slidesId, navigateToIndex],
 	);
 
-	const navigateToIndexRef = useRef(navigateToIndex);
-	navigateToIndexRef.current = navigateToIndex;
-
-	/**
-	 * The external-control surface (`index` prop + ref handle): the same path as the built-in
-	 * buttons, ignored while the flow owns the track. `step` skips the clamp so next/prev can
-	 * wrap under isLoop; goTo and the controlled prop clamp instead of wrapping.
-	 */
-	const apiNavigate = useCallback((target: number, step?: boolean) => {
-		const s = storeRef.current;
-		if (s.effectiveFlow) return;
-		navigateToIndexRef.current(
-			step ? target : Math.max(0, Math.min(s.maxIndex, target)),
-			'api',
-		);
-	}, []);
-
-	/** Controlled position: navigate on `index` change. It does not lock the carousel. */
-	useEffect(() => {
-		if (index !== undefined) apiNavigate(index);
-	}, [index, apiNavigate]);
-
-	useImperativeHandle(
-		ref,
-		() => ({
-			goTo: (target: number) => apiNavigate(target),
-			next: () => apiNavigate(storeRef.current.currentIndex + 1, true),
-			prev: () => apiNavigate(storeRef.current.currentIndex - 1, true),
-			getIndex: () => storeRef.current.currentIndex,
-		}),
-		[apiNavigate],
-	);
-
-	/** Flow supersedes step auto-scroll; neither runs while loading or with the motion gate closed. */
-	useAutoScroll(
-		effectiveFlow || isLoading || !motionAllowed ? undefined : autoScroll,
-		{
-			storeRef,
-			navigateToIndexRef,
-		},
-	);
-
-	/** True while any auto motion runs — the live-region plugin stays quiet then. */
-	const autoMotion =
-		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
-
-	const dragHandlers = useDragGesture({
-		trackRef,
-		storeRef,
-		snapToVisual,
-		navigateToIndex,
-	});
-
-	const flowHandlers = useFlow({
-		enabled: effectiveFlow,
-		speed: flow?.speed ?? DEFAULT_FLOW_SPEED,
-		resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
-		trackRef,
-		storeRef,
-	});
-
-	const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
-
-	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */
-	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-	}, []);
-
-	const displayChildren = useMemo(
-		() => buildDisplayChildren(childArray, slideCount, loopOffset, slideLabel),
-		[childArray, slideCount, loopOffset, slideLabel],
-	);
-
 	return (
 		<SlideMetricsContext.Provider value={metricsValue}>
 			<NavContext.Provider value={navValue}>
@@ -360,7 +261,7 @@ function LightSlideInner<T = unknown>(
 					style={style}>
 					<div className={styles.stage}>
 						<div className={styles.viewport}>
-							{isLoading ? (
+							{loading ? (
 								fallback
 							) : (
 								<div
@@ -375,10 +276,10 @@ function LightSlideInner<T = unknown>(
 							)}
 						</div>
 
-						{!isLoading && navigation && <Navigation config={navigation} />}
+						{!loading && navigation && <Navigation config={navigation} />}
 					</div>
 
-					{!isLoading && pagination && <Pagination config={pagination} />}
+					{!loading && pagination && <Pagination config={pagination} />}
 
 					{a11y && (
 						<A11yContext.Provider
