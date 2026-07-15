@@ -66,65 +66,56 @@ function LightSlideInner<T = unknown>(
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
 
-	// Stable, SSR-safe id for the slides container (the track). Nav buttons and pagination dots
-	// point aria-controls at it, so assistive tech knows which region they drive.
+	/** SSR-safe id for the slides container — nav buttons and dots point aria-controls at it. */
 	const slidesId = useId();
 
-	// First-render position: the controlled index if given, else initialIndex. Only the lower
-	// bound is enforced here — the mount layout effect clamps to maxIndex once it is derived.
+	/** First-render position; only the lower bound is known here — the mount effect clamps to maxIndex. */
 	const startIndex = Math.max(0, index ?? initialIndex);
 
-	// Single mutable store for all core data — read/written imperatively by the gesture
-	// and animation hooks (zero re-renders). The "functional" pieces (analytics handlers,
-	// the navigate fn) live in their own refs below. See helpers/store.ts.
+	/**
+	 * Single mutable store for all core data, read/written imperatively by the gesture and
+	 * animation hooks so hot paths never re-render. See helpers/store.ts.
+	 */
 	const storeRef = useRef(createStore<T>({currentIndex: startIndex}));
 
-	// Latest-ref of the raw analytics prop. The single onEvent handler is called optionally at
-	// each fire site (analytics?.onEvent?.(payload)) — no merging, no noop layer.
+	/** Latest-refs of the callback props, so the navigation path stays stable across renders. */
 	const analyticsRef = useRef(analytics);
 	analyticsRef.current = analytics;
-
-	// Latest-ref of onIndexChange, so the navigation path never re-creates over it.
 	const onIndexChangeRef = useRef(onIndexChange);
 	onIndexChangeRef.current = onIndexChange;
 
-	// Viewed-slides tracking is opt-in via the presence of `viewedTimeout`: the timer only runs
-	// when the consumer sets it (otherwise the carousel_reached_end terminal stays armed). Its
-	// value doubles as the duration knob (seconds), defaulting to DEFAULT_VIEWED_TIMEOUT.
+	/** Viewed-slides tracking is opt-in via the presence of viewedTimeout (its value = seconds). */
 	const viewedTrackingEnabled = analytics?.viewedTimeout !== undefined;
 	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
 
 	const childArray = useMemo(() => Children.toArray(children), [children]);
 	const slideCount = childArray.length;
-	// ceil, not floor: a fractional slidesPerView (e.g. 1.5) needs one extra reachable
-	// position so the last slide can scroll flush to the right edge instead of stopping
-	// half-cut. The track offset for that final index is clamped to the flush max by
-	// trackOffset. For an integer slidesPerView ceil === floor, so nothing changes.
+	/**
+	 * ceil so a fractional slidesPerView gets one extra reachable position — the last slide
+	 * scrolls flush to the right edge (trackOffset clamps that final offset).
+	 */
 	const maxIndex = Math.max(0, Math.ceil(slideCount - slidesPerView));
 
-	// While loading we render the fallback, not the track — so all auto motion
-	// (flow / auto-scroll) must stay off until the real slides mount.
 	const isLoading = loading;
 
-	// Auto-motion gate. Defaults on; the opt-in reduced-motion plugin flips it off (via the a11y
-	// seam) when the user prefers reduced motion, which stops flow / auto-scroll reactively. Base
-	// consumers never touch it, so it stays true and adds no behaviour.
+	/**
+	 * Auto-motion gate. The opt-in reduced-motion plugin flips it off through the a11y seam;
+	 * base consumers never touch it.
+	 */
 	const [motionAllowed, setMotionAllowed] = useState(true);
 
-	// The flow needs the loop-clone structure to wrap seamlessly, so it also
-	// turns on effectiveLoop (whether or not the consumer set isLoop).
+	/** The flow needs the loop-clone structure to wrap seamlessly, so it forces effectiveLoop on. */
 	const effectiveFlow =
 		flow?.enabled === true && maxIndex > 0 && !isLoading && motionAllowed;
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
-	// Collected once per children change, not on every navigation re-render — the store sync
-	// below just points the store at it.
 	const slideData = useMemo(() => collectSlideData<T>(childArray), [childArray]);
 
-	// Sync the render-derived core data into the store every render. currentIndex and
-	// autoScrollPaused are owned by the imperative path (navigation / drag) and never
-	// overwritten here.
+	/**
+	 * Render-derived data syncs into the store every render; currentIndex and autoScrollPaused
+	 * are owned by the imperative path and never overwritten here.
+	 */
 	const store = storeRef.current;
 	store.slideCount = slideCount;
 	store.maxIndex = maxIndex;
@@ -153,9 +144,7 @@ function LightSlideInner<T = unknown>(
 
 	const [currentIndex, setCurrentIndex] = useState(startIndex);
 
-	// Reveal the controls only after the first client commit. Server-rendered (or
-	// not-yet-measured) prev/next buttons would otherwise flash in an un-positioned spot
-	// before the carousel lays out — they render at opacity 0 until ready instead.
+	/** Controls stay at opacity 0 until the first client commit — no un-positioned SSR flash. */
 	const [isReady, setIsReady] = useState(false);
 	useLayoutEffect(() => {
 		setIsReady(true);
@@ -168,29 +157,29 @@ function LightSlideInner<T = unknown>(
 
 	const {snapToVisual, snapTrack} = useTrackSnap(trackRef, storeRef);
 
-	// Re-derive maxIndex, clamp the index, and re-snap (no animation) when the layout
-	// shape changes — slidesPerView, loop mode, or loading clearing. Runs as a *layout*
-	// effect so loop mode positions the track at its home offset before the first paint;
-	// otherwise the prepend clones would flash for one frame and then jump to slide 0.
+	/**
+	 * Re-measure, re-clamp, and re-snap (no animation) when the layout shape changes. A layout
+	 * effect so loop mode positions the track before the first paint — no clone flash.
+	 */
 	useLayoutEffect(() => {
 		measureSlideWidth();
 		const s = storeRef.current;
 		const newMax = Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));
 		s.maxIndex = newMax;
 		const corrected = Math.min(s.currentIndex, newMax);
-		// A layout change that swallows the current position is a real position change —
-		// tell the consumer, or their synced state (thumbnails, controlled index) goes stale.
+		// a clamped-away position is a real change — keep the consumer's synced state fresh
 		if (corrected !== s.currentIndex) onIndexChangeRef.current?.(corrected);
 		s.currentIndex = corrected;
 		setCurrentIndex(corrected);
-		// While the flow runs it owns the transform (its rAF/layout effect positions
-		// the track); snapping here would fight it. Restore discrete position otherwise.
+		// the flow owns the transform while it runs; snapping here would fight it
 		if (!s.effectiveFlow) snapTrack(corrected, false);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [slidesPerView, isLoop, flow?.enabled, loading]);
 
-	// Single navigation path. `source` decides which extra analytics events fire and
-	// whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
+	/**
+	 * The single navigation path. `source` decides which extra analytics events fire and
+	 * whether a no-op drag snaps back; loop wrap-around is detected from the raw index.
+	 */
 	const navigateToIndex = useCallback(
 		(nextIndex: number, source: NavigateSource) => {
 			const {
@@ -262,10 +251,10 @@ function LightSlideInner<T = unknown>(
 		[markViewed, fireTerminalIfNeeded, snapToVisual],
 	);
 
-	// Two contexts so the slides don't re-render on navigation: <Slide> consumes only the
-	// geometry (slideWidth, changes on resize), while Navigation/Pagination consume the
-	// nav state (currentIndex etc., changes on every navigation). navigateToIndex doubles
-	// as the contexts' goToIndex — their narrower source union is assignable as-is.
+	/**
+	 * Split contexts: slides consume only geometry, controls consume nav state — navigating
+	 * never re-renders the slides. navigateToIndex doubles as the contexts' goToIndex.
+	 */
 	const metricsValue = useMemo(() => ({slideWidth}), [slideWidth]);
 	const navValue = useMemo(
 		() => ({
@@ -282,12 +271,11 @@ function LightSlideInner<T = unknown>(
 	const navigateToIndexRef = useRef(navigateToIndex);
 	navigateToIndexRef.current = navigateToIndex;
 
-	// The whole external-control surface (controlled `index` prop + ref handle) funnels through
-	// here: the same navigation path as the built-in buttons, so analytics and loop wrap-around
-	// behave identically, and a same-position call is already a no-op inside navigateToIndex.
-	// Ignored while the flow owns the track (continuous motion has no discrete position).
-	// `step` skips the clamp so next/prev can wrap under isLoop; goTo and the controlled prop
-	// clamp, so an out-of-range jump lands on the nearest edge instead of wrapping.
+	/**
+	 * The external-control surface (`index` prop + ref handle): the same path as the built-in
+	 * buttons, ignored while the flow owns the track. `step` skips the clamp so next/prev can
+	 * wrap under isLoop; goTo and the controlled prop clamp instead of wrapping.
+	 */
 	const apiNavigate = useCallback((target: number, step?: boolean) => {
 		const s = storeRef.current;
 		if (s.effectiveFlow) return;
@@ -297,9 +285,7 @@ function LightSlideInner<T = unknown>(
 		);
 	}, []);
 
-	// Controlled position: navigate whenever the `index` prop changes to a new position. It
-	// does not lock the carousel — gestures/buttons still move it, and the consumer stays in
-	// sync via onIndexChange.
+	/** Controlled position: navigate on `index` change. It does not lock the carousel. */
 	useEffect(() => {
 		if (index !== undefined) apiNavigate(index);
 	}, [index, apiNavigate]);
@@ -315,8 +301,7 @@ function LightSlideInner<T = unknown>(
 		[apiNavigate],
 	);
 
-	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs while loading
-	// (no track to move) nor when the reduced-motion gate is closed.
+	/** Flow supersedes step auto-scroll; neither runs while loading or with the motion gate closed. */
 	useAutoScroll(
 		effectiveFlow || isLoading || !motionAllowed ? undefined : autoScroll,
 		{
@@ -325,9 +310,7 @@ function LightSlideInner<T = unknown>(
 		},
 	);
 
-	// Whether any automatic movement is currently active — the live-region plugin reads this to
-	// stay quiet during auto-motion. effectiveFlow already implies motionAllowed; the auto-scroll
-	// term needs the gate applied explicitly.
+	/** True while any auto motion runs — the live-region plugin stays quiet then. */
 	const autoMotion =
 		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
 
@@ -346,12 +329,9 @@ function LightSlideInner<T = unknown>(
 		storeRef,
 	});
 
-	// In flow mode the flow owns the track (continuous drift + auto-resume);
-	// otherwise the discrete drag-to-snap gesture is active.
 	const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
 
-	// Stop native image/anchor drag-and-drop from hijacking the pointer gesture
-	// (which is what "drag is broken when a big component is inside" was).
+	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */
 	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 	}, []);
@@ -366,15 +346,13 @@ function LightSlideInner<T = unknown>(
 			<NavContext.Provider value={navValue}>
 				<div
 					ref={containerRef}
-					// Carousel landmark (WAI-ARIA APG): a labelled region when `label` is given,
-					// otherwise a plain group; either way announced as a "carousel".
+					// APG landmark: a labelled region when `label` is given, else a plain group
 					role={label ? 'region' : 'group'}
 					aria-roledescription="carousel"
 					aria-label={label}
 					className={cx(styles.container, className)}
 					style={style}>
-					{/* Stage height tracks the viewport only, so the controls anchored to it
-					    centre on the track — never offset by the pagination row below. */}
+					{/* Stage height tracks the viewport only, so the controls centre on the track. */}
 					<div className={styles.stage}>
 						<div className={styles.viewport}>
 							{isLoading ? (
@@ -397,8 +375,7 @@ function LightSlideInner<T = unknown>(
 
 					{!isLoading && pagination && <Pagination config={pagination} />}
 
-					{/* Opt-in a11y layer. The provider (and its value object) only materialise when
-					    the consumer passes an `a11y` node, so base consumers pay nothing here. */}
+					{/* Opt-in a11y layer: the provider only materialises when an `a11y` node is passed. */}
 					{a11y && (
 						<A11yContext.Provider
 							value={{
@@ -423,9 +400,11 @@ function LightSlideInner<T = unknown>(
 	);
 }
 
-// forwardRef erases the type parameter, so the export is re-asserted with a generic call
-// signature (same pattern as <Slide>): `<LightSlide<Product> …>` keeps the data type flowing
-// into the analytics payloads, while `ref` receives the imperative LightSlideHandle.
+/**
+ * forwardRef erases the type parameter, so the export is re-asserted with a generic call
+ * signature (same pattern as <Slide>): the slide data type keeps flowing into the analytics
+ * payloads, while `ref` receives the imperative LightSlideHandle.
+ */
 export const LightSlide = forwardRef(LightSlideInner) as (<T = unknown>(
 	props: LightSlideProps<T> & {ref?: Ref<LightSlideHandle>},
 ) => ReactElement) & {displayName?: string};
