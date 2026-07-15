@@ -31,7 +31,7 @@ export function Hero() {
 			<div className={styles.inner}>
 				<p className={styles.eyebrow}>
 					<span className={styles.dot} />
-					ZERO-DEP · ~5 KB · FULLY TYPED
+					ZERO-DEP · ~5.5 KB · FULLY TYPED
 				</p>
 
 				<h1 className={styles.headline}>
@@ -41,7 +41,7 @@ export function Hero() {
 
 				<p className={styles.lede}>
 					A tiny, fully-typed React slider. Drag, loop, flow, paginate — no
-					dependencies, no styling opinions, ~5&nbsp;kB gzipped.
+					dependencies, no styling opinions, ~5.5&nbsp;kB gzipped.
 				</p>
 
 				<div className={styles.actions}>

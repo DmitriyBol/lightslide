@@ -1,21 +1,24 @@
 import {
 	Children,
+	forwardRef,
 	useCallback,
+	useEffect,
 	useId,
+	useImperativeHandle,
 	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from 'react';
 
-import type {DragEvent} from 'react';
+import type {DragEvent, ForwardedRef, ReactElement, Ref} from 'react';
 
 import {A11yContext} from '../a11ySeam';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import {Navigation} from '../Navigation/Navigation';
 import {Pagination} from '../Pagination/Pagination';
-import type {LightSlideProps} from '../types';
+import type {LightSlideHandle, LightSlideProps} from '../types';
 import {cx} from '../utils/cx';
 import {
 	DEFAULT_FLOW_RESUME_DELAY,
@@ -35,25 +38,31 @@ import {useTrackSnap} from './helpers/useTrackSnap';
 import {useViewportEngagement} from './helpers/useViewportEngagement';
 import styles from './LightSlide.module.scss';
 
-export function LightSlide<T = unknown>({
-	children,
-	style,
-	className,
-	trackStyle,
-	trackClassName,
-	label,
-	slideLabel = DEFAULT_SLIDE_LABEL,
-	analytics,
-	slidesPerView = 1,
-	autoScroll,
-	flow,
-	navigation,
-	pagination,
-	a11y,
-	isLoop = false,
-	loading = false,
-	fallback,
-}: LightSlideProps<T>) {
+function LightSlideInner<T = unknown>(
+	{
+		children,
+		style,
+		className,
+		trackStyle,
+		trackClassName,
+		label,
+		slideLabel = DEFAULT_SLIDE_LABEL,
+		analytics,
+		slidesPerView = 1,
+		initialIndex = 0,
+		index,
+		onIndexChange,
+		autoScroll,
+		flow,
+		navigation,
+		pagination,
+		a11y,
+		isLoop = false,
+		loading = false,
+		fallback,
+	}: LightSlideProps<T>,
+	ref: ForwardedRef<LightSlideHandle>,
+) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
 
@@ -61,15 +70,23 @@ export function LightSlide<T = unknown>({
 	// point aria-controls at it, so assistive tech knows which region they drive.
 	const slidesId = useId();
 
+	// First-render position: the controlled index if given, else initialIndex. Only the lower
+	// bound is enforced here — the mount layout effect clamps to maxIndex once it is derived.
+	const startIndex = Math.max(0, index ?? initialIndex);
+
 	// Single mutable store for all core data — read/written imperatively by the gesture
 	// and animation hooks (zero re-renders). The "functional" pieces (analytics handlers,
 	// the navigate fn) live in their own refs below. See helpers/store.ts.
-	const storeRef = useRef(createStore<T>());
+	const storeRef = useRef(createStore<T>({currentIndex: startIndex}));
 
 	// Latest-ref of the raw analytics prop. The single onEvent handler is called optionally at
 	// each fire site (analytics?.onEvent?.(payload)) — no merging, no noop layer.
 	const analyticsRef = useRef(analytics);
 	analyticsRef.current = analytics;
+
+	// Latest-ref of onIndexChange, so the navigation path never re-creates over it.
+	const onIndexChangeRef = useRef(onIndexChange);
+	onIndexChangeRef.current = onIndexChange;
 
 	// Viewed-slides tracking is opt-in via the presence of `viewedTimeout`: the timer only runs
 	// when the consumer sets it (otherwise the carousel_reached_end terminal stays armed). Its
@@ -134,7 +151,7 @@ export function LightSlide<T = unknown>({
 		getSlideData,
 	});
 
-	const [currentIndex, setCurrentIndex] = useState(0);
+	const [currentIndex, setCurrentIndex] = useState(startIndex);
 
 	// Reveal the controls only after the first client commit. Server-rendered (or
 	// not-yet-measured) prev/next buttons would otherwise flash in an un-positioned spot
@@ -161,6 +178,9 @@ export function LightSlide<T = unknown>({
 		const newMax = Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));
 		s.maxIndex = newMax;
 		const corrected = Math.min(s.currentIndex, newMax);
+		// A layout change that swallows the current position is a real position change —
+		// tell the consumer, or their synced state (thumbnails, controlled index) goes stale.
+		if (corrected !== s.currentIndex) onIndexChangeRef.current?.(corrected);
 		s.currentIndex = corrected;
 		setCurrentIndex(corrected);
 		// While the flow runs it owns the transform (its rAF/layout effect positions
@@ -200,6 +220,7 @@ export function LightSlide<T = unknown>({
 
 			storeRef.current.currentIndex = clamped;
 			setCurrentIndex(clamped);
+			onIndexChangeRef.current?.(clamped);
 			markViewed(clamped);
 
 			analyticsRef.current?.onEvent?.({
@@ -241,16 +262,10 @@ export function LightSlide<T = unknown>({
 		[markViewed, fireTerminalIfNeeded, snapToVisual],
 	);
 
-	const goToIndex = useCallback(
-		(index: number, source: 'button' | 'pagination') => {
-			navigateToIndex(index, source);
-		},
-		[navigateToIndex],
-	);
-
 	// Two contexts so the slides don't re-render on navigation: <Slide> consumes only the
 	// geometry (slideWidth, changes on resize), while Navigation/Pagination consume the
-	// nav state (currentIndex etc., changes on every navigation).
+	// nav state (currentIndex etc., changes on every navigation). navigateToIndex doubles
+	// as the contexts' goToIndex — their narrower source union is assignable as-is.
 	const metricsValue = useMemo(() => ({slideWidth}), [slideWidth]);
 	const navValue = useMemo(
 		() => ({
@@ -259,13 +274,46 @@ export function LightSlide<T = unknown>({
 			isLoop: effectiveLoop,
 			isReady,
 			slidesId,
-			goToIndex,
+			goToIndex: navigateToIndex,
 		}),
-		[currentIndex, maxIndex, effectiveLoop, isReady, slidesId, goToIndex],
+		[currentIndex, maxIndex, effectiveLoop, isReady, slidesId, navigateToIndex],
 	);
 
 	const navigateToIndexRef = useRef(navigateToIndex);
 	navigateToIndexRef.current = navigateToIndex;
+
+	// The whole external-control surface (controlled `index` prop + ref handle) funnels through
+	// here: the same navigation path as the built-in buttons, so analytics and loop wrap-around
+	// behave identically, and a same-position call is already a no-op inside navigateToIndex.
+	// Ignored while the flow owns the track (continuous motion has no discrete position).
+	// `step` skips the clamp so next/prev can wrap under isLoop; goTo and the controlled prop
+	// clamp, so an out-of-range jump lands on the nearest edge instead of wrapping.
+	const apiNavigate = useCallback((target: number, step?: boolean) => {
+		const s = storeRef.current;
+		if (s.effectiveFlow) return;
+		navigateToIndexRef.current(
+			step ? target : Math.max(0, Math.min(s.maxIndex, target)),
+			'api',
+		);
+	}, []);
+
+	// Controlled position: navigate whenever the `index` prop changes to a new position. It
+	// does not lock the carousel — gestures/buttons still move it, and the consumer stays in
+	// sync via onIndexChange.
+	useEffect(() => {
+		if (index !== undefined) apiNavigate(index);
+	}, [index, apiNavigate]);
+
+	useImperativeHandle(
+		ref,
+		() => ({
+			goTo: (target: number) => apiNavigate(target),
+			next: () => apiNavigate(storeRef.current.currentIndex + 1, true),
+			prev: () => apiNavigate(storeRef.current.currentIndex - 1, true),
+			getIndex: () => storeRef.current.currentIndex,
+		}),
+		[apiNavigate],
+	);
 
 	// Flow supersedes step auto-scroll — they are both "auto motion". Neither runs while loading
 	// (no track to move) nor when the reduced-motion gate is closed.
@@ -363,7 +411,7 @@ export function LightSlide<T = unknown>({
 								slidesPerView,
 								isLoop: effectiveLoop,
 								autoMotion,
-								goToIndex,
+								goToIndex: navigateToIndex,
 								setMotionAllowed,
 							}}>
 							{a11y}
@@ -374,3 +422,12 @@ export function LightSlide<T = unknown>({
 		</SlideMetricsContext.Provider>
 	);
 }
+
+// forwardRef erases the type parameter, so the export is re-asserted with a generic call
+// signature (same pattern as <Slide>): `<LightSlide<Product> …>` keeps the data type flowing
+// into the analytics payloads, while `ref` receives the imperative LightSlideHandle.
+export const LightSlide = forwardRef(LightSlideInner) as (<T = unknown>(
+	props: LightSlideProps<T> & {ref?: Ref<LightSlideHandle>},
+) => ReactElement) & {displayName?: string};
+
+LightSlide.displayName = 'LightSlide';

@@ -16,7 +16,7 @@ const ITEMS = [
 	'ESLint',
 	'Prettier',
 	'Zero deps',
-	'~5 kB',
+	'~5.5 kB',
 ];
 
 const SPEEDS = [
@@ -32,7 +32,7 @@ export function FlowExample() {
 	return (
 		<Demo
 			id="flow"
-			number="09"
+			number="10"
 			title="Flow ticker"
 			tag="flow"
 			description={

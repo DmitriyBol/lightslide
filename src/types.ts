@@ -49,6 +49,18 @@ export type LightSlideProps<T = unknown> = {
 	slideLabel?: (index: number, count: number) => string;
 	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
+	// Starting position (0..maxIndex, clamped). Uncontrolled: the carousel owns the index
+	// afterwards — read changes via onIndexChange or drive them via `index`/the ref handle.
+	initialIndex?: number;
+	/**
+	 * Controlled position: whenever the value changes, the carousel animates to it. It does not
+	 * lock the carousel — gestures and buttons still navigate; pair with `onIndexChange` to keep
+	 * your state in sync. Ignored while `flow` runs (continuous motion has no discrete position).
+	 */
+	index?: number;
+	// Fires after every settled position change, from any source — drag, buttons, pagination,
+	// auto-scroll, or the external API. Simpler than subscribing to analytics for the same fact.
+	onIndexChange?: (index: number) => void;
 	autoScroll?: AutoScrollConfig;
 	flow?: FlowConfig;
 	navigation?: NavigationConfig;
@@ -78,6 +90,20 @@ export type SlideProps<T = unknown> = AriaAttributes & {
 	id?: string;
 };
 
+/**
+ * Imperative handle exposed through `ref` on `<LightSlide>`. All indices are scroll positions
+ * (0..maxIndex — the same positions pagination dots represent; with an integer slidesPerView
+ * that is one per slide). `goTo` clamps out-of-range targets; `next`/`prev` step one position
+ * and wrap around when `isLoop` is on. While `flow` runs the track has no discrete position,
+ * so the navigation methods no-op and `getIndex` reports the last settled index.
+ */
+export type LightSlideHandle = {
+	goTo: (index: number) => void;
+	next: () => void;
+	prev: () => void;
+	getIndex: () => number;
+};
+
 // Every analytics event the carousel emits, as one discriminated union — narrow on `event`
 // to handle a specific one. Generic over the slide `data` shape `T`, which flows into the
 // terminal-event payloads (carousel_reached_end / carousel_viewed_slides).
@@ -105,7 +131,8 @@ export type InViewportPayload = {
 	event: 'carousel_in_viewport';
 };
 
-// Fired on every navigation — drag, button, pagination, or auto-scroll.
+// Fired on every navigation — drag, button, pagination, auto-scroll, or the external API
+// (the controlled `index` prop / ref handle).
 export type SlidePayload = {
 	event: 'carousel_slide';
 	direction: 'left' | 'right';
