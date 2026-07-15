@@ -9,6 +9,7 @@ import {useTheme} from './components/useTheme';
 import {AccessibilityExample} from './examples/AccessibilityExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
 import {BasicExample} from './examples/BasicExample';
+import {BreakpointsExample} from './examples/BreakpointsExample';
 import {ControlledExample} from './examples/ControlledExample';
 import {CustomStylesExample} from './examples/CustomStylesExample';
 import {CustomTimeoutExample} from './examples/CustomTimeoutExample';
@@ -44,6 +45,7 @@ export function App() {
 
 				<PhaseLabel label="Navigation" />
 				<SlidesPerViewExample />
+				<BreakpointsExample />
 				<NavigationExample />
 				<PaginationExample />
 				<ControlledExample />

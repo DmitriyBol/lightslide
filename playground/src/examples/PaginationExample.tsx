@@ -25,7 +25,7 @@ export function PaginationExample() {
 	return (
 		<Demo
 			id="pagination"
-			number="06"
+			number="07"
 			title="Pagination dots"
 			tag="pagination"
 			description={

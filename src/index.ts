@@ -4,6 +4,7 @@ export type {
 	AnalyticsConfig,
 	AnalyticsEvent,
 	AutoScrollConfig,
+	BreakpointOverrides,
 	InViewportPayload,
 	LightSlideHandle,
 	LightSlideProps,

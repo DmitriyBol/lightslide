@@ -130,6 +130,50 @@ describe('LightSlide', () => {
 		expect(track?.style.columnGap).toBe('');
 	});
 
+	it('applies breakpoint overrides while their query matches and reverts when it stops', () => {
+		const matching = new Set<string>();
+		const listeners = new Set<() => void>();
+		const original = window.matchMedia;
+		window.matchMedia = ((query: string) => ({
+			get matches() {
+				return matching.has(query);
+			},
+			media: query,
+			addEventListener: (_type: string, l: () => void) => listeners.add(l),
+			removeEventListener: (_type: string, l: () => void) =>
+				listeners.delete(l),
+		})) as unknown as typeof window.matchMedia;
+
+		try {
+			render(
+				<LightSlide gap={8} breakpoints={{'(min-width: 768px)': {gap: 24}}}>
+					<Slide>
+						<div>Slide 1</div>
+					</Slide>
+					<Slide>
+						<div>Slide 2</div>
+					</Slide>
+				</LightSlide>,
+			);
+			const track = screen.getByRole('group', {name: '1 of 2'}).parentElement;
+			expect(track).toHaveStyle({columnGap: '8px'});
+
+			act(() => {
+				matching.add('(min-width: 768px)');
+				listeners.forEach(l => l());
+			});
+			expect(track).toHaveStyle({columnGap: '24px'});
+
+			act(() => {
+				matching.delete('(min-width: 768px)');
+				listeners.forEach(l => l());
+			});
+			expect(track).toHaveStyle({columnGap: '8px'});
+		} finally {
+			window.matchMedia = original;
+		}
+	});
+
 	it('fires carousel_in_viewport once when carousel enters viewport', () => {
 		const onEvent = makeOnEvent();
 		renderLightSlide(onEvent);

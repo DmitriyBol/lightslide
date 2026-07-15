@@ -22,6 +22,7 @@ import {buildDisplayChildren} from './helpers/loopClones';
 import {collectSlideData} from './helpers/slideData';
 import {createStore} from './helpers/store';
 import {useAutoScroll} from './helpers/useAutoScroll';
+import {useBreakpoints} from './helpers/useBreakpoints';
 import {useDragGesture} from './helpers/useDragGesture';
 import {useExternalControl} from './helpers/useExternalControl';
 import {useLatestRef} from './helpers/useLatestRef';
@@ -57,8 +58,9 @@ function LightSlideInner<T = unknown>(
 		label,
 		slideLabel = DEFAULT_SLIDE_LABEL,
 		analytics,
-		slidesPerView = 1,
-		gap = 0,
+		slidesPerView: slidesPerViewProp = 1,
+		gap: gapProp = 0,
+		breakpoints,
 		initialIndex = 0,
 		index,
 		onIndexChange,
@@ -105,6 +107,15 @@ function LightSlideInner<T = unknown>(
 	/** Latest-refs of the callback props, so the navigation path stays stable across renders. */
 	const analyticsRef = useLatestRef(analytics);
 	const onIndexChangeRef = useLatestRef(onIndexChange);
+
+	/**
+	 * Media-query overrides resolve into the effective geometry props before any derivation,
+	 * so a breakpoint flip flows down the exact same path as a prop change (useLayoutResync
+	 * re-measures, re-clamps, and re-snaps).
+	 */
+	const breakpointOverrides = useBreakpoints(breakpoints);
+	const slidesPerView = breakpointOverrides?.slidesPerView ?? slidesPerViewProp;
+	const gap = breakpointOverrides?.gap ?? gapProp;
 
 	const childArray = useMemo(() => Children.toArray(children), [children]);
 	const slideCount = childArray.length;

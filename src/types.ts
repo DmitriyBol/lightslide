@@ -20,6 +20,18 @@ export type AutoScrollConfig = {
 };
 
 /**
+ * Prop overrides applied while a media query matches — the value type of the `breakpoints`
+ * record. Deliberately just the geometry props: the carousel re-measures, re-clamps, and
+ * re-snaps when they change (the same path a container resize takes), so a breakpoint flip
+ * is safe mid-interaction. Everything else (plugin slots, autoScroll, isLoop) stays with the
+ * consumer, who can switch those props on their own media-query state.
+ */
+export type BreakpointOverrides = {
+	slidesPerView?: number;
+	gap?: number;
+};
+
+/**
  * Main carousel props. Generic over the slide `data` shape `T` (carried through to the
  * analytics payloads), defaulting to `unknown`. Write `<LightSlide<Product> …>` to type the
  * whole chain; omit it and everything still works with an unspecified data type.
@@ -31,6 +43,12 @@ export type AutoScrollConfig = {
  * - `gap` — horizontal space between adjacent slides, px (default 0). Applied as CSS
  *   `column-gap` on the track and folded into all geometry: slide width, snap positions,
  *   the fractional flush of the last slide, loop clones, and flow.
+ * - `breakpoints` — responsive overrides: each key is a media query, its value replaces
+ *   `slidesPerView`/`gap` while the query matches, e.g.
+ *   `{'(min-width: 768px)': {slidesPerView: 2}, '(min-width: 1200px)': {slidesPerView: 3}}`.
+ *   When several queries match, later entries win per property, so order overrides
+ *   mobile-first. The server (and any client without `matchMedia`) renders with the base
+ *   props; matches apply on hydration.
  * - `initialIndex` — starting position (0..maxIndex, clamped). Uncontrolled: the carousel owns
  *   the index afterwards — read changes via `onIndexChange`, drive them via `index`/the ref.
  * - `index` — controlled position: whenever the value changes, the carousel animates to it. It
@@ -59,6 +77,7 @@ export type LightSlideProps<T = unknown> = {
 	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
 	gap?: number;
+	breakpoints?: Record<string, BreakpointOverrides>;
 	initialIndex?: number;
 	index?: number;
 	onIndexChange?: (index: number) => void;
