@@ -2,6 +2,7 @@ import React, {createRef} from 'react';
 
 import {act, render} from '@testing-library/react';
 
+import {Flow} from '../flow';
 import {Slide} from '../Slide/Slide';
 import type {AnalyticsEvent, LightSlideHandle} from '../types';
 import {LightSlide} from './LightSlide';
@@ -58,7 +59,7 @@ type RenderOptions = {
 	onEvent?: ReturnType<typeof makeOnEvent>;
 	isLoop?: boolean;
 	slidesPerView?: number;
-	flow?: {enabled: boolean};
+	flow?: React.ReactNode;
 };
 
 function renderCarousel(options: RenderOptions = {}) {
@@ -267,12 +268,12 @@ describe('LightSlide external control', () => {
 			const {ref, rerender} = renderCarousel({
 				onIndexChange,
 				onEvent,
-				flow: {enabled: true},
+				flow: <Flow />,
 			});
 
 			act(() => ref.current?.goTo(2));
 			act(() => ref.current?.next());
-			act(() => rerender({flow: {enabled: true}, index: 2}));
+			act(() => rerender({flow: <Flow />, index: 2}));
 
 			expect(ref.current?.getIndex()).toBe(0);
 			expect(onIndexChange).not.toHaveBeenCalled();

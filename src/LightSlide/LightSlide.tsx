@@ -12,28 +12,22 @@ import {
 import type {DragEvent, ForwardedRef, ReactElement, Ref} from 'react';
 
 import {A11yContext} from '../a11ySeam';
+import {FlowContext} from '../flowSeam';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
-import {Navigation} from '../Navigation/Navigation';
-import {Pagination} from '../Pagination/Pagination';
 import type {LightSlideHandle, LightSlideProps} from '../types';
 import {cx} from '../utils/cx';
-import {
-	DEFAULT_FLOW_RESUME_DELAY,
-	DEFAULT_FLOW_SPEED,
-	DEFAULT_SLIDE_LABEL,
-	DEFAULT_VIEWED_TIMEOUT,
-} from './helpers/constants';
+import {DEFAULT_SLIDE_LABEL, DEFAULT_VIEWED_TIMEOUT} from './helpers/constants';
 import {buildDisplayChildren} from './helpers/loopClones';
 import {collectSlideData} from './helpers/slideData';
 import {createStore} from './helpers/store';
 import {useAutoScroll} from './helpers/useAutoScroll';
 import {useDragGesture} from './helpers/useDragGesture';
 import {useExternalControl} from './helpers/useExternalControl';
-import {useFlow} from './helpers/useFlow';
 import {useLatestRef} from './helpers/useLatestRef';
 import {useLayoutResync} from './helpers/useLayoutResync';
 import {useNavigation} from './helpers/useNavigation';
+import type {PointerHandlers} from './helpers/usePointerGesture';
 import {useSlideMetrics} from './helpers/useSlideMetrics';
 import {useTrackSnap} from './helpers/useTrackSnap';
 import {useViewportEngagement} from './helpers/useViewportEngagement';
@@ -47,9 +41,11 @@ import styles from './LightSlide.module.scss';
  *
  * The container is a WAI-ARIA APG carousel landmark — a labelled `region` when `label` is
  * given, else a plain `group`. The stage's height tracks the viewport only, so the controls
- * anchored to it centre on the track (never offset by the pagination row). The a11y provider
- * at the bottom only materialises when the consumer passes an `a11y` node, so base consumers
- * pay nothing for it.
+ * anchored to it centre on the track (never offset by the pagination row). navigation /
+ * pagination / flow / a11y are consumer-passed plugin nodes from their tree-shakeable entries,
+ * rendered into their slots; their providers only materialise when a node is passed, so base
+ * consumers pay nothing for any of them. Flow is presence-based: the node being there turns
+ * the mode on, and the plugin hands its pointer handlers back through the flow seam.
  */
 function LightSlideInner<T = unknown>(
 	{
@@ -118,9 +114,12 @@ function LightSlideInner<T = unknown>(
 	 */
 	const maxIndex = Math.max(0, Math.ceil(slideCount - slidesPerView));
 
-	/** The flow needs the loop-clone structure to wrap seamlessly, so it forces effectiveLoop on. */
+	/**
+	 * Flow is presence-based: passing the node turns the mode on. It needs the loop-clone
+	 * structure to wrap seamlessly, so it forces effectiveLoop on.
+	 */
 	const effectiveFlow =
-		flow?.enabled === true && maxIndex > 0 && !loading && motionAllowed;
+		flow != null && flow !== false && maxIndex > 0 && !loading && motionAllowed;
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
@@ -175,7 +174,7 @@ function LightSlideInner<T = unknown>(
 		setCurrentIndex,
 		slidesPerView,
 		isLoop,
-		flowEnabled: flow?.enabled === true,
+		flowEnabled: effectiveFlow,
 		loading,
 	});
 
@@ -208,15 +207,25 @@ function LightSlideInner<T = unknown>(
 		navigateToIndex,
 	});
 
-	const flowHandlers = useFlow({
-		enabled: effectiveFlow,
-		speed: flow?.speed ?? DEFAULT_FLOW_SPEED,
-		resumeDelay: flow?.resumeDelay ?? DEFAULT_FLOW_RESUME_DELAY,
-		trackRef,
-		storeRef,
-	});
+	/**
+	 * While the flow is active its plugin owns the track: the handlers it registered through
+	 * the seam replace the drag-to-snap gesture (drag falls back in until the plugin mounts).
+	 */
+	const [flowHandlers, setFlowHandlers] = useState<PointerHandlers | null>(
+		null,
+	);
+	const pointerHandlers =
+		effectiveFlow && flowHandlers ? flowHandlers : dragHandlers;
 
-	const pointerHandlers = effectiveFlow ? flowHandlers : dragHandlers;
+	const flowSeamValue = useMemo(
+		() => ({
+			trackRef,
+			storeRef,
+			active: effectiveFlow,
+			setPointerHandlers: setFlowHandlers,
+		}),
+		[effectiveFlow],
+	);
 
 	/** True while any auto motion runs — the live-region plugin stays quiet then. */
 	const autoMotion =
@@ -276,10 +285,16 @@ function LightSlideInner<T = unknown>(
 							)}
 						</div>
 
-						{!loading && navigation && <Navigation config={navigation} />}
+						{!loading && navigation}
 					</div>
 
-					{!loading && pagination && <Pagination config={pagination} />}
+					{!loading && pagination}
+
+					{flow && (
+						<FlowContext.Provider value={flowSeamValue}>
+							{flow}
+						</FlowContext.Provider>
+					)}
 
 					{a11y && (
 						<A11yContext.Provider

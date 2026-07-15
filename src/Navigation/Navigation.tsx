@@ -3,19 +3,26 @@ import {useCallback} from 'react';
 import {useNavContext} from '../lightSlideContext';
 import {cx} from '../utils/cx';
 import styles from './Navigation.module.scss';
-import type {NavigationConfig} from './Navigation.types';
-
-type NavigationProps = {
-	config: NavigationConfig;
-};
+import type {NavigationProps} from './Navigation.types';
 
 /**
- * Prev/next buttons. Hidden until the carousel has measured on the client, so they never flash
- * in an un-positioned spot during SSR / before first layout. Custom render-prop buttons are
- * wrapped in a positioning slot that lands them left/right of centre (outside the clipping
- * viewport) and dims itself at the boundary, while the consumer owns the element's own markup.
+ * Prev/next buttons, shipped as the tree-shakeable `lightslide/navigation` entry — pass to
+ * `<LightSlide navigation={<Navigation />}>`. Hidden until the carousel has measured on the
+ * client, so they never flash in an un-positioned spot during SSR / before first layout.
+ * Custom render-prop buttons are wrapped in a positioning slot that lands them left/right of
+ * centre (outside the clipping viewport) and dims itself at the boundary, while the consumer
+ * owns the element's own markup.
  */
-export function Navigation({config}: NavigationProps) {
+export function Navigation({
+	style,
+	className,
+	prevStyle,
+	nextStyle,
+	prevClassName,
+	nextClassName,
+	renderPrev,
+	renderNext,
+}: NavigationProps) {
 	const {currentIndex, maxIndex, isLoop, isReady, slidesId, goToIndex} =
 		useNavContext();
 
@@ -34,7 +41,7 @@ export function Navigation({config}: NavigationProps) {
 
 	return (
 		<>
-			{config.renderPrev ? (
+			{renderPrev ? (
 				<div
 					className={cx(
 						styles.slot,
@@ -42,7 +49,7 @@ export function Navigation({config}: NavigationProps) {
 						prevDisabled && styles.slotDisabled,
 						hidden,
 					)}>
-					{config.renderPrev({
+					{renderPrev({
 						direction: 'left',
 						onClick: handlePrev,
 						disabled: prevDisabled,
@@ -56,17 +63,17 @@ export function Navigation({config}: NavigationProps) {
 					className={cx(
 						styles.button,
 						styles.prev,
-						config.className,
-						config.prevClassName,
+						className,
+						prevClassName,
 						hidden,
 					)}
-					style={{...config.style, ...config.prevStyle}}
+					style={{...style, ...prevStyle}}
 					onClick={handlePrev}>
 					‹
 				</button>
 			)}
 
-			{config.renderNext ? (
+			{renderNext ? (
 				<div
 					className={cx(
 						styles.slot,
@@ -74,7 +81,7 @@ export function Navigation({config}: NavigationProps) {
 						nextDisabled && styles.slotDisabled,
 						hidden,
 					)}>
-					{config.renderNext({
+					{renderNext({
 						direction: 'right',
 						onClick: handleNext,
 						disabled: nextDisabled,
@@ -88,11 +95,11 @@ export function Navigation({config}: NavigationProps) {
 					className={cx(
 						styles.button,
 						styles.next,
-						config.className,
-						config.nextClassName,
+						className,
+						nextClassName,
 						hidden,
 					)}
-					style={{...config.style, ...config.nextStyle}}
+					style={{...style, ...nextStyle}}
 					onClick={handleNext}>
 					›
 				</button>

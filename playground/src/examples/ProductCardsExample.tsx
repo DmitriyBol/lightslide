@@ -1,5 +1,7 @@
-import {LightSlide, Slide} from 'lightslide';
 import type {AnalyticsConfig} from 'lightslide';
+import {LightSlide, Slide} from 'lightslide';
+import {Navigation} from 'lightslide/navigation';
+import {Pagination} from 'lightslide/pagination';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -85,11 +87,13 @@ export function ProductCardsExample() {
 				<LightSlide<Product>
 					analytics={analytics}
 					slidesPerView={1.5}
-					navigation={{}}
-					pagination={{
-						dotStyle: {background: 'var(--border-strong)'},
-						activeDotStyle: {background: 'var(--accent)'},
-					}}>
+					navigation={<Navigation />}
+					pagination={
+						<Pagination
+							dotStyle={{background: 'var(--border-strong)'}}
+							activeDotStyle={{background: 'var(--accent)'}}
+						/>
+					}>
 					{PRODUCTS.map((p, i) => {
 						const off = Math.round((1 - p.price / p.oldPrice) * 100);
 						return (

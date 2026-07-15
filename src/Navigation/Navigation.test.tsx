@@ -23,11 +23,11 @@ function makeContext(overrides?: Partial<NavContextType>): NavContextType {
 
 function renderNavigation(
 	ctx: NavContextType,
-	config: React.ComponentProps<typeof Navigation>['config'] = {},
+	props: React.ComponentProps<typeof Navigation> = {},
 ) {
 	return render(
 		<NavContext.Provider value={ctx}>
-			<Navigation config={config} />
+			<Navigation {...props} />
 		</NavContext.Provider>,
 	);
 }

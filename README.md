@@ -15,15 +15,18 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
   drag that leaves the carousel mid-gesture never gets stuck.
 - **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek).
 - **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
-- **Navigation buttons** — optional prev/next, fully styleable, or bring your own element via
-  `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at the edges.
-- **Pagination dots** — optional dot indicators with active-state styling.
+- **Navigation buttons** (`lightslide/navigation`) — prev/next, fully styleable, or bring your
+  own element via `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at
+  the edges.
+- **Pagination dots** (`lightslide/pagination`) — dot indicators with active-state styling.
 - **External control** — a controlled `index` prop, `onIndexChange`, and a `ref` handle
   (`goTo` / `next` / `prev` / `getIndex`): the building blocks for thumbnails, synced
   carousels, and custom UIs.
 - **Auto-scroll** — optional step cycling at a configurable interval; pauses during drag.
-- **Flow** — optional continuous ticker scroll at a configurable speed; seamless with looping;
-  pauses on interaction and resumes after a delay.
+- **Flow** (`lightslide/flow`) — continuous ticker scroll at a configurable speed; seamless
+  with looping; pauses on interaction and resumes after a delay.
+- **Pay for what you use** — arrows, dots, flow, and the a11y layer ship as tree-shakeable
+  entries; the core stays ~4.5 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -49,10 +52,12 @@ Requires React ≥ 18 (the accessible id wiring uses `useId`).
 
 ```tsx
 import { LightSlide, Slide } from "lightslide";
+import { Navigation } from "lightslide/navigation";
+import { Pagination } from "lightslide/pagination";
 
 function ProductCarousel() {
   return (
-    <LightSlide slidesPerView={2} navigation={{}} pagination={{}}>
+    <LightSlide slidesPerView={2} navigation={<Navigation />} pagination={<Pagination />}>
       <Slide data={{ id: 1 }}><ProductCard id={1} /></Slide>
       <Slide data={{ id: 2 }}><ProductCard id={2} /></Slide>
       <Slide data={{ id: 3 }}><ProductCard id={3} /></Slide>
@@ -61,6 +66,11 @@ function ProductCarousel() {
   );
 }
 ```
+
+The core ships only what every carousel needs (~4.5 kB). Arrows, dots, the flow ticker, and
+the accessibility layer are separate tree-shakeable entries — import a module and pass its
+node to the matching slot prop; skip the import and none of its code or styles reaches your
+bundle.
 
 ## Components & props
 
@@ -85,9 +95,9 @@ payloads.
 | `index` | `number` | — | Controlled position — the carousel navigates whenever it changes |
 | `onIndexChange` | `(index: number) => void` | — | Fires after every settled position change, from any source |
 | `autoScroll` | `AutoScrollConfig` | — | Automatic slide cycling |
-| `flow` | `FlowConfig` | — | Continuous ticker scroll (supersedes `autoScroll`) |
-| `navigation` | `NavigationConfig` | — | Prev/next buttons. Pass `{}` for defaults |
-| `pagination` | `PaginationConfig` | — | Pagination dots. Pass `{}` for defaults |
+| `flow` | `ReactNode` | — | Continuous ticker from `lightslide/flow` — pass `<Flow />` (supersedes `autoScroll`) |
+| `navigation` | `ReactNode` | — | Prev/next buttons from `lightslide/navigation` — pass `<Navigation />` |
+| `pagination` | `ReactNode` | — | Pagination dots from `lightslide/pagination` — pass `<Pagination />` |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
@@ -121,11 +131,13 @@ type Product = { id: number; name: string };
 </LightSlide>
 ```
 
-### Navigation
+### Navigation (`lightslide/navigation`)
 
 ```tsx
-<LightSlide navigation={{}} />                       {/* default ‹ › arrows */}
-<LightSlide navigation={{ prevStyle: { left: 16 } }} />
+import { Navigation } from "lightslide/navigation";
+
+<LightSlide navigation={<Navigation />} />                       {/* default ‹ › arrows */}
+<LightSlide navigation={<Navigation prevStyle={{ left: 16 }} />} />
 ```
 
 Buttons are absolutely positioned over the **track** (centered, prev-left / next-right) — the
@@ -133,7 +145,7 @@ pagination row below never offsets them. They dim to 50% opacity and disable at 
 slide unless `isLoop` is active, and are held invisible until the carousel has measured on the
 client (no SSR/pre-layout flash). For a custom label or element, use `renderPrev`/`renderNext`.
 
-**`NavigationConfig`**
+**`NavigationProps`**
 
 | Key | Type | Description |
 |---|---|---|
@@ -155,16 +167,18 @@ un-clipped, and the slot dims to 50% at the boundary by default.
 | `disabled` | `boolean` | Boundary state. Always `false` when `isLoop` is active |
 | `direction` | `"left" \| "right"` | Which button this is |
 
-### Pagination
+### Pagination (`lightslide/pagination`)
 
 ```tsx
-<LightSlide pagination={{ activeDotStyle: { background: "#4f46e5" } }} />
+import { Pagination } from "lightslide/pagination";
+
+<LightSlide pagination={<Pagination activeDotStyle={{ background: "#4f46e5" }} />} />
 ```
 
 Dot count = `maxIndex + 1` (number of scroll positions). The active dot updates on every
 navigation type. Not tracked during a flow (continuous motion has no discrete index).
 
-**`PaginationConfig`**: `style`, `className`, `dotStyle`, `dotClassName`, `activeDotStyle`,
+**`PaginationProps`**: `style`, `className`, `dotStyle`, `dotClassName`, `activeDotStyle`,
 `activeDotClassName`.
 
 ### Auto-scroll
@@ -177,18 +191,21 @@ Loops back to 0 after the last slide; pauses during drag; does **not** fire `car
 
 **`AutoScrollConfig`**: `enabled: boolean`, `interval: number` (ms).
 
-### Flow (continuous ticker)
+### Flow (continuous ticker, `lightslide/flow`)
 
 ```tsx
-<LightSlide flow={{ enabled: true, speed: 80, resumeDelay: 3000 }} />
+import { Flow } from "lightslide/flow";
+
+<LightSlide flow={<Flow speed={80} resumeDelay={3000} />} />
 ```
 
 Scrolls the track continuously at `speed` px/s (driven by `requestAnimationFrame`, no CSS
-transition). Loops seamlessly (clones added automatically), pauses on interaction, and resumes
-from where it stopped after `resumeDelay`. Supersedes `autoScroll` when both are set.
+transition). Presence turns the mode on — pass the node conditionally
+(`flow={active ? <Flow /> : undefined}`) to toggle it. Loops seamlessly (clones added
+automatically), pauses on interaction, and resumes from where it stopped after `resumeDelay`.
+Supersedes `autoScroll` when both are set.
 
-**`FlowConfig`**: `enabled: boolean`, `speed?: number` (default 40), `resumeDelay?: number`
-(default 2000 ms).
+**`FlowProps`**: `speed?: number` (default 40), `resumeDelay?: number` (default 2000 ms).
 
 ## isLoop
 
@@ -377,12 +394,15 @@ aren't clipped; an inner viewport clips the track. Use `padding` on `<Slide>` fo
 
 ```ts
 import type {
-  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig, FlowConfig,
+  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig,
   InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
   NavigationButtonPayload, PaginationClickPayload,
-  NavigationConfig, NavButtonRenderProps, PaginationConfig,
   LightSlideProps, LightSlideHandle, SlideProps, SlideData,
 } from "lightslide";
+
+import type { NavigationProps, NavButtonRenderProps } from "lightslide/navigation";
+import type { PaginationProps } from "lightslide/pagination";
+import type { FlowProps } from "lightslide/flow";
 ```
 
 ## Project structure
@@ -421,18 +441,24 @@ src/
 │   ├── LiveRegion.tsx              #   polite "Slide N of M" announcements
 │   └── ReducedMotion.tsx           #   stop flow/auto-scroll under prefers-reduced-motion
 ├── a11ySeam.ts                     # Context seam between the core and the a11y plugins
+├── flowSeam.ts                     # Context seam between the core and the flow plugin
+├── flow/
+│   ├── index.ts                    #   `lightslide/flow` entry barrel
+│   └── Flow.tsx                    #   continuous ticker plugin (owns the rAF drift)
 ├── Slide/
 │   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
 │   └── Slide.module.scss
 ├── Navigation/
 │   ├── Navigation.tsx              # Prev/next buttons
 │   ├── Navigation.test.tsx
-│   ├── Navigation.types.ts         # NavigationConfig, NavButtonRenderProps
+│   ├── index.ts                    #   `lightslide/navigation` entry barrel
+│   ├── Navigation.types.ts         # NavigationProps, NavButtonRenderProps
 │   └── Navigation.module.scss
 ├── Pagination/
 │   ├── Pagination.tsx              # Pagination dots
 │   ├── Pagination.test.tsx
-│   ├── Pagination.types.ts         # PaginationConfig
+│   ├── index.ts                    #   `lightslide/pagination` entry barrel
+│   ├── Pagination.types.ts         # PaginationProps
 │   └── Pagination.module.scss
 ├── hooks/
 │   ├── useViewedSlides.ts          # Tracks unique viewed slide indices

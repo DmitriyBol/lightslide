@@ -1,4 +1,5 @@
 import {LightSlide, Slide} from 'lightslide';
+import {Navigation} from 'lightslide/navigation';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -86,28 +87,30 @@ export function LinkCardsExample() {
 			<Well>
 				<LightSlide
 					slidesPerView={2.5}
-					navigation={{
-						renderPrev: ({onClick, disabled}) => (
-							<button
-								type="button"
-								className={card.nav}
-								onClick={onClick}
-								disabled={disabled}
-								aria-label="Previous slide">
-								<Arrow dir="left" />
-							</button>
-						),
-						renderNext: ({onClick, disabled}) => (
-							<button
-								type="button"
-								className={card.nav}
-								onClick={onClick}
-								disabled={disabled}
-								aria-label="Next slide">
-								<Arrow dir="right" />
-							</button>
-						),
-					}}>
+					navigation={
+						<Navigation
+							renderPrev={({onClick, disabled}) => (
+								<button
+									type="button"
+									className={card.nav}
+									onClick={onClick}
+									disabled={disabled}
+									aria-label="Previous slide">
+									<Arrow dir="left" />
+								</button>
+							)}
+							renderNext={({onClick, disabled}) => (
+								<button
+									type="button"
+									className={card.nav}
+									onClick={onClick}
+									disabled={disabled}
+									aria-label="Next slide">
+									<Arrow dir="right" />
+								</button>
+							)}
+						/>
+					}>
 					{PRODUCTS.map((p, i) => (
 						<Slide key={p.id} data={p} style={{padding: '0 6px'}}>
 							<a

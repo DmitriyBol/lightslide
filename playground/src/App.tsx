@@ -1,3 +1,4 @@
+import styles from './App.module.scss';
 import {Hero} from './components/Hero';
 import {Logo} from './components/Logo';
 import {Nav} from './components/Nav';
@@ -21,7 +22,6 @@ import {NavigationExample} from './examples/NavigationExample';
 import {PaginationExample} from './examples/PaginationExample';
 import {ProductCardsExample} from './examples/ProductCardsExample';
 import {SlidesPerViewExample} from './examples/SlidesPerViewExample';
-import styles from './App.module.scss';
 import {GITHUB_URL, INSTALL_COMMAND, NPM_URL} from './meta';
 
 export function App() {
@@ -73,7 +73,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~5.5&nbsp;kB · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~4.5&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub

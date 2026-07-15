@@ -1,10 +1,10 @@
 import type {CSSProperties} from 'react';
 
 /**
- * Pagination dots.
- * dotStyle/dotClassName apply to every dot; activeDotStyle/activeDotClassName merge on top for the active dot.
+ * Pagination dots. dotStyle/dotClassName apply to every dot; activeDotStyle/activeDotClassName
+ * merge on top for the active dot.
  */
-export type PaginationConfig = {
+export type PaginationProps = {
 	style?: CSSProperties;
 	className?: string;
 	dotStyle?: CSSProperties;
