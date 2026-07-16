@@ -13,6 +13,9 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
 
 - **Swipe & drag** — real-time finger tracking via Pointer Events; the track follows the
   pointer and snaps on release. A multi-slide drag lands on the slide you actually dragged to.
+- **Free scrolling** (`lightslide/free`) — momentum drag: the track coasts with native-feel
+  inertia and rests anywhere (the nearest slide becomes the active index), or lands on a
+  slide boundary with `<FreeScroll snap />`.
 - **Interactive content friendly** — links/buttons inside slides stay clickable; a tap passes
   through, a drag never triggers them, native image/anchor drag can't hijack the gesture, and a
   drag that leaves the carousel mid-gesture never gets stuck.
@@ -37,8 +40,9 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
 - **Wheel & trackpad** (`lightslide/wheel`) — a horizontal two-finger swipe (or shift+wheel)
   turns one page per flick, with the inertia tail filtered out; vertical page scrolling over
   the carousel is never intercepted. During flow the same gesture drifts the strip.
-- **Pay for what you use** — arrows, dots, flow, wheel gestures, and the a11y layer ship as
-  tree-shakeable entries; the core stays ~5 kB and an unused module never reaches your bundle.
+- **Pay for what you use** — arrows, dots, flow, wheel gestures, free scrolling, and the a11y
+  layer ship as tree-shakeable entries; the core stays ~5 kB and an unused module never
+  reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -59,7 +63,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.3 kB** core, +0.7–1.5 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
+| **lightslide** | **5.3 kB** core, +0.7–1.6 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -111,9 +115,9 @@ function ProductCarousel() {
 ```
 
 The core ships only what every carousel needs (~5 kB). Arrows, dots, the flow ticker, wheel
-gestures, and the accessibility layer are separate tree-shakeable entries — import a module
-and pass its node to the matching slot prop; skip the import and none of its code or styles
-reaches your bundle.
+gestures, free scrolling, and the accessibility layer are separate tree-shakeable entries —
+import a module and pass its node to the matching slot prop; skip the import and none of its
+code or styles reaches your bundle.
 
 ## Components & props
 
@@ -144,6 +148,7 @@ payloads.
 | `navigation` | `ReactNode` | — | Prev/next buttons from `lightslide/navigation` — pass `<Navigation />` |
 | `pagination` | `ReactNode` | — | Pagination dots from `lightslide/pagination` — pass `<Pagination />` |
 | `wheel` | `ReactNode` | — | Wheel/trackpad gestures from `lightslide/wheel` — pass `<Wheel />` (see [Wheel & trackpad](#wheel--trackpad-lightslidewheel)) |
+| `free` | `ReactNode` | — | Momentum drag physics from `lightslide/free` — pass `<FreeScroll />` (see [Free scrolling](#free-scrolling-lightslidefree)) |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
@@ -302,6 +307,37 @@ While `flow` runs the same gesture drifts the strip instead of paging.
 **`WheelProps`**: `threshold?: number` (default 30) — accumulated horizontal px before a
 page turn commits.
 
+### Free scrolling (`lightslide/free`)
+
+```tsx
+import { FreeScroll } from "lightslide/free";
+
+<LightSlide free={<FreeScroll />} />        // coast anywhere
+<LightSlide free={<FreeScroll snap />} />   // coast, land on a boundary
+```
+
+Momentum physics for the drag gesture, replacing the default one-gesture-one-snap behaviour
+while the plugin is mounted:
+
+- **`<FreeScroll />`** — the release keeps its momentum: the track coasts with exponentially
+  decaying inertia and rests wherever it stops, boundary or not. At the edges (non-loop) the
+  drag rubber-bands and the coast stops flush; with `isLoop` the coast wraps seamlessly
+  through the clones. Once it rests, the **nearest slide becomes the active index** —
+  pagination, `onIndexChange`, and a single `carousel_slide` (from the drag's start index to
+  the settled one) all fire then, and the track is left exactly where the momentum ended.
+  Navigating by any other means (buttons, dots, the API) re-aligns the track to a boundary —
+  including clicking the active dot.
+- **`<FreeScroll snap />`** — the same momentum, quantised: the coast's endpoint is projected
+  from the release velocity and the track animates straight to the nearest slide boundary to
+  it. No half-slide threshold — the nearest boundary simply wins.
+
+The coast respects `prefers-reduced-motion` (the track rests at the release point instead of
+coasting), grabbing a coasting track catches it mid-flight, and while `flow` runs the flow
+plugin owns the track — free scrolling stands by until it stops.
+
+**`FreeScrollProps`**: `snap?: boolean` (default `false`) — land on the nearest slide
+boundary instead of resting anywhere.
+
 ## isLoop
 
 ```tsx
@@ -416,7 +452,7 @@ your own in the handler if needed).
 | `event` | When it fires | Payload |
 |---|---|---|
 | `carousel_in_viewport` | First time ≥50% visible (once) | `{ event }` |
-| `carousel_slide` | Every navigation (drag/button/pagination/auto/API) | `{ event, direction, fromIndex, toIndex }` |
+| `carousel_slide` | Every navigation (drag/button/pagination/auto/API), incl. a free-drag coast settling on a new nearest index | `{ event, direction, fromIndex, toIndex }` |
 | `carousel_reached_end` | User reaches the last position (once) | `{ event, slides }` — **all** slides |
 | `carousel_viewed_slides` | After `viewedTimeout` s of visibility (once, opt-in) | `{ event, slides, viewedSeconds }` — **viewed** slides |
 | `carousel_nav_button` | Prev/next clicked (alongside `carousel_slide`) | `{ event, direction, fromIndex, toIndex }` |
@@ -530,7 +566,7 @@ slides.
 
 ```ts
 import type {
-  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig,
+  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig, DragMode,
   InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
   NavigationButtonPayload, PaginationClickPayload,
   LightSlideProps, LightSlideHandle, SlideProps, SlideData,
@@ -540,6 +576,7 @@ import type { NavigationProps, NavButtonRenderProps } from "lightslide/navigatio
 import type { PaginationProps } from "lightslide/pagination";
 import type { FlowProps } from "lightslide/flow";
 import type { WheelProps } from "lightslide/wheel";
+import type { FreeScrollProps } from "lightslide/free";
 ```
 
 ## Project structure
@@ -570,6 +607,7 @@ src/
 │       ├── useHoverFocus.ts        #   hover/focus-within → store pause flags (+ test)
 │       ├── usePointerGesture.ts    #   shared drag mechanics: lock/capture/click (+ test)
 │       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
+│       ├── useFreeDrag.ts          #   momentum drag + coast, thin over it (+ test)
 │       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
 │       ├── useWheel.ts             #   wheel/trackpad gestures → page turns / flow drift (+ test)
 │       └── useViewportEngagement.ts#   IntersectionObserver + terminal events
@@ -589,6 +627,10 @@ src/
 ├── wheel/
 │   ├── index.ts                    #   `lightslide/wheel` entry barrel
 │   └── Wheel.tsx                   #   wheel/trackpad gesture plugin (+ test)
+├── freeSeam.ts                     # Context seam between the core and the free plugin
+├── free/
+│   ├── index.ts                    #   `lightslide/free` entry barrel
+│   └── FreeScroll.tsx              #   momentum drag plugin (+ test)
 ├── Slide/
 │   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
 │   └── Slide.module.scss
@@ -623,7 +665,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 233 integration tests (Jest + jsdom) across 24 suites
+npm test             # 255 integration tests (Jest + jsdom) across 27 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

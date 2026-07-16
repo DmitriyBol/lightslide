@@ -112,7 +112,7 @@ export function CompareExample() {
 	return (
 		<Demo
 			id="compare"
-			number="19"
+			number="20"
 			title="How it compares"
 			tag="honest numbers"
 			description={

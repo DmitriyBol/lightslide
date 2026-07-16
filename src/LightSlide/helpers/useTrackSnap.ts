@@ -33,6 +33,8 @@ export function useTrackSnap(
 			const track = trackRef.current;
 			if (!track) return;
 			const offset = trackOffset(visualIndex, storeRef.current);
+			/** Every snap defines a new rest position — free-mode drags start from it. */
+			storeRef.current.restOffset = offset;
 
 			/**
 			 * Honour prefers-reduced-motion by snapping instantly. Crucially we route through the

@@ -14,6 +14,7 @@ import {CompareExample} from './examples/CompareExample';
 import {ControlledExample} from './examples/ControlledExample';
 import {CustomStylesExample} from './examples/CustomStylesExample';
 import {CustomTimeoutExample} from './examples/CustomTimeoutExample';
+import {DragModeExample} from './examples/DragModeExample';
 import {FlowExample} from './examples/FlowExample';
 import {FlowPerfExample} from './examples/FlowPerfExample';
 import {LinkCardsExample} from './examples/LinkCardsExample';
@@ -58,6 +59,7 @@ export function App() {
 				<FlowExample />
 				<FlowPerfExample />
 				<WheelExample />
+				<DragModeExample />
 
 				<PhaseLabel label="Cards & state" />
 				<ProductCardsExample />

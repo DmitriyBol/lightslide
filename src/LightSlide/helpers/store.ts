@@ -31,6 +31,11 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  * `wheelDeltaX` is the wheel plugin's mailbox while flow runs: horizontal wheel deltas
  * accumulate here and the flow ticker consumes them as extra drift each frame (stays 0 when
  * the wheel plugin isn't mounted or flow is off).
+ * `restOffset` is the track's resting translateX in px (positive; the transform negates it),
+ * written by every snap and by a free-drag coast coming to rest. Free-mode drags start from
+ * it (the rest position is not derivable from currentIndex when the track rests between
+ * boundaries), and navigation compares it against the boundary offset to re-align an
+ * off-boundary track.
  */
 export type LightSlideStore<T = unknown> = {
 	currentIndex: number;
@@ -49,6 +54,7 @@ export type LightSlideStore<T = unknown> = {
 	focusWithin: boolean;
 	apiPaused: boolean;
 	wheelDeltaX: number;
+	restOffset: number;
 };
 
 /** Creates a store seeded with safe defaults; `overrides` is a convenience for tests. */
@@ -72,6 +78,7 @@ export function createStore<T = unknown>(
 		focusWithin: false,
 		apiPaused: false,
 		wheelDeltaX: 0,
+		restOffset: 0,
 		...overrides,
 	};
 }
