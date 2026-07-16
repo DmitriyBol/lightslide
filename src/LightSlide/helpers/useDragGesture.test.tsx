@@ -38,7 +38,7 @@ function setupDrag(overrides: Overrides = {}) {
 			trackRef: {current: track},
 			storeRef,
 			snapToVisual,
-			navigateToIndex: navigate,
+			goToIndex: navigate,
 		}),
 	);
 	return {result, navigate, snapToVisual, store, track};

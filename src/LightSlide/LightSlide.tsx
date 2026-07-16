@@ -237,7 +237,7 @@ function LightSlideInner<T = unknown>(
 		trackRef,
 		storeRef,
 		snapToVisual,
-		navigateToIndex,
+		goToIndex: navigateToIndex,
 	});
 
 	/**
@@ -256,6 +256,8 @@ function LightSlideInner<T = unknown>(
 			? flowHandlers
 			: (freeHandlers ?? dragHandlers);
 
+	const pluginActive = maxIndex > 0 && !loading;
+
 	const flowSeamValue = useMemo(
 		() => ({
 			trackRef,
@@ -270,21 +272,21 @@ function LightSlideInner<T = unknown>(
 		() => ({
 			trackRef,
 			storeRef,
-			active: maxIndex > 0 && !loading,
+			active: pluginActive,
 			goToIndex: navigateToIndex,
 			setPointerHandlers: setFreeHandlers,
 		}),
-		[maxIndex, loading, navigateToIndex],
+		[pluginActive, navigateToIndex],
 	);
 
 	const wheelSeamValue = useMemo(
 		() => ({
 			containerRef,
 			storeRef,
-			active: maxIndex > 0 && !loading,
+			active: pluginActive,
 			goToIndex: navigateToIndex,
 		}),
-		[maxIndex, loading, navigateToIndex],
+		[pluginActive, navigateToIndex],
 	);
 
 	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */

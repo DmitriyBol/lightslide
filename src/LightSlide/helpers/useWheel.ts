@@ -13,7 +13,7 @@ import type {NavigateFn} from './navigation';
 import type {LightSlideStore} from './store';
 
 /**
- * `threshold` is the accumulated horizontal px that commits a page turn; `navigate` is the
+ * `threshold` is the accumulated horizontal px that commits a page turn; `goToIndex` is the
  * core navigation path handed through the wheel seam.
  */
 type WheelParams = {
@@ -21,7 +21,7 @@ type WheelParams = {
 	threshold: number;
 	containerRef: RefObject<HTMLDivElement>;
 	storeRef: MutableRefObject<LightSlideStore>;
-	navigate: NavigateFn;
+	goToIndex: NavigateFn;
 };
 
 /**
@@ -41,11 +41,11 @@ export function useWheel({
 	threshold,
 	containerRef,
 	storeRef,
-	navigate,
+	goToIndex,
 }: WheelParams): void {
-	/** Latest-refs so a re-created navigate or a threshold change never rebinds the listener. */
-	const navigateRef = useRef(navigate);
-	navigateRef.current = navigate;
+	/** Latest-refs so a re-created goToIndex or a threshold change never rebinds the listener. */
+	const goToIndexRef = useRef(goToIndex);
+	goToIndexRef.current = goToIndex;
 	const thresholdRef = useRef(threshold);
 	thresholdRef.current = threshold;
 
@@ -104,7 +104,7 @@ export function useWheel({
 			const step = s.acc > 0 ? 1 : -1;
 			s.acc = 0;
 			s.cooling = true;
-			navigateRef.current(store.currentIndex + step, 'drag');
+			goToIndexRef.current(store.currentIndex + step, 'drag');
 		};
 
 		container.addEventListener('wheel', onWheel, {passive: false});

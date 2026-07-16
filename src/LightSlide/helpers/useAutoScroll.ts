@@ -41,11 +41,8 @@ export function useAutoScroll(
 			} = storeRef.current;
 			if (autoScrollPaused || apiPaused) return;
 			if ((pauseOnHover && hovered) || (pauseOnFocus && focusWithin)) return;
-			const next = isLoop
-				? currentIndex + 1
-				: currentIndex >= maxIndex
-					? 0
-					: currentIndex + 1;
+			const next =
+				!isLoop && currentIndex >= maxIndex ? 0 : currentIndex + 1;
 			navigateToIndexRef.current(next, 'auto');
 		};
 
