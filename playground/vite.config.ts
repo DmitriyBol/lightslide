@@ -26,6 +26,10 @@ export default defineConfig({
 				replacement: path.resolve(__dirname, '../src/flow/index.ts'),
 			},
 			{
+				find: 'lightslide/wheel',
+				replacement: path.resolve(__dirname, '../src/wheel/index.ts'),
+			},
+			{
 				find: 'lightslide',
 				replacement: path.resolve(__dirname, '../src/index.ts'),
 			},

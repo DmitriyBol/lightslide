@@ -17,6 +17,7 @@ import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import type {LightSlideHandle, LightSlideProps} from '../types';
 import {cx} from '../utils/cx';
+import {WheelContext} from '../wheelSeam';
 import {DEFAULT_SLIDE_LABEL, DEFAULT_VIEWED_TIMEOUT} from './helpers/constants';
 import {buildDisplayChildren} from './helpers/loopClones';
 import {collectSlideData} from './helpers/slideData';
@@ -43,8 +44,12 @@ import styles from './LightSlide.module.scss';
  *
  * The container is a WAI-ARIA APG carousel landmark — a labelled `region` when `label` is
  * given, else a plain `group`. The stage's height tracks the viewport only, so the controls
- * anchored to it centre on the track (never offset by the pagination row). navigation /
- * pagination / flow / a11y are consumer-passed plugin nodes from their tree-shakeable entries,
+ * anchored to it centre on the track (never offset by the pagination row). The viewport, not
+ * the track, is the gesture surface: the track's flex box does not cover its overflowing
+ * slides, so a pointerdown falling through a pointer-events-none loop clone would miss
+ * handlers attached to the track — events from real slides bubble to the viewport all the
+ * same. navigation /
+ * pagination / flow / wheel / a11y are consumer-passed plugin nodes from their tree-shakeable entries,
  * rendered into their slots; their providers only materialise when a node is passed, so base
  * consumers pay nothing for any of them. Flow is presence-based: the node being there turns
  * the mode on, and the plugin hands its pointer handlers back through the flow seam.
@@ -69,6 +74,7 @@ function LightSlideInner<T = unknown>(
 		flow,
 		navigation,
 		pagination,
+		wheel,
 		a11y,
 		isLoop = false,
 		loading = false,
@@ -251,6 +257,16 @@ function LightSlideInner<T = unknown>(
 		[effectiveFlow],
 	);
 
+	const wheelSeamValue = useMemo(
+		() => ({
+			containerRef,
+			storeRef,
+			active: maxIndex > 0 && !loading,
+			goToIndex: navigateToIndex,
+		}),
+		[maxIndex, loading, navigateToIndex],
+	);
+
 	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */
 	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
@@ -289,7 +305,10 @@ function LightSlideInner<T = unknown>(
 					className={cx(styles.container, className)}
 					style={style}>
 					<div className={styles.stage}>
-						<div className={styles.viewport}>
+						<div
+							className={styles.viewport}
+							onDragStart={preventNativeDrag}
+							{...pointerHandlers}>
 							{loading ? (
 								fallback
 							) : (
@@ -297,9 +316,7 @@ function LightSlideInner<T = unknown>(
 									ref={trackRef}
 									id={slidesId}
 									className={cx(styles.track, trackClassName)}
-									style={gap > 0 ? {columnGap: gap, ...trackStyle} : trackStyle}
-									onDragStart={preventNativeDrag}
-									{...pointerHandlers}>
+									style={gap > 0 ? {columnGap: gap, ...trackStyle} : trackStyle}>
 									{displayChildren}
 								</div>
 							)}
@@ -316,6 +333,12 @@ function LightSlideInner<T = unknown>(
 						</FlowContext.Provider>
 					)}
 
+					{wheel && (
+						<WheelContext.Provider value={wheelSeamValue}>
+							{wheel}
+						</WheelContext.Provider>
+					)}
+
 					{a11y && (
 						<A11yContext.Provider
 							value={{
@@ -327,6 +350,7 @@ function LightSlideInner<T = unknown>(
 								maxIndex,
 								slidesPerView,
 								isLoop: effectiveLoop,
+								isFlow: effectiveFlow,
 								autoMotion,
 								goToIndex: navigateToIndex,
 								setMotionAllowed,

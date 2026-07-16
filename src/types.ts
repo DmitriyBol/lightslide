@@ -60,11 +60,13 @@ export type BreakpointOverrides = {
  *   `onIndexChange` to keep your state in sync. Ignored while `flow` runs.
  * - `onIndexChange` — fires after every settled position change, from any source: drag,
  *   buttons, pagination, auto-scroll, or the external API.
- * - `navigation` / `pagination` / `flow` / `a11y` — the opt-in plugin slots. Each takes the
- *   node(s) from its tree-shakeable entry (`lightslide/navigation`, `lightslide/pagination`,
- *   `lightslide/flow`, `lightslide/a11y`), e.g. `navigation={<Navigation />}` or
- *   `flow={<Flow speed={60} />}`. Omit a slot and none of that entry's code or styles enters
- *   your bundle. Flow supersedes autoScroll and forces looping on while it runs.
+ * - `navigation` / `pagination` / `flow` / `wheel` / `a11y` — the opt-in plugin slots. Each
+ *   takes the node(s) from its tree-shakeable entry (`lightslide/navigation`,
+ *   `lightslide/pagination`, `lightslide/flow`, `lightslide/wheel`, `lightslide/a11y`), e.g.
+ *   `navigation={<Navigation />}` or `flow={<Flow speed={60} />}`. Omit a slot and none of
+ *   that entry's code or styles enters your bundle. Flow supersedes autoScroll and forces
+ *   looping on while it runs. Wheel turns horizontal trackpad/wheel gestures into page turns
+ *   (drift during flow) without touching vertical page scrolling.
  * - `loading` — when true, the carousel renders `fallback` instead of the slides — useful
  *   while async slide data is still being fetched. With no `fallback` it renders nothing.
  * - `fallback` — node rendered in place of the track while `loading` is true (your own
@@ -89,6 +91,7 @@ export type LightSlideProps<T = unknown> = {
 	flow?: ReactNode;
 	navigation?: ReactNode;
 	pagination?: ReactNode;
+	wheel?: ReactNode;
 	a11y?: ReactNode;
 	isLoop?: boolean;
 	loading?: boolean;

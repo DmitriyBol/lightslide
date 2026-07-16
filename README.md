@@ -34,8 +34,11 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
   `pause()`/`resume()` on the ref handle for a visible pause control.
 - **Flow** (`lightslide/flow`) — continuous ticker scroll at a configurable speed; seamless
   with looping; pauses on interaction, hover, and keyboard focus, and resumes after a delay.
-- **Pay for what you use** — arrows, dots, flow, and the a11y layer ship as tree-shakeable
-  entries; the core stays ~5 kB and an unused module never reaches your bundle.
+- **Wheel & trackpad** (`lightslide/wheel`) — a horizontal two-finger swipe (or shift+wheel)
+  turns one page per flick, with the inertia tail filtered out; vertical page scrolling over
+  the carousel is never intercepted. During flow the same gesture drifts the strip.
+- **Pay for what you use** — arrows, dots, flow, wheel gestures, and the a11y layer ship as
+  tree-shakeable entries; the core stays ~5 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -56,7 +59,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.3 kB** core, +0.9–1.5 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
+| **lightslide** | **5.3 kB** core, +0.7–1.5 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -107,10 +110,10 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5 kB). Arrows, dots, the flow ticker, and
-the accessibility layer are separate tree-shakeable entries — import a module and pass its
-node to the matching slot prop; skip the import and none of its code or styles reaches your
-bundle.
+The core ships only what every carousel needs (~5 kB). Arrows, dots, the flow ticker, wheel
+gestures, and the accessibility layer are separate tree-shakeable entries — import a module
+and pass its node to the matching slot prop; skip the import and none of its code or styles
+reaches your bundle.
 
 ## Components & props
 
@@ -140,6 +143,7 @@ payloads.
 | `flow` | `ReactNode` | — | Continuous ticker from `lightslide/flow` — pass `<Flow />` (supersedes `autoScroll`) |
 | `navigation` | `ReactNode` | — | Prev/next buttons from `lightslide/navigation` — pass `<Navigation />` |
 | `pagination` | `ReactNode` | — | Pagination dots from `lightslide/pagination` — pass `<Pagination />` |
+| `wheel` | `ReactNode` | — | Wheel/trackpad gestures from `lightslide/wheel` — pass `<Wheel />` (see [Wheel & trackpad](#wheel--trackpad-lightslidewheel)) |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
@@ -278,6 +282,25 @@ is inside it (opt out via `pauseOnHover` / `pauseOnFocus`), and the ref handle's
 
 **`FlowProps`**: `speed?: number` (default 40), `resumeDelay?: number` (default 2000 ms),
 `pauseOnHover?: boolean` (default `true`), `pauseOnFocus?: boolean` (default `true`).
+
+### Wheel & trackpad (`lightslide/wheel`)
+
+```tsx
+import { Wheel } from "lightslide/wheel";
+
+<LightSlide wheel={<Wheel />} />
+```
+
+A horizontal two-finger trackpad swipe (or shift+wheel on a mouse; line-based mouse deltas
+are normalized to px) turns one page per flick, wrapping when `isLoop` is on. Deltas
+accumulate until `threshold`, then the gesture commits and the inertia tail a trackpad keeps
+emitting is swallowed — 150 ms of silence or a sharply rising delta starts the next gesture.
+Vertical-dominant wheel events are never touched, so page scrolling over the carousel stays
+native; horizontal ones are consumed, which also suppresses the browser's history swipe.
+While `flow` runs the same gesture drifts the strip instead of paging.
+
+**`WheelProps`**: `threshold?: number` (default 30) — accumulated horizontal px before a
+page turn commits.
 
 ## isLoop
 
@@ -482,7 +505,7 @@ import { A11y } from "lightslide/a11y";
 | Behaviour | Prop (default `true`) | What it does |
 |---|---|---|
 | Keyboard | `keyboard` | `←`/`→` step a slide, `Home`/`End` jump to the first/last, once focus is inside the carousel. Ignores keys typed into form fields. |
-| Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. |
+| Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. Suspends while `flow` runs — a drifting strip has no fixed visible window, and every slide must stay grabbable. |
 | Live region | `liveRegion` | A polite live region announcing `"Slide N of M"` on manual navigation; silent during auto-motion. Customise via `announce={(i, n) => …}`. |
 | Reduced motion | `respectReducedMotion` | Stops **flow**/**auto-scroll** while the user prefers reduced motion (slide-snap is already instant — handled by the core). |
 
@@ -516,6 +539,7 @@ import type {
 import type { NavigationProps, NavButtonRenderProps } from "lightslide/navigation";
 import type { PaginationProps } from "lightslide/pagination";
 import type { FlowProps } from "lightslide/flow";
+import type { WheelProps } from "lightslide/wheel";
 ```
 
 ## Project structure
@@ -547,6 +571,7 @@ src/
 │       ├── usePointerGesture.ts    #   shared drag mechanics: lock/capture/click (+ test)
 │       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
 │       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
+│       ├── useWheel.ts             #   wheel/trackpad gestures → page turns / flow drift (+ test)
 │       └── useViewportEngagement.ts#   IntersectionObserver + terminal events
 ├── a11y/                           # Opt-in `lightslide/a11y` entry (tree-shakeable)
 │   ├── index.ts                    #   subpath barrel
@@ -560,6 +585,10 @@ src/
 ├── flow/
 │   ├── index.ts                    #   `lightslide/flow` entry barrel
 │   └── Flow.tsx                    #   continuous ticker plugin (owns the rAF drift)
+├── wheelSeam.ts                    # Context seam between the core and the wheel plugin
+├── wheel/
+│   ├── index.ts                    #   `lightslide/wheel` entry barrel
+│   └── Wheel.tsx                   #   wheel/trackpad gesture plugin (+ test)
 ├── Slide/
 │   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
 │   └── Slide.module.scss
@@ -594,7 +623,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 211 integration tests (Jest + jsdom) across 22 suites
+npm test             # 233 integration tests (Jest + jsdom) across 24 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

@@ -21,6 +21,7 @@ function setup(overrides?: Partial<A11yContextType>) {
 		maxIndex: 5,
 		slidesPerView: 1,
 		isLoop: false,
+		isFlow: false,
 		autoMotion: false,
 		goToIndex,
 		setMotionAllowed: jest.fn(),

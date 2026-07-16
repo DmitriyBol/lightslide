@@ -253,6 +253,47 @@ describe('useFlow', () => {
 		expect(track.style.transform).toBe('translateX(-400px)');
 	});
 
+	it('consumes wheel mailbox deltas as extra drift and clears the mailbox', () => {
+		const storeRef = {
+			current: createStore({slideCount: 3, loopOffset: 1, slideWidth: 300}),
+		};
+		const {track} = setup({speed: 100, storeRef});
+		frame(0);
+		storeRef.current.wheelDeltaX = 50;
+		frame(1000); /** +100 drift +50 wheel → offset 150 → -(300 + 150) */
+		expect(track.style.transform).toBe('translateX(-450px)');
+		expect(storeRef.current.wheelDeltaX).toBe(0);
+	});
+
+	it('applies wheel deltas even while the hover pause holds the drift', () => {
+		const storeRef = {
+			current: createStore({
+				slideCount: 3,
+				loopOffset: 1,
+				slideWidth: 300,
+				hovered: true,
+			}),
+		};
+		const {track} = setup({speed: 100, storeRef});
+		frame(0);
+		storeRef.current.wheelDeltaX = 80;
+		frame(1000); /** hovered → no speed advance; wheel-only → offset 80 */
+		expect(track.style.transform).toBe('translateX(-380px)');
+	});
+
+	it('drops wheel deltas while a drag interaction owns the transform', () => {
+		const storeRef = {
+			current: createStore({slideCount: 3, loopOffset: 1, slideWidth: 300}),
+		};
+		const {result, track} = setup({speed: 100, storeRef});
+		frame(0);
+		result.current.onPointerDown(downEvent(500));
+		storeRef.current.wheelDeltaX = 80;
+		frame(1000); /** interacting → wheel dropped, no advance */
+		expect(track.style.transform).toBe('translateX(-300px)');
+		expect(storeRef.current.wheelDeltaX).toBe(0);
+	});
+
 	it('does not schedule any frame when disabled', () => {
 		const {track} = setup({enabled: false});
 		expect(window.requestAnimationFrame).not.toHaveBeenCalled();

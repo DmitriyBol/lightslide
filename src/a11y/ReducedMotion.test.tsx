@@ -39,6 +39,7 @@ function mount(setMotionAllowed: jest.Mock) {
 		maxIndex: 2,
 		slidesPerView: 1,
 		isLoop: false,
+		isFlow: false,
 		autoMotion: false,
 		goToIndex: jest.fn(),
 		setMotionAllowed,
