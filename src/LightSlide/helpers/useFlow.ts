@@ -6,11 +6,16 @@ import type {LightSlideStore} from './store';
 import type {PointerHandlers} from './usePointerGesture';
 import {usePointerGesture} from './usePointerGesture';
 
-/** `speed` is the resolved px per second, `resumeDelay` the resolved ms. */
+/**
+ * `speed` is the resolved px per second, `resumeDelay` the resolved ms; `pauseOnHover` /
+ * `pauseOnFocus` are the resolved booleans gating the drift on the store's hovered/focusWithin.
+ */
 type FlowParams = {
 	enabled: boolean;
 	speed: number;
 	resumeDelay: number;
+	pauseOnHover: boolean;
+	pauseOnFocus: boolean;
 	trackRef: RefObject<HTMLDivElement>;
 	storeRef: MutableRefObject<LightSlideStore>;
 };
@@ -54,22 +59,30 @@ const wrap = (value: number, span: number) =>
  * a clone that is pixel-identical to the start, so there is no visible jump. The drag mechanics are
  * shared with useDragGesture via usePointerGesture; here a drag just drifts the strip from its
  * current position, and motion resumes resumeDelay ms after the interaction ends, continuing from
- * wherever it stopped (no snap, no jank).
+ * wherever it stopped (no snap, no jank). The drift also holds while the store says the user is
+ * engaged (hovered/focusWithin, per the pauseOnHover/pauseOnFocus config) or apiPaused is set —
+ * checked per frame, so release resumes on the next frame with no timer.
  */
 export function useFlow({
 	enabled,
 	speed,
 	resumeDelay,
+	pauseOnHover,
+	pauseOnFocus,
 	trackRef,
 	storeRef,
 }: FlowParams): PointerHandlers {
 	const flow = useRef<FlowState>(initialFlowState());
 
-	/** Latest-refs of the prop knobs so changing speed/resumeDelay never restarts the rAF loop. */
+	/** Latest-refs of the prop knobs so changing any of them never restarts the rAF loop. */
 	const speedRef = useRef(speed);
 	speedRef.current = speed;
 	const resumeDelayRef = useRef(resumeDelay);
 	resumeDelayRef.current = resumeDelay;
+	const pauseOnHoverRef = useRef(pauseOnHover);
+	pauseOnHoverRef.current = pauseOnHover;
+	const pauseOnFocusRef = useRef(pauseOnFocus);
+	pauseOnFocusRef.current = pauseOnFocus;
 
 	/** `stride` is the px distance between adjacent slide positions — slideWidth + gap. */
 	const applyTransform = useCallback(
@@ -126,8 +139,13 @@ export function useFlow({
 			 * forces no layout/reflow per frame. The width only changes on resize, where the
 			 * ResizeObserver refreshes store.slideWidth for us.
 			 */
-			const {slideWidth, gap, slideCount} = storeRef.current;
-			if (!f.interacting && slideWidth > 0) {
+			const {slideWidth, gap, slideCount, hovered, focusWithin, apiPaused} =
+				storeRef.current;
+			const engaged =
+				apiPaused ||
+				(pauseOnHoverRef.current && hovered) ||
+				(pauseOnFocusRef.current && focusWithin);
+			if (!f.interacting && !engaged && slideWidth > 0) {
 				const stride = slideWidth + gap;
 				const span = slideCount * stride;
 				f.offset = wrap(f.offset + (speedRef.current * dt) / 1000, span);

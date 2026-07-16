@@ -22,6 +22,9 @@ type ExternalControlParams = {
  * position). `step` skips the clamp so next/prev can wrap under isLoop; goTo and the
  * controlled prop clamp, so an out-of-range jump lands on the nearest edge instead of
  * wrapping. The controlled prop navigates on change only — it never locks the carousel.
+ * `pause`/`resume` flip the store's apiPaused flag, which holds auto-scroll and flow (the APG
+ * pause control); unlike navigation they are not gated on flow, and manual navigation keeps
+ * working while paused.
  */
 export function useExternalControl({
 	ref,
@@ -52,6 +55,12 @@ export function useExternalControl({
 			next: () => apiNavigate(storeRef.current.currentIndex + 1, true),
 			prev: () => apiNavigate(storeRef.current.currentIndex - 1, true),
 			getIndex: () => storeRef.current.currentIndex,
+			pause: () => {
+				storeRef.current.apiPaused = true;
+			},
+			resume: () => {
+				storeRef.current.apiPaused = false;
+			},
 		}),
 		[apiNavigate, storeRef],
 	);

@@ -12,11 +12,15 @@ export type SlideData<T = unknown> = {
 
 /**
  * Automatic slide cycling every `interval` ms. Set enabled: false to pause without removing
- * the prop.
+ * the prop. `pauseOnHover` / `pauseOnFocus` (default true) hold the cycling while the pointer
+ * is over the carousel or keyboard focus is inside it, resuming when it leaves — the WAI-ARIA
+ * APG carousel behaviour; set to false to opt out.
  */
 export type AutoScrollConfig = {
 	enabled: boolean;
 	interval: number;
+	pauseOnHover?: boolean;
+	pauseOnFocus?: boolean;
 };
 
 /**
@@ -112,12 +116,17 @@ export type SlideProps<T = unknown> = AriaAttributes & {
  * that is one per slide). `goTo` clamps out-of-range targets; `next`/`prev` step one position
  * and wrap around when `isLoop` is on. While `flow` runs the track has no discrete position,
  * so the navigation methods no-op and `getIndex` reports the last settled index.
+ * `pause`/`resume` hold and release all auto motion (`autoScroll` and `flow`) — wire them to a
+ * visible button for the WAI-ARIA APG pause control; manual navigation keeps working while
+ * paused, and they work during flow too.
  */
 export type LightSlideHandle = {
 	goTo: (index: number) => void;
 	next: () => void;
 	prev: () => void;
 	getIndex: () => number;
+	pause: () => void;
+	resume: () => void;
 };
 
 /**

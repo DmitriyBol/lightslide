@@ -26,9 +26,11 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
 - **External control** — a controlled `index` prop, `onIndexChange`, and a `ref` handle
   (`goTo` / `next` / `prev` / `getIndex`): the building blocks for thumbnails, synced
   carousels, and custom UIs.
-- **Auto-scroll** — optional step cycling at a configurable interval; pauses during drag.
+- **Auto-scroll** — optional step cycling at a configurable interval; pauses during drag, on
+  hover, and while keyboard focus is inside (WAI-ARIA APG behaviour, opt-out per config), plus
+  `pause()`/`resume()` on the ref handle for a visible pause control.
 - **Flow** (`lightslide/flow`) — continuous ticker scroll at a configurable speed; seamless
-  with looping; pauses on interaction and resumes after a delay.
+  with looping; pauses on interaction, hover, and keyboard focus, and resumes after a delay.
 - **Pay for what you use** — arrows, dots, flow, and the a11y layer ship as tree-shakeable
   entries; the core stays ~4.5 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
@@ -196,7 +198,33 @@ navigation type. Not tracked during a flow (continuous motion has no discrete in
 
 Loops back to 0 after the last slide; pauses during drag; does **not** fire `carousel_reached_end`.
 
-**`AutoScrollConfig`**: `enabled: boolean`, `interval: number` (ms).
+By default the cycling also pauses while the pointer hovers the carousel or keyboard focus is
+inside it, and resumes when it leaves — the [WAI-ARIA APG carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/)
+behaviour. Set `pauseOnHover: false` / `pauseOnFocus: false` to opt out.
+
+**`AutoScrollConfig`**: `enabled: boolean`, `interval: number` (ms),
+`pauseOnHover?: boolean` (default `true`), `pauseOnFocus?: boolean` (default `true`).
+
+The APG pattern also asks for a **visible pause control**. Build it with the ref handle's
+`pause()`/`resume()` — auto-rotation stops while paused, manual navigation keeps working:
+
+```tsx
+const ref = useRef<LightSlideHandle>(null);
+const [isPaused, setIsPaused] = useState(false);
+
+<button
+  type="button"
+  aria-pressed={isPaused}
+  onClick={() => {
+    if (isPaused) ref.current?.resume();
+    else ref.current?.pause();
+    setIsPaused(!isPaused);
+  }}
+>
+  {isPaused ? "Resume" : "Pause"}
+</button>
+<LightSlide ref={ref} autoScroll={{ enabled: true, interval: 3000 }}>…</LightSlide>
+```
 
 ### Flow (continuous ticker, `lightslide/flow`)
 
@@ -210,9 +238,12 @@ Scrolls the track continuously at `speed` px/s (driven by `requestAnimationFrame
 transition). Presence turns the mode on — pass the node conditionally
 (`flow={active ? <Flow /> : undefined}`) to toggle it. Loops seamlessly (clones added
 automatically), pauses on interaction, and resumes from where it stopped after `resumeDelay`.
-Supersedes `autoScroll` when both are set.
+Like auto-scroll, the drift also holds while the pointer hovers the carousel or keyboard focus
+is inside it (opt out via `pauseOnHover` / `pauseOnFocus`), and the ref handle's
+`pause()`/`resume()` hold it explicitly. Supersedes `autoScroll` when both are set.
 
-**`FlowProps`**: `speed?: number` (default 40), `resumeDelay?: number` (default 2000 ms).
+**`FlowProps`**: `speed?: number` (default 40), `resumeDelay?: number` (default 2000 ms),
+`pauseOnHover?: boolean` (default `true`), `pauseOnFocus?: boolean` (default `true`).
 
 ## isLoop
 
@@ -292,6 +323,8 @@ ref.current?.goTo(4); // animate to a position (clamped into range, never wraps)
 ref.current?.next(); // one step right (wraps under isLoop)
 ref.current?.prev(); // one step left (wraps under isLoop)
 ref.current?.getIndex(); // current settled position
+ref.current?.pause(); // hold auto-scroll / flow (the APG pause control)
+ref.current?.resume(); // release the hold
 ```
 
 Or bind it to state — the controlled `index` prop navigates whenever the value changes:
@@ -313,7 +346,8 @@ Semantics worth knowing:
 - Programmatic navigation fires `carousel_slide` like any other navigation, but never
   `carousel_nav_button` / `carousel_pagination_click`.
 - While `flow` runs the track has no discrete position: the controlled prop and the navigation
-  methods are ignored, and `getIndex` reports the last settled position.
+  methods are ignored, and `getIndex` reports the last settled position. `pause()`/`resume()`
+  are the exception — they hold and release the flow drift too.
 
 ## Analytics
 
@@ -383,6 +417,10 @@ out of the box — no configuration required:
   `inert`, so a screen reader never reads them twice and Tab never lands on an off-screen copy.
 - **Linked controls** — prev/next buttons and pagination dots set `aria-controls` to the slides
   container, and dots expose `aria-current`. Built-in buttons/dots already carry `aria-label`s.
+- **Autoplay pauses on hover and focus** — `autoScroll` and `flow` hold while the pointer is
+  over the carousel or keyboard focus is inside it, and resume when it leaves (opt out via
+  `pauseOnHover` / `pauseOnFocus`). For the APG's visible pause control, wire a button to the
+  ref handle's `pause()`/`resume()` — see [Auto-scroll](#auto-scroll).
 - **Reduced motion** — when the user requests `prefers-reduced-motion: reduce`, slide snapping is
   instant (no animated transform). Continuous **flow**/**auto-scroll** motion is left to the
   opt-in layer below.
@@ -471,6 +509,7 @@ src/
 │       ├── useTrackSnap.ts         #   transform/translateX snapping
 │       ├── useBreakpoints.ts       #   media-query overrides of slidesPerView/gap (+ test)
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
+│       ├── useHoverFocus.ts        #   hover/focus-within → store pause flags (+ test)
 │       ├── usePointerGesture.ts    #   shared drag mechanics: lock/capture/click (+ test)
 │       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
 │       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
@@ -521,7 +560,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 190 integration tests (Jest + jsdom) across 21 suites
+npm test             # 211 integration tests (Jest + jsdom) across 22 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

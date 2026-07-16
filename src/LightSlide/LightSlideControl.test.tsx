@@ -1,10 +1,14 @@
 import React, {createRef} from 'react';
 
-import {act, render} from '@testing-library/react';
+import {act, fireEvent, render} from '@testing-library/react';
 
 import {Flow} from '../flow';
 import {Slide} from '../Slide/Slide';
-import type {AnalyticsEvent, LightSlideHandle} from '../types';
+import type {
+	AnalyticsEvent,
+	AutoScrollConfig,
+	LightSlideHandle,
+} from '../types';
 import {LightSlide} from './LightSlide';
 
 import '@testing-library/jest-dom';
@@ -60,6 +64,7 @@ type RenderOptions = {
 	isLoop?: boolean;
 	slidesPerView?: number;
 	flow?: React.ReactNode;
+	autoScroll?: AutoScrollConfig;
 };
 
 function renderCarousel(options: RenderOptions = {}) {
@@ -83,8 +88,14 @@ function renderCarousel(options: RenderOptions = {}) {
 		</LightSlide>
 	);
 	const view = render(ui());
+	/** The carousel root (role group/region) — the element the hover/focus listeners sit on. */
+	const container = view.container.querySelector(
+		'[aria-roledescription="carousel"]',
+	);
+	if (!container) throw new Error('carousel container not found');
 	return {
 		ref,
+		container,
 		rerender: (overrides: Partial<RenderOptions>) =>
 			view.rerender(ui(overrides)),
 	};
@@ -258,6 +269,67 @@ describe('LightSlide external control', () => {
 
 			expect(ref.current?.getIndex()).toBe(0);
 			expect(onIndexChange).toHaveBeenCalledWith(0);
+		});
+	});
+
+	describe('pause / resume', () => {
+		const autoScroll: AutoScrollConfig = {enabled: true, interval: 1000};
+
+		it('pause() holds auto-scroll and resume() restarts it', () => {
+			const {ref} = renderCarousel({autoScroll});
+
+			act(() => jest.advanceTimersByTime(1000));
+			expect(ref.current?.getIndex()).toBe(1);
+
+			act(() => ref.current?.pause());
+			act(() => jest.advanceTimersByTime(3000));
+			expect(ref.current?.getIndex()).toBe(1);
+
+			act(() => ref.current?.resume());
+			act(() => jest.advanceTimersByTime(1000));
+			expect(ref.current?.getIndex()).toBe(2);
+		});
+
+		it('manual navigation keeps working while paused', () => {
+			const {ref} = renderCarousel({autoScroll});
+
+			act(() => ref.current?.pause());
+			act(() => ref.current?.next());
+			expect(ref.current?.getIndex()).toBe(1);
+		});
+
+		it('hovering the carousel holds auto-scroll; leaving resumes it', () => {
+			const {ref, container} = renderCarousel({autoScroll});
+
+			fireEvent.pointerEnter(container, {pointerType: 'mouse'});
+			act(() => jest.advanceTimersByTime(3000));
+			expect(ref.current?.getIndex()).toBe(0);
+
+			fireEvent.pointerLeave(container, {pointerType: 'mouse'});
+			act(() => jest.advanceTimersByTime(1000));
+			expect(ref.current?.getIndex()).toBe(1);
+		});
+
+		it('focus inside the carousel holds auto-scroll; blur out resumes it', () => {
+			const {ref, container} = renderCarousel({autoScroll});
+
+			fireEvent.focusIn(container);
+			act(() => jest.advanceTimersByTime(3000));
+			expect(ref.current?.getIndex()).toBe(0);
+
+			fireEvent.focusOut(container, {relatedTarget: document.body});
+			act(() => jest.advanceTimersByTime(1000));
+			expect(ref.current?.getIndex()).toBe(1);
+		});
+
+		it('hover does not hold auto-scroll when pauseOnHover is false', () => {
+			const {ref, container} = renderCarousel({
+				autoScroll: {...autoScroll, pauseOnHover: false},
+			});
+
+			fireEvent.pointerEnter(container, {pointerType: 'mouse'});
+			act(() => jest.advanceTimersByTime(1000));
+			expect(ref.current?.getIndex()).toBe(1);
 		});
 	});
 
