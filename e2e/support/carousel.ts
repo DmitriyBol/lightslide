@@ -17,6 +17,8 @@ export function carousel(page: Page, sectionId: string, index = 0) {
 
 	return {
 		section,
+		/** The carousel root (the `aria-roledescription="carousel"` landmark) — hover target. */
+		root: section.locator('[aria-roledescription="carousel"]').nth(index),
 		/**
 		 * Prev/next arrows. Default and custom-rendered buttons both carry the same aria-label,
 		 * so this matches either.

@@ -24,6 +24,10 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  * (offsetWidth). `gap` is the px space between adjacent slides (CSS column-gap on the track);
  * every offset computation steps by the stride `slideWidth + gap`.
  * `autoScrollPaused` is set while a drag is in progress so auto motion (auto-scroll/flow) pauses.
+ * `hovered` / `focusWithin` mirror user engagement with the carousel (pointer over, keyboard
+ * focus inside), written by useHoverFocus; auto-scroll and flow read them on their own cadence
+ * and pause per their pauseOnHover/pauseOnFocus config. `apiPaused` is the consumer's explicit
+ * hold, flipped by the ref handle's pause()/resume() — it stops all auto motion unconditionally.
  */
 export type LightSlideStore<T = unknown> = {
 	currentIndex: number;
@@ -38,6 +42,9 @@ export type LightSlideStore<T = unknown> = {
 	slideWidth: number;
 	slideData: (T | undefined)[];
 	autoScrollPaused: boolean;
+	hovered: boolean;
+	focusWithin: boolean;
+	apiPaused: boolean;
 };
 
 /** Creates a store seeded with safe defaults; `overrides` is a convenience for tests. */
@@ -57,6 +64,9 @@ export function createStore<T = unknown>(
 		slideWidth: 0,
 		slideData: [],
 		autoScrollPaused: false,
+		hovered: false,
+		focusWithin: false,
+		apiPaused: false,
 		...overrides,
 	};
 }

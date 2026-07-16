@@ -42,6 +42,8 @@ function setup(overrides: Record<string, unknown> = {}) {
 		enabled: true,
 		speed: 100,
 		resumeDelay: 2000,
+		pauseOnHover: true,
+		pauseOnFocus: true,
 		trackRef: {current: track},
 		/**
 		 * slideWidth is the cached width every flow path (rAF loop, drag, positioning) sizes
@@ -172,6 +174,83 @@ describe('useFlow', () => {
 		 */
 		frame(3000);
 		expect(track.style.transform).toBe('translateX(-500px)');
+	});
+
+	it('holds the drift while hovered and resumes on the next frame after leave', () => {
+		const storeRef = {
+			current: createStore({
+				slideCount: 3,
+				loopOffset: 1,
+				slideWidth: 300,
+				hovered: true,
+			}),
+		};
+		const {track} = setup({speed: 100, storeRef});
+		frame(0);
+		frame(1000); /** hovered → no advance */
+		expect(track.style.transform).toBe('translateX(-300px)');
+
+		storeRef.current.hovered = false;
+		frame(2000); /** dt 1000 → +100px */
+		expect(track.style.transform).toBe('translateX(-400px)');
+	});
+
+	it('holds the drift while focus is within and resumes once it leaves', () => {
+		const storeRef = {
+			current: createStore({
+				slideCount: 3,
+				loopOffset: 1,
+				slideWidth: 300,
+				focusWithin: true,
+			}),
+		};
+		const {track} = setup({speed: 100, storeRef});
+		frame(0);
+		frame(1000);
+		expect(track.style.transform).toBe('translateX(-300px)');
+
+		storeRef.current.focusWithin = false;
+		frame(2000);
+		expect(track.style.transform).toBe('translateX(-400px)');
+	});
+
+	it('keeps drifting while hovered when pauseOnHover is false', () => {
+		const storeRef = {
+			current: createStore({
+				slideCount: 3,
+				loopOffset: 1,
+				slideWidth: 300,
+				hovered: true,
+			}),
+		};
+		const {track} = setup({speed: 100, pauseOnHover: false, storeRef});
+		frame(0);
+		frame(1000);
+		expect(track.style.transform).toBe('translateX(-400px)');
+	});
+
+	it('holds the drift while apiPaused even with both pause configs opted out', () => {
+		const storeRef = {
+			current: createStore({
+				slideCount: 3,
+				loopOffset: 1,
+				slideWidth: 300,
+				apiPaused: true,
+			}),
+		};
+		const {track} = setup({
+			speed: 100,
+			pauseOnHover: false,
+			pauseOnFocus: false,
+			storeRef,
+		});
+		frame(0);
+		frame(1000);
+		expect(track.style.transform).toBe('translateX(-300px)');
+
+		storeRef.current.apiPaused = false;
+		frame(2000);
+		expect(track.style.transform).toBe('translateX(-400px)');
 	});
 
 	it('does not schedule any frame when disabled', () => {

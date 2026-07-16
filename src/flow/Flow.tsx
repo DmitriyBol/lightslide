@@ -9,11 +9,16 @@ import {useFlow} from '../LightSlide/helpers/useFlow';
 
 /**
  * Continuous-ticker tuning: `speed` in px per second (default 40), `resumeDelay` the pause in
- * ms after an interaction before the drift resumes (default 2000).
+ * ms after an interaction before the drift resumes (default 2000). `pauseOnHover` /
+ * `pauseOnFocus` (default true) hold the drift while the pointer is over the carousel or
+ * keyboard focus is inside it, resuming as soon as it leaves — the WAI-ARIA APG carousel
+ * behaviour; set to false to opt out.
  */
 export type FlowProps = {
 	speed?: number;
 	resumeDelay?: number;
+	pauseOnHover?: boolean;
+	pauseOnFocus?: boolean;
 };
 
 /**
@@ -26,6 +31,8 @@ export type FlowProps = {
 export function Flow({
 	speed = DEFAULT_FLOW_SPEED,
 	resumeDelay = DEFAULT_FLOW_RESUME_DELAY,
+	pauseOnHover = true,
+	pauseOnFocus = true,
 }: FlowProps) {
 	const {trackRef, storeRef, active, setPointerHandlers} = useFlowSeam();
 
@@ -33,6 +40,8 @@ export function Flow({
 		enabled: active,
 		speed,
 		resumeDelay,
+		pauseOnHover,
+		pauseOnFocus,
 		trackRef,
 		storeRef,
 	});

@@ -53,6 +53,12 @@ test.describe('flow ticker', () => {
 		for (let i = 1; i <= 10; i++) await page.mouse.move(x - i * 6, y);
 		await page.mouse.up();
 
+		/**
+		 * Park the mouse off the carousel: hovering pauses the drift by default now
+		 * (pauseOnHover), which would otherwise hold it past the resume window.
+		 */
+		await page.mouse.move(5, 5);
+
 		/** Frozen well inside the resume window. */
 		const p1 = await chip.boundingBox();
 		await page.waitForTimeout(250);

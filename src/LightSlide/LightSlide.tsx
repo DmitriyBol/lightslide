@@ -25,6 +25,7 @@ import {useAutoScroll} from './helpers/useAutoScroll';
 import {useBreakpoints} from './helpers/useBreakpoints';
 import {useDragGesture} from './helpers/useDragGesture';
 import {useExternalControl} from './helpers/useExternalControl';
+import {useHoverFocus} from './helpers/useHoverFocus';
 import {useLatestRef} from './helpers/useLatestRef';
 import {useLayoutResync} from './helpers/useLayoutResync';
 import {useNavigation} from './helpers/useNavigation';
@@ -135,6 +136,13 @@ function LightSlideInner<T = unknown>(
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
 	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
 
+	/**
+	 * True while any auto motion runs — it turns on the hover/focus pause listeners, and the
+	 * live-region plugin stays quiet then.
+	 */
+	const autoMotion =
+		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
+
 	const slideData = useMemo(() => collectSlideData<T>(childArray), [childArray]);
 
 	/** Viewed-slides tracking is opt-in via the presence of viewedTimeout (its value = seconds). */
@@ -205,6 +213,8 @@ function LightSlideInner<T = unknown>(
 
 	useExternalControl({ref, index, storeRef, navigateToIndexRef});
 
+	useHoverFocus({enabled: autoMotion, containerRef, storeRef});
+
 	/** Flow supersedes step auto-scroll; neither runs while loading or with the motion gate closed. */
 	useAutoScroll(
 		effectiveFlow || loading || !motionAllowed ? undefined : autoScroll,
@@ -240,10 +250,6 @@ function LightSlideInner<T = unknown>(
 		}),
 		[effectiveFlow],
 	);
-
-	/** True while any auto motion runs — the live-region plugin stays quiet then. */
-	const autoMotion =
-		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
 
 	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */
 	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
