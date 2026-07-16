@@ -1,13 +1,35 @@
 # LightSlide
 
-> The project is currently in testing and may contain bugs. The goal is to find and fix as
-> many issues as possible before 1.0.0. Thank you.
+[![npm version](https://img.shields.io/npm/v/lightslide)](https://www.npmjs.com/package/lightslide)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/lightslide?label=core%20min%2Bgzip)](https://bundlephobia.com/package/lightslide)
+[![CI](https://github.com/DmitriyBol/lightslide/actions/workflows/ci.yml/badge.svg)](https://github.com/DmitriyBol/lightslide/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/lightslide)](https://github.com/DmitriyBol/lightslide/blob/main/LICENSE)
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, built-in navigation, pagination, autoplay,
 infinite loop, a continuous flow (ticker) mode, and one typed analytics event stream —
 in a ~5 kB fully-typed core with zero runtime dependencies beyond React. Everything
 optional ships as a tree-shakeable entry, so you only pay for what you import.
+
+> **Status: pre-1.0.** The API is settling and the project is in active testing — the goal is
+> to find and fix as many issues as possible before 1.0.0. Bug reports are very welcome.
+
+## Contents
+
+- [What it can do](#what-it-can-do)
+- [How it compares](#how-it-compares)
+- [Installation](#installation) · [Quick start](#quick-start)
+- [Components & props](#components--props) — [`<LightSlide>`](#lightslidet), [`<Slide>`](#slidet),
+  [Navigation](#navigation-lightslidenavigation), [Pagination](#pagination-lightslidepagination),
+  [Auto-scroll](#auto-scroll), [Flow](#flow-continuous-ticker-lightslideflow),
+  [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
+- [isLoop](#isloop) · [Loading fallback](#loading-fallback)
+- [slidesPerView & gap](#slidesperview--gap) · [Responsive breakpoints](#responsive-breakpoints)
+- [External control](#external-control)
+- [Analytics](#analytics)
+- [Accessibility](#accessibility)
+- [Styling](#styling) · [Exported types](#exported-types)
+- [Project structure](#project-structure) · [Development](#development) · [License](#license)
 
 ## What it can do
 
@@ -530,8 +552,15 @@ layer is ~1 kB). Import it and pass it to the `a11y` prop:
 ```tsx
 import { LightSlide, Slide } from "lightslide";
 import { A11y } from "lightslide/a11y";
+import { Navigation } from "lightslide/navigation";
+import { Pagination } from "lightslide/pagination";
 
-<LightSlide label="Product highlights" navigation={{}} pagination={{}} a11y={<A11y />}>
+<LightSlide
+  label="Product highlights"
+  navigation={<Navigation />}
+  pagination={<Pagination />}
+  a11y={<A11y />}
+>
   {/* … */}
 </LightSlide>;
 ```
@@ -566,12 +595,13 @@ slides.
 
 ```ts
 import type {
-  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig, DragMode,
+  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig, BreakpointOverrides,
   InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
   NavigationButtonPayload, PaginationClickPayload,
   LightSlideProps, LightSlideHandle, SlideProps, SlideData,
 } from "lightslide";
 
+import type { A11yProps, LiveRegionProps } from "lightslide/a11y";
 import type { NavigationProps, NavButtonRenderProps } from "lightslide/navigation";
 import type { PaginationProps } from "lightslide/pagination";
 import type { FlowProps } from "lightslide/flow";
@@ -604,7 +634,8 @@ src/
 │       ├── useExternalControl.ts   #   controlled index prop + LightSlideHandle ref
 │       ├── useLayoutResync.ts      #   re-measure/clamp/re-snap on layout-shape changes
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
-│       ├── useTrackSnap.ts         #   transform/translateX snapping
+│       ├── trackOffset.ts          #   pure px offset for a visual index (+ test)
+│       ├── useTrackSnap.ts         #   transform/translateX snapping (+ test)
 │       ├── useBreakpoints.ts       #   media-query overrides of slidesPerView/gap (+ test)
 │       ├── useAutoScroll.ts        #   interval cycling (+ test)
 │       ├── useHoverFocus.ts        #   hover/focus-within → store pause flags (+ test)
@@ -613,7 +644,7 @@ src/
 │       ├── useFreeDrag.ts          #   momentum drag + coast, thin over it (+ test)
 │       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
 │       ├── useWheel.ts             #   wheel/trackpad gestures → page turns / flow drift (+ test)
-│       └── useViewportEngagement.ts#   IntersectionObserver + terminal events
+│       └── useViewportEngagement.ts#   IntersectionObserver + terminal events (+ test)
 ├── modules/                        # Every opt-in tree-shakeable entry lives here
 │   ├── a11y/                       #   `lightslide/a11y` (barrel + A11y, Keyboard,
 │   │                               #   FocusGuard, LiveRegion, ReducedMotion + tests)
@@ -638,7 +669,8 @@ src/
 │   ├── cx.test.ts
 │   ├── swipe.ts                    # getSnapIndex — threshold + velocity + multi-slide
 │   ├── swipe.test.ts
-│   └── reducedMotion.ts            # prefers-reduced-motion check (SSR-safe)
+│   ├── reducedMotion.ts            # prefers-reduced-motion check (SSR-safe)
+│   └── reducedMotion.test.ts
 ├── lightSlideContext.ts            # Split contexts: SlideMetricsContext + NavContext
 ├── types.ts                        # Shared + public types
 ├── styles.d.ts                     # Ambient declaration for *.module.scss imports
@@ -649,7 +681,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 255 integration tests (Jest + jsdom) across 27 suites
+npm test             # 276 integration tests (Jest + jsdom) across 30 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
@@ -667,7 +699,7 @@ Two layers:
 - **End-to-end** (`npm run test:e2e`) — Playwright (Chromium) driving the live playground in a
   real browser. Covers what jsdom can't: pointer drag/snap, layout-measured slide widths,
   loop/flow motion, and the a11y layer's real keyboard focus flow + `inert` guarding. See
-  [`e2e/`](e2e/).
+  [`e2e/`](https://github.com/DmitriyBol/lightslide/tree/main/e2e).
 
 ```bash
 npx playwright install chromium   # one-time: browser
