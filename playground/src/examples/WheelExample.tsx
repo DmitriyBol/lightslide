@@ -14,9 +14,9 @@ import flow from './FlowExample.module.scss';
 const ITEMS = ['Aurora', 'Breeze', 'Cinder', 'Dune', 'Ember'];
 
 const FLOW_ITEMS = [
-	'Two-finger swipe',
-	'Shift + wheel',
-	'No page-scroll theft',
+	'Swipe to drift',
+	'Shift+wheel',
+	'No scroll theft',
 	'One page per flick',
 	'Inertia-aware',
 	'~0.7 kB',
@@ -71,7 +71,7 @@ export function WheelExample() {
 
 			<Well>
 				<LightSlide
-					slidesPerView={3.5}
+					slidesPerView={2.5}
 					wheel={<Wheel />}
 					flow={<Flow speed={30} />}>
 					{FLOW_ITEMS.map(label => (

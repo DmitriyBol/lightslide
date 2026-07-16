@@ -31,9 +31,10 @@ type WheelParams = {
  * stays native — while horizontal-dominant ones are consumed (which also suppresses the
  * browser's history swipe). Horizontal deltas accumulate until `threshold`, then commit one
  * page turn per gesture: the inertia tail an unlocking trackpad keeps sending is swallowed
- * until either WHEEL_RESET_MS of silence ends the gesture or a sharply rising delta betrays a
- * new user impulse. While flow runs there is no discrete position to page — deltas route into
- * the store's wheel mailbox instead and the flow ticker drifts by them.
+ * until WHEEL_RESET_MS of silence ends the gesture, the delta changes direction, or a sharply
+ * rising delta betrays a new user impulse (a decaying tail never flips sign and never grows).
+ * While flow runs there is no discrete position to page — deltas route into the store's wheel
+ * mailbox instead and the flow ticker drifts by them.
  */
 export function useWheel({
 	enabled,
@@ -54,10 +55,10 @@ export function useWheel({
 
 		/**
 		 * Per-gesture scratch, scoped to the binding: `acc` is the accumulated horizontal px,
-		 * `lastAbs`/`lastTime` the previous event's magnitude and timestamp (for the silence and
-		 * rise checks), `cooling` swallows the inertia tail after a committed page turn.
+		 * `lastDx`/`lastTime` the previous event's signed delta and timestamp (for the silence,
+		 * flip, and rise checks), `cooling` swallows the inertia tail after a committed page turn.
 		 */
-		const s = {acc: 0, lastAbs: 0, lastTime: 0, cooling: false};
+		const s = {acc: 0, lastDx: 0, lastTime: 0, cooling: false};
 
 		const onWheel = (e: WheelEvent) => {
 			/** Firefox keeps shift+wheel on deltaY; Chrome maps it to deltaX already. */
@@ -78,17 +79,23 @@ export function useWheel({
 			}
 
 			const now = Date.now();
-			const abs = Math.abs(dx);
-			const isNewGesture = now - s.lastTime > WHEEL_RESET_MS;
+			/**
+			 * A direction change is always a fresh gesture — a decaying inertia tail never flips
+			 * sign, and without this a continuous back-and-forth jerk (no silence gap, no rising
+			 * delta) would stay swallowed by `cooling` forever and the carousel would freeze.
+			 */
+			const flipped = s.lastDx !== 0 && (dx > 0) !== (s.lastDx > 0);
+			const isNewGesture = now - s.lastTime > WHEEL_RESET_MS || flipped;
 			const isNewImpulse =
 				s.cooling &&
-				abs > Math.max(s.lastAbs * WHEEL_RISE_RATIO, WHEEL_RISE_FLOOR_PX);
+				Math.abs(dx) >
+					Math.max(Math.abs(s.lastDx) * WHEEL_RISE_RATIO, WHEEL_RISE_FLOOR_PX);
 			if (isNewGesture || isNewImpulse) {
 				s.acc = 0;
 				s.cooling = false;
 			}
 			s.lastTime = now;
-			s.lastAbs = abs;
+			s.lastDx = dx;
 			if (s.cooling) return;
 
 			s.acc += dx;

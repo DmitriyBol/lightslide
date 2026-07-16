@@ -623,7 +623,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 229 integration tests (Jest + jsdom) across 24 suites
+npm test             # 231 integration tests (Jest + jsdom) across 24 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

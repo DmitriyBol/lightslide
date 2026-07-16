@@ -106,6 +106,34 @@ describe('useWheel', () => {
 		expect(navigate).toHaveBeenCalledTimes(2);
 	});
 
+	it('re-arms on a direction flip so rapid back-and-forth jerking never freezes', () => {
+		const {container, navigate} = setup();
+
+		fireWheel(container, {deltaX: 40});
+		fireWheel(container, {deltaX: 20});
+		fireWheel(container, {deltaX: -40});
+		fireWheel(container, {deltaX: -15});
+		fireWheel(container, {deltaX: 40});
+
+		expect(navigate.mock.calls).toEqual([
+			[2, 'drag'],
+			[0, 'drag'],
+			[2, 'drag'],
+		]);
+	});
+
+	it('restarts accumulation from zero when the direction flips mid-gesture', () => {
+		const {container, navigate} = setup();
+
+		fireWheel(container, {deltaX: 20});
+		fireWheel(container, {deltaX: -20});
+		expect(navigate).not.toHaveBeenCalled();
+
+		fireWheel(container, {deltaX: -15});
+		expect(navigate).toHaveBeenCalledTimes(1);
+		expect(navigate).toHaveBeenCalledWith(0, 'drag');
+	});
+
 	it('keeps swallowing a decaying tail that never rises', () => {
 		const {container, navigate} = setup();
 
