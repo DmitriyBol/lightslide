@@ -12,12 +12,12 @@ const external = ["react", "react-dom", "react/jsx-runtime"];
 // never pulls an opt-in entry, so each layer stays out of bundles that don't import it.
 const input = {
   index: "src/index.ts",
-  a11y: "src/a11y/index.ts",
-  navigation: "src/Navigation/index.ts",
-  pagination: "src/Pagination/index.ts",
-  flow: "src/flow/index.ts",
-  wheel: "src/wheel/index.ts",
-  free: "src/free/index.ts",
+  a11y: "src/modules/a11y/index.ts",
+  navigation: "src/modules/Navigation/index.ts",
+  pagination: "src/modules/Pagination/index.ts",
+  flow: "src/modules/flow/index.ts",
+  wheel: "src/modules/wheel/index.ts",
+  free: "src/modules/free/index.ts",
 };
 
 export default [

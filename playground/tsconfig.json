@@ -11,12 +11,12 @@
     "skipLibCheck": true,
     "paths": {
       "lightslide": ["../src/index.ts"],
-      "lightslide/a11y": ["../src/a11y/index.ts"],
-      "lightslide/navigation": ["../src/Navigation/index.ts"],
-      "lightslide/pagination": ["../src/Pagination/index.ts"],
-      "lightslide/flow": ["../src/flow/index.ts"],
-      "lightslide/wheel": ["../src/wheel/index.ts"],
-      "lightslide/free": ["../src/free/index.ts"]
+      "lightslide/a11y": ["../src/modules/a11y/index.ts"],
+      "lightslide/navigation": ["../src/modules/Navigation/index.ts"],
+      "lightslide/pagination": ["../src/modules/Pagination/index.ts"],
+      "lightslide/flow": ["../src/modules/flow/index.ts"],
+      "lightslide/wheel": ["../src/modules/wheel/index.ts"],
+      "lightslide/free": ["../src/modules/free/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

@@ -1,7 +1,7 @@
 import {act, render, screen} from '@testing-library/react';
 
-import {LightSlide} from '../LightSlide/LightSlide';
-import {Slide} from '../Slide/Slide';
+import {LightSlide} from '../../LightSlide/LightSlide';
+import {Slide} from '../../Slide/Slide';
 import {Wheel} from './Wheel';
 
 /** ── IntersectionObserver / ResizeObserver mocks (not implemented in jsdom) ── */

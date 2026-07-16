@@ -1,7 +1,7 @@
 import {useCallback} from 'react';
 
-import {useNavContext} from '../lightSlideContext';
-import {cx} from '../utils/cx';
+import {useNavContext} from '../../lightSlideContext';
+import {cx} from '../../utils/cx';
 import styles from './Pagination.module.scss';
 import type {PaginationProps} from './Pagination.types';
 

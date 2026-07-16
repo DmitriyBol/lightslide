@@ -1,7 +1,7 @@
 import {useLayoutEffect} from 'react';
 
-import {useFreeSeam} from '../freeSeam';
-import {useFreeDrag} from '../LightSlide/helpers/useFreeDrag';
+import {useFreeSeam} from '../../freeSeam';
+import {useFreeDrag} from '../../LightSlide/helpers/useFreeDrag';
 
 /**
  * `snap` picks the free-snap variant: the coast travels the same distance but lands on the
