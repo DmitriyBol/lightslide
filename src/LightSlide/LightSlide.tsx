@@ -13,6 +13,7 @@ import type {DragEvent, ForwardedRef, ReactElement, Ref} from 'react';
 
 import {A11yContext} from '../a11ySeam';
 import {FlowContext} from '../flowSeam';
+import {FreeContext} from '../freeSeam';
 import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import type {LightSlideHandle, LightSlideProps} from '../types';
@@ -49,10 +50,11 @@ import styles from './LightSlide.module.scss';
  * slides, so a pointerdown falling through a pointer-events-none loop clone would miss
  * handlers attached to the track — events from real slides bubble to the viewport all the
  * same. navigation /
- * pagination / flow / wheel / a11y are consumer-passed plugin nodes from their tree-shakeable entries,
- * rendered into their slots; their providers only materialise when a node is passed, so base
- * consumers pay nothing for any of them. Flow is presence-based: the node being there turns
- * the mode on, and the plugin hands its pointer handlers back through the flow seam.
+ * pagination / flow / wheel / free / a11y are consumer-passed plugin nodes from their
+ * tree-shakeable entries, rendered into their slots; their providers only materialise when a
+ * node is passed, so base consumers pay nothing for any of them. Flow and free are
+ * presence-based: the node being there turns the mode on, and the plugin hands its pointer
+ * handlers back through its seam.
  */
 function LightSlideInner<T = unknown>(
 	{
@@ -75,6 +77,7 @@ function LightSlideInner<T = unknown>(
 		navigation,
 		pagination,
 		wheel,
+		free,
 		a11y,
 		isLoop = false,
 		loading = false,
@@ -238,14 +241,20 @@ function LightSlideInner<T = unknown>(
 	});
 
 	/**
-	 * While the flow is active its plugin owns the track: the handlers it registered through
-	 * the seam replace the drag-to-snap gesture (drag falls back in until the plugin mounts).
+	 * Plugin-owned gestures replace the built-in drag-to-snap through the seams: while the
+	 * flow is active its plugin owns the track outright; otherwise a mounted free plugin's
+	 * momentum handlers take over. Drag-to-snap falls back in until a plugin registers.
 	 */
 	const [flowHandlers, setFlowHandlers] = useState<PointerHandlers | null>(
 		null,
 	);
+	const [freeHandlers, setFreeHandlers] = useState<PointerHandlers | null>(
+		null,
+	);
 	const pointerHandlers =
-		effectiveFlow && flowHandlers ? flowHandlers : dragHandlers;
+		effectiveFlow && flowHandlers
+			? flowHandlers
+			: (freeHandlers ?? dragHandlers);
 
 	const flowSeamValue = useMemo(
 		() => ({
@@ -255,6 +264,17 @@ function LightSlideInner<T = unknown>(
 			setPointerHandlers: setFlowHandlers,
 		}),
 		[effectiveFlow],
+	);
+
+	const freeSeamValue = useMemo(
+		() => ({
+			trackRef,
+			storeRef,
+			active: maxIndex > 0 && !loading,
+			goToIndex: navigateToIndex,
+			setPointerHandlers: setFreeHandlers,
+		}),
+		[maxIndex, loading, navigateToIndex],
 	);
 
 	const wheelSeamValue = useMemo(
@@ -337,6 +357,12 @@ function LightSlideInner<T = unknown>(
 						<WheelContext.Provider value={wheelSeamValue}>
 							{wheel}
 						</WheelContext.Provider>
+					)}
+
+					{free && (
+						<FreeContext.Provider value={freeSeamValue}>
+							{free}
+						</FreeContext.Provider>
 					)}
 
 					{a11y && (

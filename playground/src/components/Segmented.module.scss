@@ -1,6 +1,12 @@
+// Equal-width columns are load-bearing: the thumb is width 100%/count translated by
+// index * 100%, so every segment must be exactly as wide as the widest label — inline-grid
+// with 1fr auto-columns guarantees that even when labels differ a lot (snap vs free-snap);
+// flex items would stop shrinking at their own content width and skew the thumb.
 .seg {
 	position: relative;
-	display: inline-flex;
+	display: inline-grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
 	background: var(--bg);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-sm);
@@ -23,7 +29,6 @@
 .segBtn {
 	position: relative;
 	z-index: 1;
-	flex: 1 1 0;
 	padding: 7px 16px;
 	font-family: var(--font-mono);
 	font-size: 0.75rem;
@@ -35,7 +40,7 @@
 	cursor: pointer;
 	transition: color 160ms var(--ease-out);
 
-	&[aria-selected='true'] {
+	&[aria-pressed='true'] {
 		color: var(--text);
 	}
 

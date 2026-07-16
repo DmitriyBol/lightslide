@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, built-in navigation, pagination, autoplay, infinite loop, continuous flow (ticker) mode, and typed analytics. ~5 kB core, zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -35,6 +35,11 @@
       "types": "./dist/wheel.d.ts",
       "import": "./dist/wheel.esm.js",
       "require": "./dist/wheel.js"
+    },
+    "./free": {
+      "types": "./dist/free.d.ts",
+      "import": "./dist/free.esm.js",
+      "require": "./dist/free.js"
     },
     "./package.json": "./package.json"
   },
@@ -88,12 +93,17 @@
     {
       "name": "lightslide/flow (with shared chunks)",
       "path": "dist/flow.esm.js",
-      "limit": "1.5 kB"
+      "limit": "1.55 kB"
     },
     {
       "name": "lightslide/wheel (with shared chunks)",
       "path": "dist/wheel.esm.js",
       "limit": "1 kB"
+    },
+    {
+      "name": "lightslide/free (with shared chunks)",
+      "path": "dist/free.esm.js",
+      "limit": "1.75 kB"
     }
   ],
   "repository": {

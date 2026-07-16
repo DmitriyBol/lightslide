@@ -15,7 +15,8 @@
       "lightslide/navigation": ["../src/Navigation/index.ts"],
       "lightslide/pagination": ["../src/Pagination/index.ts"],
       "lightslide/flow": ["../src/flow/index.ts"],
-      "lightslide/wheel": ["../src/wheel/index.ts"]
+      "lightslide/wheel": ["../src/wheel/index.ts"],
+      "lightslide/free": ["../src/free/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

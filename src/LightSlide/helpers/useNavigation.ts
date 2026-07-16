@@ -5,6 +5,7 @@ import type {Dispatch, MutableRefObject, SetStateAction} from 'react';
 import type {AnalyticsConfig} from '../../types';
 import type {NavigateFn} from './navigation';
 import type {LightSlideStore} from './store';
+import {trackOffset} from './trackOffset';
 
 /**
  * Wiring for the navigation path: the imperative core (store + snap), the latest-refs of the
@@ -30,6 +31,12 @@ type NavigationParams<T> = {
  * the external API. `source` decides which extra analytics events fire and whether a no-op
  * drag snaps back. Loop wrap-around is detected from the raw index and resolved as an
  * animated snap onto the edge clone followed by a silent re-snap to the matching real slide.
+ *
+ * 'settle' (a free-drag coast coming to rest) is the one source that never moves the track:
+ * the index commits with plain clamping (no wrap dance — the coast already wrapped its
+ * offset) and every snap is skipped. Conversely, when any user trigger targets the current
+ * index while the track rests OFF its boundary (a free-mode rest), the early return still
+ * re-aligns the track — clicking the active dot after a free scroll straightens the slides.
  */
 export function useNavigation<T>({
 	storeRef,
@@ -50,8 +57,9 @@ export function useNavigation<T>({
 				currentIndex: from,
 			} = storeRef.current;
 
-			const isBackwardWrap = loopMode && nextIndex < 0;
-			const isForwardWrap = loopMode && nextIndex > maxIdx;
+			const wraps = loopMode && source !== 'settle';
+			const isBackwardWrap = wraps && nextIndex < 0;
+			const isForwardWrap = wraps && nextIndex > maxIdx;
 
 			let clamped: number;
 			if (isBackwardWrap) clamped = maxIdx;
@@ -59,8 +67,12 @@ export function useNavigation<T>({
 			else clamped = Math.max(0, Math.min(maxIdx, nextIndex));
 
 			if (clamped === from && !isBackwardWrap && !isForwardWrap) {
-				if (source === 'drag')
-					snapToVisual(from + (loopMode ? offset : 0), true);
+				const fromVisual = from + (loopMode ? offset : 0);
+				const offBoundary =
+					storeRef.current.restOffset !==
+					trackOffset(fromVisual, storeRef.current);
+				if (source === 'drag' || (source !== 'settle' && offBoundary))
+					snapToVisual(fromVisual, true);
 				return;
 			}
 
@@ -104,7 +116,7 @@ export function useNavigation<T>({
 				snapToVisual(0, true, () => snapToVisual(maxIdx + offset, false));
 			} else if (isForwardWrap) {
 				snapToVisual(count + offset, true, () => snapToVisual(offset, false));
-			} else {
+			} else if (source !== 'settle') {
 				snapToVisual(clamped + (loopMode ? offset : 0), true);
 			}
 		},
