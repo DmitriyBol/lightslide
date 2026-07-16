@@ -95,6 +95,112 @@ describe('useNavigation — settle source', () => {
 	});
 });
 
+describe('useNavigation — loop wrap dance', () => {
+	afterEach(() => jest.clearAllMocks());
+
+	const loopStore = {
+		isLoop: true,
+		loopOffset: 1,
+		slidesPerView: 1,
+		maxIndex: 4,
+		slideCount: 5,
+	};
+
+	it('next past the end animates onto the edge clone, then silently re-snaps to the real slide', () => {
+		const {navigate, store, onEvent, snapToVisual} = setupNavigation({
+			...loopStore,
+			currentIndex: 4,
+		});
+		navigate(5, 'button');
+		expect(store.currentIndex).toBe(0);
+		expect(snapToVisual).toHaveBeenCalledTimes(1);
+		expect(snapToVisual).toHaveBeenCalledWith(6, true, expect.any(Function));
+		const [, , onComplete] = snapToVisual.mock.calls[0] as [
+			number,
+			boolean,
+			() => void,
+		];
+		onComplete();
+		expect(snapToVisual).toHaveBeenLastCalledWith(1, false);
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_slide',
+			direction: 'right',
+			fromIndex: 4,
+			toIndex: 0,
+		});
+	});
+
+	it('prev from the first slide wraps with direction "left" — the true motion, not the index delta', () => {
+		const {navigate, store, onEvent, fireTerminalIfNeeded, snapToVisual} =
+			setupNavigation({...loopStore, currentIndex: 0});
+		navigate(-1, 'button');
+		expect(store.currentIndex).toBe(4);
+		expect(snapToVisual).toHaveBeenCalledWith(0, true, expect.any(Function));
+		const [, , onComplete] = snapToVisual.mock.calls[0] as [
+			number,
+			boolean,
+			() => void,
+		];
+		onComplete();
+		expect(snapToVisual).toHaveBeenLastCalledWith(5, false);
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_slide',
+			direction: 'left',
+			fromIndex: 0,
+			toIndex: 4,
+		});
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_nav_button',
+			direction: 'left',
+			fromIndex: 0,
+			toIndex: 4,
+		});
+		/** Landing on maxIndex via a wrap is not "reaching the end". */
+		expect(fireTerminalIfNeeded).not.toHaveBeenCalled();
+	});
+});
+
+describe('useNavigation — per-source analytics', () => {
+	afterEach(() => jest.clearAllMocks());
+
+	it('a button navigation emits carousel_nav_button alongside carousel_slide', () => {
+		const {navigate, onEvent} = setupNavigation();
+		navigate(2, 'button');
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_slide',
+			direction: 'right',
+			fromIndex: 1,
+			toIndex: 2,
+		});
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_nav_button',
+			direction: 'right',
+			fromIndex: 1,
+			toIndex: 2,
+		});
+	});
+
+	it('a pagination navigation emits carousel_pagination_click and no nav-button event', () => {
+		const {navigate, onEvent} = setupNavigation();
+		navigate(3, 'pagination');
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_pagination_click',
+			fromIndex: 1,
+			toIndex: 3,
+		});
+		const kinds = onEvent.mock.calls.map(
+			([event]: [{event: string}]) => event.event,
+		);
+		expect(kinds).not.toContain('carousel_nav_button');
+	});
+
+	it('a drag navigation emits only carousel_slide', () => {
+		const {navigate, onEvent} = setupNavigation();
+		navigate(2, 'drag');
+		expect(onEvent).toHaveBeenCalledTimes(1);
+	});
+});
+
 describe('useNavigation — off-boundary re-align', () => {
 	afterEach(() => jest.clearAllMocks());
 
