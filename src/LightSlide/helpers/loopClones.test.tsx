@@ -44,12 +44,30 @@ describe('buildDisplayChildren', () => {
 			expect(props.inert).toBe('');
 			/** no redundant "N of M" label on an already-hidden node */
 			expect(props['aria-label']).toBeUndefined();
+			/** a grab over a clone must fall through to the track (inert swallows pointer events) */
+			expect((props.style as {pointerEvents?: string}).pointerEvents).toBe(
+				'none',
+			);
 		}
 
 		/** the 3 real slides sit labelled in the middle */
 		result.slice(1, 4).forEach((node, i) => {
 			expect(propsOf(node)['aria-label']).toBe(`${i + 1} of 3`);
 		});
+	});
+
+	it('merges the consumer style into a clone under pointer-events none', () => {
+		const styled = [
+			<div key="a" style={{padding: '0 5px'}}>
+				A
+			</div>,
+			<div key="b">B</div>,
+		];
+		const result = buildDisplayChildren(styled, 2, 1, label);
+		/** append clone copies slide A — its padding must survive the merge */
+		const style = propsOf(result[3]).style as Record<string, string>;
+		expect(style.padding).toBe('0 5px');
+		expect(style.pointerEvents).toBe('none');
 	});
 
 	it('clones loopOffset slides from each end for larger offsets', () => {

@@ -29,6 +29,50 @@ test.describe('flow ticker', () => {
 		expect(Math.abs(after.x - before.x)).toBeGreaterThan(10);
 	});
 
+	test('stays grabbable after dragging deep into the clone window', async ({
+		page,
+	}) => {
+		await page.goto('/');
+		const section = page.locator('#flow');
+		const region = section.locator('[aria-roledescription="carousel"]');
+		await region.scrollIntoViewIfNeeded();
+		/** Let the smooth scroll and the reveal animation settle before taking coordinates. */
+		await page.waitForTimeout(900);
+
+		const track = region.locator('[id]');
+		const transform = async () => {
+			const s = await track.evaluate(el => el.style.transform);
+			return Math.round(Number(/-?[\d.]+/.exec(s)?.[0] ?? NaN));
+		};
+
+		/**
+		 * Repeated left drags park the viewport on the appended loop clones (pixel-identical to
+		 * the real slides, so the strip looks perfectly normal). Clones are aria-hidden + inert;
+		 * without pointer-events: none on them the next grab would land on an inert target,
+		 * whose pointer events Chromium never dispatches — and the strip would freeze for the
+		 * user. The cursor never leaves the carousel, exactly the reported gesture.
+		 */
+		async function drag(dx: number) {
+			const box = await region.boundingBox();
+			if (!box) throw new Error('flow region has no bounding box');
+			const y = box.y + box.height / 2;
+			const x = box.x + box.width / 2;
+			await page.mouse.move(x, y);
+			await page.mouse.down();
+			for (let i = 1; i <= 8; i++) await page.mouse.move(x + (dx * i) / 8, y);
+			const during = await transform();
+			await page.mouse.up();
+			return during;
+		}
+
+		for (let i = 0; i < 6; i++) await drag(-250);
+
+		/** The strip is now parked on clones — a right drag must still track the pointer. */
+		const start = await transform();
+		const during = await drag(250);
+		expect(during - start).toBeGreaterThan(200);
+	});
+
 	test('a drag pauses the drift; it resumes after resumeDelay', async ({
 		page,
 	}) => {

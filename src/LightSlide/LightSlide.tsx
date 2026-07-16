@@ -44,7 +44,11 @@ import styles from './LightSlide.module.scss';
  *
  * The container is a WAI-ARIA APG carousel landmark — a labelled `region` when `label` is
  * given, else a plain `group`. The stage's height tracks the viewport only, so the controls
- * anchored to it centre on the track (never offset by the pagination row). navigation /
+ * anchored to it centre on the track (never offset by the pagination row). The viewport, not
+ * the track, is the gesture surface: the track's flex box does not cover its overflowing
+ * slides, so a pointerdown falling through a pointer-events-none loop clone would miss
+ * handlers attached to the track — events from real slides bubble to the viewport all the
+ * same. navigation /
  * pagination / flow / wheel / a11y are consumer-passed plugin nodes from their tree-shakeable entries,
  * rendered into their slots; their providers only materialise when a node is passed, so base
  * consumers pay nothing for any of them. Flow is presence-based: the node being there turns
@@ -301,7 +305,10 @@ function LightSlideInner<T = unknown>(
 					className={cx(styles.container, className)}
 					style={style}>
 					<div className={styles.stage}>
-						<div className={styles.viewport}>
+						<div
+							className={styles.viewport}
+							onDragStart={preventNativeDrag}
+							{...pointerHandlers}>
 							{loading ? (
 								fallback
 							) : (
@@ -309,9 +316,7 @@ function LightSlideInner<T = unknown>(
 									ref={trackRef}
 									id={slidesId}
 									className={cx(styles.track, trackClassName)}
-									style={gap > 0 ? {columnGap: gap, ...trackStyle} : trackStyle}
-									onDragStart={preventNativeDrag}
-									{...pointerHandlers}>
+									style={gap > 0 ? {columnGap: gap, ...trackStyle} : trackStyle}>
 									{displayChildren}
 								</div>
 							)}

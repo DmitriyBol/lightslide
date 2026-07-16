@@ -5,8 +5,9 @@ import type {MouseEvent, PointerEvent, RefObject} from 'react';
 import {DRAG_DIRECTION_LOCK_PX} from './constants';
 
 /**
- * The pointer-event handler bag both gesture modes (drag-to-snap and flow drift) attach to the
- * track. Identical shape for both, so each consumer returns it verbatim.
+ * The pointer-event handler bag both gesture modes (drag-to-snap and flow drift) attach to
+ * the viewport — the gesture surface. Identical shape for both, so each consumer returns it
+ * verbatim.
  */
 export type PointerHandlers = {
 	onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
@@ -85,7 +86,7 @@ const initialScratch = (): GestureScratch => ({
  * are identical across modes — the first-few-px direction lock (horizontal vs vertical intent),
  * deferred pointer capture, velocity tracking, swallowing the click that follows a real drag, and
  * the "pointer left the carousel mid-drag" safety net — and delegates the mode-specific motion to
- * the four callbacks. Returns the handler bag the consumer spreads onto the track unchanged.
+ * the four callbacks. Returns the handler bag the consumer spreads onto the viewport unchanged.
  */
 export function usePointerGesture({
 	trackRef,

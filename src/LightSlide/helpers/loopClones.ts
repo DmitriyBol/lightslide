@@ -1,6 +1,6 @@
 import {cloneElement, isValidElement} from 'react';
 
-import type {ReactElement, ReactNode} from 'react';
+import type {CSSProperties, ReactElement, ReactNode} from 'react';
 
 type SlideLabeler = (index: number, count: number) => string;
 
@@ -33,8 +33,26 @@ function slideAria(
  * aria-hidden keeps a screen reader from announcing the content twice, and inert removes their
  * focusable descendants from the tab order (otherwise Tab would stop on off-screen duplicates).
  * `inert=''` — the empty-string form React 18 renders as the boolean attribute's presence.
+ *
+ * They also get `pointer-events: none`: the browser never dispatches pointer events for an
+ * inert target — not even to its ancestors — so a grab that lands on a clone would silently
+ * die and the strip would be undraggable whenever the wrap window parks clones under the
+ * cursor (flow spends a whole viewport-width of every cycle there). Skipping the clone in CSS
+ * hit-testing instead makes the grab fall through to the viewport, where the gesture handlers
+ * live. The consumer's own style is merged in so clones keep the exact geometry of their
+ * originals.
  */
-const cloneAria = {'aria-hidden': true, inert: ''};
+function cloneProps(child: ReactNode, key: string): Record<string, unknown> {
+	const style = isValidElement(child)
+		? (child.props as {style?: CSSProperties}).style
+		: undefined;
+	return {
+		'aria-hidden': true,
+		inert: '',
+		key,
+		style: {...style, pointerEvents: 'none'},
+	};
+}
 
 function decorate(child: ReactNode, props: Record<string, unknown>): ReactNode {
 	return isValidElement(child)
@@ -71,13 +89,11 @@ export function buildDisplayChildren(
 	 */
 	const prependClones = childArray
 		.slice(slideCount - loopOffset)
-		.map((child, i) => decorate(child, {...cloneAria, key: `__loop_pre_${i}`}));
+		.map((child, i) => decorate(child, cloneProps(child, `__loop_pre_${i}`)));
 
 	const appendClones = childArray
 		.slice(0, loopOffset)
-		.map((child, i) =>
-			decorate(child, {...cloneAria, key: `__loop_post_${i}`}),
-		);
+		.map((child, i) => decorate(child, cloneProps(child, `__loop_post_${i}`)));
 
 	return [...prependClones, ...real, ...appendClones];
 }

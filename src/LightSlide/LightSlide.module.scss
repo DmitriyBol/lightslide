@@ -12,18 +12,21 @@
 	width: 100%;
 }
 
-// Clips the track. Width follows the container so slide geometry is unchanged.
+// Clips the track and is the gesture surface: the pointer handlers live here, so a grab
+// that falls through a pointer-events-none loop clone still lands on the carousel (the
+// track's own flex box does not cover its overflowing slides). cursor/user-select inherit
+// down; touch-action on an ancestor governs the whole subtree's touches.
 .viewport {
 	width: 100%;
 	overflow: hidden;
-}
-
-// Inner draggable track. The translateX transform is dynamic and applied
-// inline by the component; only the static layout lives here.
-.track {
-	display: flex;
 	cursor: grab;
 	user-select: none;
 	touch-action: pan-y;
+}
+
+// Inner sliding track. The translateX transform is dynamic and applied
+// inline by the component; only the static layout lives here.
+.track {
+	display: flex;
 	will-change: transform;
 }
