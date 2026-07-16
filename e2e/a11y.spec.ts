@@ -82,4 +82,26 @@ test.describe('accessibility layer', () => {
 			'',
 		);
 	});
+
+	test('focus-guard suspends during flow: drifting slides stay grabbable', async ({
+		page,
+	}) => {
+		await page.goto('/');
+		const section = page.locator('#a11y');
+
+		/**
+		 * The "Ticker — flow" carousel drifts without ever changing currentIndex, so a guard
+		 * window computed from it would go stale and inert would swallow pointer grabs — every
+		 * REAL slide must stay interactive; only the loop clones stay inert (aria-hidden too).
+		 */
+		const track = section
+			.getByRole('region', {name: 'Ticker — flow'})
+			.locator('[id]');
+		await expect(
+			track.locator('[aria-hidden="true"][inert]'),
+		).toHaveCount(2);
+		await expect(
+			track.locator(':scope > :not([aria-hidden="true"])[inert]'),
+		).toHaveCount(0);
+	});
 });

@@ -27,6 +27,7 @@ function mount(track: HTMLDivElement, overrides?: Partial<A11yContextType>) {
 		maxIndex: 2,
 		slidesPerView: 1,
 		isLoop: false,
+		isFlow: false,
 		autoMotion: false,
 		goToIndex: jest.fn(),
 		setMotionAllowed: jest.fn(),
@@ -73,6 +74,26 @@ describe('FocusGuard', () => {
 		expect(inert(track, 2)).toBe(true); /** real1 off-screen */
 		expect(inert(track, 3)).toBe(true); /** real2 off-screen */
 		expect(inert(track, 4)).toBe(true); /** clone stays inert */
+	});
+
+	it('suspends during flow: every real slide stays interactive, clones stay inert', () => {
+		/** flow layout at slidesPerView 1: [clonePre, real0..real2, clonePost], drifting */
+		const track = makeTrack(5);
+		track.children[0].setAttribute('inert', '');
+		track.children[4].setAttribute('inert', '');
+		mount(track, {
+			currentIndex: 0,
+			slideCount: 3,
+			slidesPerView: 1,
+			isLoop: true,
+			isFlow: true,
+			autoMotion: true,
+		});
+		expect(inert(track, 0)).toBe(true);
+		expect(inert(track, 1)).toBe(false);
+		expect(inert(track, 2)).toBe(false);
+		expect(inert(track, 3)).toBe(false);
+		expect(inert(track, 4)).toBe(true);
 	});
 
 	it('clears the guards it set on unmount', () => {

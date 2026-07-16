@@ -19,8 +19,9 @@ import type {LightSlideStore} from './LightSlide/helpers/store';
  * Most fields are refs or plain nav state; the non-obvious ones: `containerRef` is where keyboard
  * binds its listener, `trackRef`'s children are what focus-guarding walks, `storeRef` is the
  * imperative core store, `slidesPerView` gives focus-guarding its visible range, `autoMotion` is
- * true while flow / auto-scroll runs (the live region falls silent then), and `setMotionAllowed`
- * lets the reduced-motion plugin stop auto-motion reactively.
+ * true while flow / auto-scroll runs (the live region falls silent then), `isFlow` is true only
+ * while the flow ticker runs (there is no discrete position then, so focus-guarding suspends),
+ * and `setMotionAllowed` lets the reduced-motion plugin stop auto-motion reactively.
  */
 export type A11yContextType = {
 	containerRef: RefObject<HTMLDivElement>;
@@ -31,6 +32,7 @@ export type A11yContextType = {
 	maxIndex: number;
 	slidesPerView: number;
 	isLoop: boolean;
+	isFlow: boolean;
 	autoMotion: boolean;
 	goToIndex: (index: number, source: 'button' | 'pagination') => void;
 	setMotionAllowed: (allowed: boolean) => void;

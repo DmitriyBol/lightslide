@@ -345,6 +345,7 @@ function LightSlideInner<T = unknown>(
 								maxIndex,
 								slidesPerView,
 								isLoop: effectiveLoop,
+								isFlow: effectiveFlow,
 								autoMotion,
 								goToIndex: navigateToIndex,
 								setMotionAllowed,

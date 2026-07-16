@@ -505,7 +505,7 @@ import { A11y } from "lightslide/a11y";
 | Behaviour | Prop (default `true`) | What it does |
 |---|---|---|
 | Keyboard | `keyboard` | `←`/`→` step a slide, `Home`/`End` jump to the first/last, once focus is inside the carousel. Ignores keys typed into form fields. |
-| Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. |
+| Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. Suspends while `flow` runs — a drifting strip has no fixed visible window, and every slide must stay grabbable. |
 | Live region | `liveRegion` | A polite live region announcing `"Slide N of M"` on manual navigation; silent during auto-motion. Customise via `announce={(i, n) => …}`. |
 | Reduced motion | `respectReducedMotion` | Stops **flow**/**auto-scroll** while the user prefers reduced motion (slide-snap is already instant — handled by the core). |
 
@@ -623,7 +623,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 231 integration tests (Jest + jsdom) across 24 suites
+npm test             # 232 integration tests (Jest + jsdom) across 24 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

@@ -12,9 +12,14 @@ import {useA11yContext} from '../a11ySeam';
  * `slidesPerView` keeps its partially-visible peek slide interactive. DOM child positions map
  * back to logical slide indices (clones sit below 0 or at ≥ slideCount and are skipped); on
  * unmount every guard this plugin set is cleared, so slides are interactive again.
+ *
+ * While the flow ticker runs the guard suspends and every real slide stays interactive: the
+ * strip drifts without ever changing `currentIndex`, so a window computed from it goes stale
+ * immediately — and an inert subtree also swallows pointer events, which would make the
+ * drifting slides impossible to grab.
  */
 export function FocusGuard() {
-	const {trackRef, currentIndex, slideCount, slidesPerView, isLoop} =
+	const {trackRef, currentIndex, slideCount, slidesPerView, isLoop, isFlow} =
 		useA11yContext();
 
 	useEffect(() => {
@@ -34,7 +39,8 @@ export function FocusGuard() {
 		}
 
 		for (const {el, logical} of realSlides) {
-			const visible = logical >= currentIndex && logical <= lastVisible;
+			const visible =
+				isFlow || (logical >= currentIndex && logical <= lastVisible);
 			if (visible) el.removeAttribute('inert');
 			else el.setAttribute('inert', '');
 		}
@@ -42,7 +48,7 @@ export function FocusGuard() {
 		return () => {
 			for (const {el} of realSlides) el.removeAttribute('inert');
 		};
-	}, [trackRef, currentIndex, slideCount, slidesPerView, isLoop]);
+	}, [trackRef, currentIndex, slideCount, slidesPerView, isLoop, isFlow]);
 
 	return null;
 }
