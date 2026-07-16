@@ -9,8 +9,10 @@ const SECTION_IDS = [
 	'minimal',
 	'custom-styles',
 	'slides-per-view',
+	'breakpoints',
 	'navigation',
 	'pagination',
+	'controlled',
 	'auto-scroll',
 	'loop',
 	'flow',
@@ -19,6 +21,8 @@ const SECTION_IDS = [
 	'link-cards',
 	'custom-timeout',
 	'loading',
+	'a11y',
+	'compare',
 ];
 
 test.describe('smoke', () => {

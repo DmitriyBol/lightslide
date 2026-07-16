@@ -1,7 +1,7 @@
 {
   "name": "lightslide",
-  "version": "0.12.0",
-  "description": "Lightweight, fully-typed React carousel & slider with built-in analytics, infinite loop, and a continuous flow (ticker) mode. Zero runtime dependencies beyond React.",
+  "version": "0.12.1",
+  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, built-in navigation, pagination, autoplay, infinite loop, continuous flow (ticker) mode, and typed analytics. ~5 kB core, zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -147,7 +147,14 @@
     "ticker",
     "marquee",
     "analytics",
-    "loop"
+    "loop",
+    "a11y",
+    "accessible",
+    "accessibility",
+    "wai-aria",
+    "lightweight",
+    "swipe",
+    "responsive"
   ],
   "license": "MIT"
 }
