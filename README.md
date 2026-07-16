@@ -3,8 +3,11 @@
 > The project is currently in testing and may contain bugs. The goal is to find and fix as
 > many issues as possible before 1.0.0. Thank you.
 
-A lightweight, fully-typed React carousel/slider with built-in analytics, infinite loop, and a
-continuous flow (ticker) mode. Zero runtime dependencies beyond React.
+A lightweight React carousel that is **accessible by default** and **batteries included**:
+WAI-ARIA carousel semantics out of the box, built-in navigation, pagination, autoplay,
+infinite loop, a continuous flow (ticker) mode, and one typed analytics event stream —
+in a ~5 kB fully-typed core with zero runtime dependencies beyond React. Everything
+optional ships as a tree-shakeable entry, so you only pay for what you import.
 
 ## What it can do
 
@@ -32,7 +35,7 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
 - **Flow** (`lightslide/flow`) — continuous ticker scroll at a configurable speed; seamless
   with looping; pauses on interaction, hover, and keyboard focus, and resumes after a delay.
 - **Pay for what you use** — arrows, dots, flow, and the a11y layer ship as tree-shakeable
-  entries; the core stays ~4.5 kB and an unused module never reaches your bundle.
+  entries; the core stays ~5 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -43,6 +46,37 @@ continuous flow (ticker) mode. Zero runtime dependencies beyond React.
   pagination, engagement).
 - **Fully typed** — generic over your slide `data` shape; no unnecessary re-renders (core data
   lives in one imperative store, context is split so navigating doesn't re-render the slides).
+
+## How it compares
+
+An honest look at the popular React carousels. Bundle sizes are min+gzip as reported by
+[Bundlephobia](https://bundlephobia.com) in July 2026 (the listed package with its own
+dependencies; lightslide's core measured identically from its ESM build). "Last release" is
+the package's most recent npm publish as of the same date.
+
+| Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
+|---|---|---|---|---|---|---|
+| **lightslide** | **5.3 kB** core, +0.9–1.5 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
+| [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
+| [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
+| [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
+| [@splidejs/react-splide](https://splidejs.com) | 13.7 kB | ✓ ARIA built in | ✓ | — (events) | — | Sep 2022 |
+| [react-slick](https://react-slick.neostack.com) | 15.4 kB | basic, with known gaps | ✓ | — (callbacks) | — | Aug 2025 |
+
+To keep the comparison fair:
+
+- **Embla** is the biggest ecosystem in the React space (and the default in shadcn/ui). It is
+  headless on purpose — if you want full control over markup and behaviour and don't mind
+  wiring ARIA, arrows, and dots yourself, it's an excellent choice.
+- **Swiper** is by far the most feature-rich (virtual slides, effects, zoom, framework-agnostic
+  web components) — its size buys real features, and modular imports can trim it.
+- **Splide** earned a genuine a11y reputation; its React wrapper just hasn't seen a release
+  since 2022.
+- **react-slick** additionally requires the separate `slick-carousel` CSS package.
+
+lightslide's lane is the intersection: a small, maintained, fully-typed carousel that is
+accessible and complete out of the box — arrows, dots, autoplay, loop, breakpoints, and
+analytics without extra wiring, and tree-shakeable so the unused parts cost nothing.
 
 ## Installation
 
@@ -73,7 +107,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~4.5 kB). Arrows, dots, the flow ticker, and
+The core ships only what every carousel needs (~5 kB). Arrows, dots, the flow ticker, and
 the accessibility layer are separate tree-shakeable entries — import a module and pass its
 node to the matching slot prop; skip the import and none of its code or styles reaches your
 bundle.

@@ -10,6 +10,7 @@ import {AccessibilityExample} from './examples/AccessibilityExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
 import {BasicExample} from './examples/BasicExample';
 import {BreakpointsExample} from './examples/BreakpointsExample';
+import {CompareExample} from './examples/CompareExample';
 import {ControlledExample} from './examples/ControlledExample';
 import {CustomStylesExample} from './examples/CustomStylesExample';
 import {CustomTimeoutExample} from './examples/CustomTimeoutExample';
@@ -64,6 +65,9 @@ export function App() {
 
 				<PhaseLabel label="Accessibility" />
 				<AccessibilityExample />
+
+				<PhaseLabel label="Compare" />
+				<CompareExample />
 			</main>
 
 			<footer className={styles.footer}>
@@ -75,7 +79,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~4.5&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~5&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub
