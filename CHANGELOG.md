@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
-## [Unreleased]
+## [0.14.1] — 2026-07-17
 
 ### Changed
 
@@ -142,7 +142,6 @@ All notable changes to this project are documented here. The format follows
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/0.11.0...HEAD
 [0.11.0]: https://github.com/DmitriyBol/lightslide/releases/tag/0.11.0
 [0.6.1]: https://github.com/DmitriyBol/lightslide/releases/tag/0.6.1
 [0.5.9]: https://github.com/DmitriyBol/lightslide/releases/tag/0.5.9
