@@ -17,6 +17,7 @@ import {useViewedSlides} from '../hooks/useViewedSlides';
 import {NavContext, SlideMetricsContext} from '../lightSlideContext';
 import type {LightSlideHandle, LightSlideProps} from '../types';
 import {cx} from '../utils/cx';
+import {WheelContext} from '../wheelSeam';
 import {DEFAULT_SLIDE_LABEL, DEFAULT_VIEWED_TIMEOUT} from './helpers/constants';
 import {buildDisplayChildren} from './helpers/loopClones';
 import {collectSlideData} from './helpers/slideData';
@@ -44,7 +45,7 @@ import styles from './LightSlide.module.scss';
  * The container is a WAI-ARIA APG carousel landmark — a labelled `region` when `label` is
  * given, else a plain `group`. The stage's height tracks the viewport only, so the controls
  * anchored to it centre on the track (never offset by the pagination row). navigation /
- * pagination / flow / a11y are consumer-passed plugin nodes from their tree-shakeable entries,
+ * pagination / flow / wheel / a11y are consumer-passed plugin nodes from their tree-shakeable entries,
  * rendered into their slots; their providers only materialise when a node is passed, so base
  * consumers pay nothing for any of them. Flow is presence-based: the node being there turns
  * the mode on, and the plugin hands its pointer handlers back through the flow seam.
@@ -69,6 +70,7 @@ function LightSlideInner<T = unknown>(
 		flow,
 		navigation,
 		pagination,
+		wheel,
 		a11y,
 		isLoop = false,
 		loading = false,
@@ -251,6 +253,16 @@ function LightSlideInner<T = unknown>(
 		[effectiveFlow],
 	);
 
+	const wheelSeamValue = useMemo(
+		() => ({
+			containerRef,
+			storeRef,
+			active: maxIndex > 0 && !loading,
+			goToIndex: navigateToIndex,
+		}),
+		[maxIndex, loading, navigateToIndex],
+	);
+
 	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */
 	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
@@ -314,6 +326,12 @@ function LightSlideInner<T = unknown>(
 						<FlowContext.Provider value={flowSeamValue}>
 							{flow}
 						</FlowContext.Provider>
+					)}
+
+					{wheel && (
+						<WheelContext.Provider value={wheelSeamValue}>
+							{wheel}
+						</WheelContext.Provider>
 					)}
 
 					{a11y && (

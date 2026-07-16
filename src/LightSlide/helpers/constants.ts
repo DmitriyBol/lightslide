@@ -26,3 +26,20 @@ export const DEFAULT_FLOW_SPEED = 40;
 
 /** Default flow pause after an interaction, ms. */
 export const DEFAULT_FLOW_RESUME_DELAY = 2000;
+
+/** Default accumulated horizontal wheel px before <Wheel> commits a page turn. */
+export const DEFAULT_WHEEL_THRESHOLD = 30;
+
+/** Silence (ms) after the last wheel event before the wheel gesture counts as over. */
+export const WHEEL_RESET_MS = 150;
+
+/** px per wheel delta unit when the event reports lines / pages instead of pixels. */
+export const WHEEL_LINE_PX = 16;
+export const WHEEL_PAGE_PX = 100;
+
+/**
+ * Inertia-tail escape hatch: a wheel delta this many times the previous one (and above the
+ * floor) is a new user impulse, not the decaying tail of the committed gesture.
+ */
+export const WHEEL_RISE_RATIO = 2;
+export const WHEEL_RISE_FLOOR_PX = 4;

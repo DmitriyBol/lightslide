@@ -24,6 +24,7 @@ import {NavigationExample} from './examples/NavigationExample';
 import {PaginationExample} from './examples/PaginationExample';
 import {ProductCardsExample} from './examples/ProductCardsExample';
 import {SlidesPerViewExample} from './examples/SlidesPerViewExample';
+import {WheelExample} from './examples/WheelExample';
 import {GITHUB_URL, INSTALL_COMMAND, NPM_URL} from './meta';
 
 export function App() {
@@ -56,6 +57,7 @@ export function App() {
 				<LoopExample />
 				<FlowExample />
 				<FlowPerfExample />
+				<WheelExample />
 
 				<PhaseLabel label="Cards & state" />
 				<ProductCardsExample />

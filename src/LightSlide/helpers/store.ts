@@ -28,6 +28,9 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  * focus inside), written by useHoverFocus; auto-scroll and flow read them on their own cadence
  * and pause per their pauseOnHover/pauseOnFocus config. `apiPaused` is the consumer's explicit
  * hold, flipped by the ref handle's pause()/resume() — it stops all auto motion unconditionally.
+ * `wheelDeltaX` is the wheel plugin's mailbox while flow runs: horizontal wheel deltas
+ * accumulate here and the flow ticker consumes them as extra drift each frame (stays 0 when
+ * the wheel plugin isn't mounted or flow is off).
  */
 export type LightSlideStore<T = unknown> = {
 	currentIndex: number;
@@ -45,6 +48,7 @@ export type LightSlideStore<T = unknown> = {
 	hovered: boolean;
 	focusWithin: boolean;
 	apiPaused: boolean;
+	wheelDeltaX: number;
 };
 
 /** Creates a store seeded with safe defaults; `overrides` is a convenience for tests. */
@@ -67,6 +71,7 @@ export function createStore<T = unknown>(
 		hovered: false,
 		focusWithin: false,
 		apiPaused: false,
+		wheelDeltaX: 0,
 		...overrides,
 	};
 }

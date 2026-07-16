@@ -17,6 +17,7 @@ const SECTION_IDS = [
 	'loop',
 	'flow',
 	'flow-perf',
+	'wheel',
 	'product-cards',
 	'link-cards',
 	'custom-timeout',

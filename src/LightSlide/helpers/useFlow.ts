@@ -139,16 +139,23 @@ export function useFlow({
 			 * forces no layout/reflow per frame. The width only changes on resize, where the
 			 * ResizeObserver refreshes store.slideWidth for us.
 			 */
-			const {slideWidth, gap, slideCount, hovered, focusWithin, apiPaused} =
-				storeRef.current;
+			const store = storeRef.current;
+			const {slideWidth, gap, slideCount, hovered, focusWithin, apiPaused, wheelDeltaX} =
+				store;
+			store.wheelDeltaX = 0;
 			const engaged =
 				apiPaused ||
 				(pauseOnHoverRef.current && hovered) ||
 				(pauseOnFocusRef.current && focusWithin);
-			if (!f.interacting && !engaged && slideWidth > 0) {
+			/**
+			 * Wheel deltas drift the strip even while the hover/focus pause is engaged (wheeling
+			 * implies hovering); a drag in progress owns the transform, so they drop then.
+			 */
+			let delta = f.interacting ? 0 : wheelDeltaX;
+			if (!f.interacting && !engaged) delta += (speedRef.current * dt) / 1000;
+			if (delta !== 0 && slideWidth > 0) {
 				const stride = slideWidth + gap;
-				const span = slideCount * stride;
-				f.offset = wrap(f.offset + (speedRef.current * dt) / 1000, span);
+				f.offset = wrap(f.offset + delta, slideCount * stride);
 				applyTransform(stride);
 			}
 
