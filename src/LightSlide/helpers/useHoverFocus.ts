@@ -43,15 +43,14 @@ export function useHoverFocus({
 			store.focusWithin = false;
 		};
 
-		container.addEventListener('pointerenter', onPointerEnter);
-		container.addEventListener('pointerleave', onPointerLeave);
-		container.addEventListener('focusin', onFocusIn);
-		container.addEventListener('focusout', onFocusOut);
+		const controller = new AbortController();
+		const {signal} = controller;
+		container.addEventListener('pointerenter', onPointerEnter, {signal});
+		container.addEventListener('pointerleave', onPointerLeave, {signal});
+		container.addEventListener('focusin', onFocusIn, {signal});
+		container.addEventListener('focusout', onFocusOut, {signal});
 		return () => {
-			container.removeEventListener('pointerenter', onPointerEnter);
-			container.removeEventListener('pointerleave', onPointerLeave);
-			container.removeEventListener('focusin', onFocusIn);
-			container.removeEventListener('focusout', onFocusOut);
+			controller.abort();
 			store.hovered = false;
 			store.focusWithin = false;
 		};
