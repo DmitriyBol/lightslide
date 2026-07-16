@@ -1,11 +1,11 @@
 import {useLayoutEffect} from 'react';
 
-import {useFlowSeam} from '../flowSeam';
+import {useFlowSeam} from '../../flowSeam';
 import {
 	DEFAULT_FLOW_RESUME_DELAY,
 	DEFAULT_FLOW_SPEED,
-} from '../LightSlide/helpers/constants';
-import {useFlow} from '../LightSlide/helpers/useFlow';
+} from '../../LightSlide/helpers/constants';
+import {useFlow} from '../../LightSlide/helpers/useFlow';
 
 /**
  * Continuous-ticker tuning: `speed` in px per second (default 40), `resumeDelay` the pause in

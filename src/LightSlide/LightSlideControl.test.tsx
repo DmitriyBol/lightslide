@@ -2,7 +2,7 @@ import React, {createRef} from 'react';
 
 import {act, fireEvent, render} from '@testing-library/react';
 
-import {Flow} from '../flow';
+import {Flow} from '../modules/flow';
 import {Slide} from '../Slide/Slide';
 import type {
 	AnalyticsEvent,

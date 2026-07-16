@@ -581,7 +581,10 @@ import type { FreeScrollProps } from "lightslide/free";
 
 ## Project structure
 
-Each component is a self-contained feature folder (component + test + styles + types):
+Each component is a self-contained feature folder (component + test + styles + types).
+Every opt-in tree-shakeable module lives under `src/modules/`; the seam contexts they bind
+to stay in the `src/` root (they are core-side glue, shared chunks between the core and
+their entry):
 
 ```
 src/
@@ -597,7 +600,7 @@ src/
 │       ├── slideData.ts            #   collectSlideData (+ test)
 │       ├── loopClones.ts           #   buildDisplayChildren: per-slide ARIA + loop clones (+ test)
 │       ├── useLatestRef.ts         #   latest-ref for stable callbacks
-│       ├── useNavigation.ts        #   navigateToIndex — the single navigation path
+│       ├── useNavigation.ts        #   navigateToIndex — the single navigation path (+ test)
 │       ├── useExternalControl.ts   #   controlled index prop + LightSlideHandle ref
 │       ├── useLayoutResync.ts      #   re-measure/clamp/re-snap on layout-shape changes
 │       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
@@ -611,41 +614,22 @@ src/
 │       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
 │       ├── useWheel.ts             #   wheel/trackpad gestures → page turns / flow drift (+ test)
 │       └── useViewportEngagement.ts#   IntersectionObserver + terminal events
-├── a11y/                           # Opt-in `lightslide/a11y` entry (tree-shakeable)
-│   ├── index.ts                    #   subpath barrel
-│   ├── A11y.tsx                    #   umbrella component (toggles the four behaviours)
-│   ├── Keyboard.tsx                #   arrow / Home / End navigation
-│   ├── FocusGuard.tsx              #   inert off-screen slides
-│   ├── LiveRegion.tsx              #   polite "Slide N of M" announcements
-│   └── ReducedMotion.tsx           #   stop flow/auto-scroll under prefers-reduced-motion
+├── modules/                        # Every opt-in tree-shakeable entry lives here
+│   ├── a11y/                       #   `lightslide/a11y` (barrel + A11y, Keyboard,
+│   │                               #   FocusGuard, LiveRegion, ReducedMotion + tests)
+│   ├── Navigation/                 #   `lightslide/navigation` (prev/next buttons,
+│   │                               #   render-prop API, types, styles + test)
+│   ├── Pagination/                 #   `lightslide/pagination` (dots, types, styles + test)
+│   ├── flow/                       #   `lightslide/flow` (continuous ticker plugin)
+│   ├── wheel/                      #   `lightslide/wheel` (wheel/trackpad plugin + test)
+│   └── free/                       #   `lightslide/free` (momentum drag plugin + test)
 ├── a11ySeam.ts                     # Context seam between the core and the a11y plugins
 ├── flowSeam.ts                     # Context seam between the core and the flow plugin
-├── flow/
-│   ├── index.ts                    #   `lightslide/flow` entry barrel
-│   └── Flow.tsx                    #   continuous ticker plugin (owns the rAF drift)
 ├── wheelSeam.ts                    # Context seam between the core and the wheel plugin
-├── wheel/
-│   ├── index.ts                    #   `lightslide/wheel` entry barrel
-│   └── Wheel.tsx                   #   wheel/trackpad gesture plugin (+ test)
 ├── freeSeam.ts                     # Context seam between the core and the free plugin
-├── free/
-│   ├── index.ts                    #   `lightslide/free` entry barrel
-│   └── FreeScroll.tsx              #   momentum drag plugin (+ test)
 ├── Slide/
 │   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
 │   └── Slide.module.scss
-├── Navigation/
-│   ├── Navigation.tsx              # Prev/next buttons
-│   ├── Navigation.test.tsx
-│   ├── index.ts                    #   `lightslide/navigation` entry barrel
-│   ├── Navigation.types.ts         # NavigationProps, NavButtonRenderProps
-│   └── Navigation.module.scss
-├── Pagination/
-│   ├── Pagination.tsx              # Pagination dots
-│   ├── Pagination.test.tsx
-│   ├── index.ts                    #   `lightslide/pagination` entry barrel
-│   ├── Pagination.types.ts         # PaginationProps
-│   └── Pagination.module.scss
 ├── hooks/
 │   ├── useViewedSlides.ts          # Tracks unique viewed slide indices
 │   └── useViewedSlides.test.ts

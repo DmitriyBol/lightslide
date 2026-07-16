@@ -1,8 +1,8 @@
 import {fireEvent, render} from '@testing-library/react';
 
-import type {A11yContextType} from '../a11ySeam';
-import {A11yContext} from '../a11ySeam';
-import {createStore} from '../LightSlide/helpers/store';
+import type {A11yContextType} from '../../a11ySeam';
+import {A11yContext} from '../../a11ySeam';
+import {createStore} from '../../LightSlide/helpers/store';
 import {Keyboard} from './Keyboard';
 
 import '@testing-library/jest-dom';

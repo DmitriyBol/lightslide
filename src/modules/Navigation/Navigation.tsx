@@ -1,7 +1,7 @@
 import {useCallback} from 'react';
 
-import {useNavContext} from '../lightSlideContext';
-import {cx} from '../utils/cx';
+import {useNavContext} from '../../lightSlideContext';
+import {cx} from '../../utils/cx';
 import styles from './Navigation.module.scss';
 import type {NavigationProps} from './Navigation.types';
 

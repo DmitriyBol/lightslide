@@ -11,27 +11,27 @@ export default defineConfig({
 		alias: [
 			{
 				find: 'lightslide/a11y',
-				replacement: path.resolve(__dirname, '../src/a11y/index.ts'),
+				replacement: path.resolve(__dirname, '../src/modules/a11y/index.ts'),
 			},
 			{
 				find: 'lightslide/navigation',
-				replacement: path.resolve(__dirname, '../src/Navigation/index.ts'),
+				replacement: path.resolve(__dirname, '../src/modules/Navigation/index.ts'),
 			},
 			{
 				find: 'lightslide/pagination',
-				replacement: path.resolve(__dirname, '../src/Pagination/index.ts'),
+				replacement: path.resolve(__dirname, '../src/modules/Pagination/index.ts'),
 			},
 			{
 				find: 'lightslide/flow',
-				replacement: path.resolve(__dirname, '../src/flow/index.ts'),
+				replacement: path.resolve(__dirname, '../src/modules/flow/index.ts'),
 			},
 			{
 				find: 'lightslide/wheel',
-				replacement: path.resolve(__dirname, '../src/wheel/index.ts'),
+				replacement: path.resolve(__dirname, '../src/modules/wheel/index.ts'),
 			},
 			{
 				find: 'lightslide/free',
-				replacement: path.resolve(__dirname, '../src/free/index.ts'),
+				replacement: path.resolve(__dirname, '../src/modules/free/index.ts'),
 			},
 			{
 				find: 'lightslide',

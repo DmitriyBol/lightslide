@@ -2,10 +2,10 @@ import React from 'react';
 
 import {act, render, screen} from '@testing-library/react';
 
-import {A11y} from '../a11y';
-import {Flow} from '../flow';
-import {Navigation} from '../Navigation';
-import {Pagination} from '../Pagination';
+import {A11y} from '../modules/a11y';
+import {Flow} from '../modules/flow';
+import {Navigation} from '../modules/Navigation';
+import {Pagination} from '../modules/Pagination';
 import {Slide} from '../Slide/Slide';
 import type {AnalyticsEvent} from '../types';
 import {LightSlide} from './LightSlide';
