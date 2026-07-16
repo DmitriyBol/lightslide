@@ -5,9 +5,9 @@ import type {MouseEvent, PointerEvent, RefObject} from 'react';
 import {DRAG_DIRECTION_LOCK_PX} from './constants';
 
 /**
- * The pointer-event handler bag both gesture modes (drag-to-snap and flow drift) attach to
- * the viewport — the gesture surface. Identical shape for both, so each consumer returns it
- * verbatim.
+ * The pointer-event handler bag every gesture mode (drag-to-snap, flow drift, free momentum)
+ * attaches to the viewport — the gesture surface. Identical shape for all three, so each
+ * consumer returns it verbatim.
  */
 export type PointerHandlers = {
 	onPointerDown: (e: PointerEvent<HTMLDivElement>) => void;
@@ -51,13 +51,13 @@ type PointerGestureParams = PointerGestureCallbacks & {
 /**
  * Per-gesture scratch state, held in ONE ref (never React state): it mutates on every pointermove
  * (dozens/sec) and must never trigger a re-render — the whole "mutate the DOM transform during the
- * gesture" design depends on that. Shared by both gesture modes; the mode-specific motion state
- * (snap target, flow offset, …) lives in the consumer's own ref.
+ * gesture" design depends on that.
  *
  * `startX`/`startY` anchor the press; `dragging` flips true once a move clears the direction lock
  * as horizontal; `pointerId` is captured then (deferred so a tap still reaches child links);
  * `suppressClick` swallows the trailing click after a real drag; `velocityX`/`lastX`/`lastTime`
- * track flick speed for the snap decision.
+ * track flick speed for the snap decision. Shared by every gesture mode; the mode-specific
+ * motion state (snap target, flow offset, coast physics, …) lives in the consumer's own ref.
  */
 type GestureScratch = {
 	startX: number | null;
@@ -82,8 +82,9 @@ const initialScratch = (): GestureScratch => ({
 });
 
 /**
- * The shared pointer-gesture engine behind both useDragGesture and useFlow. It owns the parts that
- * are identical across modes — the first-few-px direction lock (horizontal vs vertical intent),
+ * The shared pointer-gesture engine behind useDragGesture, useFlow, and useFreeDrag. It owns the
+ * parts that are identical across modes — the first-few-px direction lock (horizontal vs vertical
+ * intent),
  * deferred pointer capture, velocity tracking, swallowing the click that follows a real drag, and
  * the "pointer left the carousel mid-drag" safety net — and delegates the mode-specific motion to
  * the four callbacks. Returns the handler bag the consumer spreads onto the viewport unchanged.
@@ -209,8 +210,8 @@ export function usePointerGesture({
 	}, []);
 
 	/**
-	 * The bag itself is memoized (every member is already stable): the flow seam hands it
-	 * across the plugin boundary and the track spread stays diff-stable between renders.
+	 * The bag itself is memoized (every member is already stable): the flow and free seams hand
+	 * it across the plugin boundary and the track spread stays diff-stable between renders.
 	 */
 	return useMemo(
 		() => ({

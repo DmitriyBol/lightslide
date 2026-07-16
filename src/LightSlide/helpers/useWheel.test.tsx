@@ -31,7 +31,7 @@ function setup(
 		threshold: 30,
 		containerRef: {current: container},
 		storeRef,
-		navigate,
+		goToIndex: navigate,
 		...overrides,
 	};
 	const view = renderHook(() =>

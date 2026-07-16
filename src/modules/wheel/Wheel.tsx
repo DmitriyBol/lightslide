@@ -26,7 +26,7 @@ export function Wheel({threshold = DEFAULT_WHEEL_THRESHOLD}: WheelProps) {
 		threshold,
 		containerRef,
 		storeRef,
-		navigate: goToIndex,
+		goToIndex,
 	});
 
 	return null;

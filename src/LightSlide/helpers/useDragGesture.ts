@@ -18,21 +18,21 @@ type DragGestureParams = {
 		animate: boolean,
 		onComplete?: () => void,
 	) => void;
-	navigateToIndex: NavigateFn;
+	goToIndex: NavigateFn;
 };
 
 /**
  * Discrete drag-to-snap. The shared pointer mechanics (direction lock, deferred capture, velocity,
  * click suppression, leave safety) live in usePointerGesture; this hook supplies only the snap
- * behaviour: rubber-band the track during the drag, commit a snap index through navigateToIndex on
- * release, and re-settle to the current slide on cancel. Returns the same handler bag as useFlow,
- * so LightSlide swaps the two by reference without caring which is active.
+ * behaviour: rubber-band the track during the drag, commit a snap index through goToIndex on
+ * release, and re-settle to the current slide on cancel. Returns the same handler bag as useFlow
+ * and useFreeDrag, so LightSlide swaps them by reference without caring which is active.
  */
 export function useDragGesture({
 	trackRef,
 	storeRef,
 	snapToVisual,
-	navigateToIndex,
+	goToIndex,
 }: DragGestureParams): PointerHandlers {
 	const visualIndexOf = useCallback(
 		(logicalIndex: number) => {
@@ -82,9 +82,9 @@ export function useDragGesture({
 				velocityX,
 				isLoop,
 			);
-			navigateToIndex(nextIndex, 'drag');
+			goToIndex(nextIndex, 'drag');
 		},
-		[storeRef, navigateToIndex],
+		[storeRef, goToIndex],
 	);
 
 	const onCancel = useCallback(() => {

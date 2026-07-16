@@ -76,8 +76,14 @@ export function useNavigation<T>({
 				return;
 			}
 
+			/**
+			 * A wrap's direction is the user's motion, not the index delta — a backward wrap
+			 * jumps 0 → maxIdx yet the track visibly moves left.
+			 */
 			const direction: 'left' | 'right' =
-				isForwardWrap || clamped > from ? 'right' : 'left';
+				isForwardWrap || (!isBackwardWrap && clamped > from)
+					? 'right'
+					: 'left';
 
 			storeRef.current.currentIndex = clamped;
 			setCurrentIndex(clamped);

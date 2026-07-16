@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, built-in navigation, pagination, autoplay, infinite loop, continuous flow (ticker) mode, and typed analytics. ~5 kB core, zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -43,6 +43,16 @@
     },
     "./package.json": "./package.json"
   },
+  "typesVersions": {
+    "*": {
+      "a11y": ["dist/a11y.d.ts"],
+      "navigation": ["dist/navigation.d.ts"],
+      "pagination": ["dist/pagination.d.ts"],
+      "flow": ["dist/flow.d.ts"],
+      "wheel": ["dist/wheel.d.ts"],
+      "free": ["dist/free.d.ts"]
+    }
+  },
   "sideEffects": [
     "**/*.scss",
     "**/*.css"
@@ -60,6 +70,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,scss}\"",
@@ -68,7 +79,7 @@
     "stylelint:fix": "stylelint \"src/**/*.{css,scss}\" --fix",
     "size": "npm run build && size-limit",
     "playground": "npm install --prefix playground && npm run dev --prefix playground",
-    "prepublishOnly": "npm run lint && npm run stylelint && npm test && npm run build"
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run stylelint && npm test && npm run build"
   },
   "size-limit": [
     {

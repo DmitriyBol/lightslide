@@ -26,6 +26,11 @@ export function FreeScroll({snap = false}: FreeScrollProps) {
 
 	const handlers = useFreeDrag({snap, trackRef, storeRef, goToIndex});
 
+	/**
+	 * Self-gated on `active`: the core prefers a registered free bag over built-in drag with
+	 * no activity re-check at the selection site (only flow is re-gated there), so an inactive
+	 * carousel must simply never register.
+	 */
 	useLayoutEffect(() => {
 		if (!active) return;
 		setPointerHandlers(handlers);

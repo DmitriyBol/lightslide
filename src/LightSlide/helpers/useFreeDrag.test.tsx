@@ -1,8 +1,11 @@
 import {renderHook} from '@testing-library/react';
 import type {MouseEvent, PointerEvent} from 'react';
 
+import {prefersReducedMotion} from '../../utils/reducedMotion';
 import {createStore} from './store';
 import {useFreeDrag} from './useFreeDrag';
+
+jest.mock('../../utils/reducedMotion');
 
 type Overrides = {
 	snap?: boolean;
@@ -96,6 +99,20 @@ describe('useFreeDrag — free', () => {
 		expect(navigate).toHaveBeenCalledWith(1, 'settle');
 		expect(store.restOffset).toBe(400);
 		expect(track.style.transform).toBe('translateX(-400px)');
+		expect(store.autoScrollPaused).toBe(false);
+	});
+
+	it('settles immediately under reduced motion — a flick never coasts', () => {
+		/** Once: clearAllMocks clears calls but not return values, and later tests must coast. */
+		jest.mocked(prefersReducedMotion).mockReturnValueOnce(true);
+		const {result, navigate, store} = setupFreeDrag({});
+		result.current.onPointerDown(downEvent(500));
+		jest.setSystemTime(50);
+		result.current.onPointerMove(moveEvent(425)); /** dx -75, velocity -1.5 px/ms */
+		result.current.onPointerUp(moveEvent(425));
+		/** No rAF loop ran: the release position is the rest position, synchronously. */
+		expect(navigate).toHaveBeenCalledWith(0, 'settle');
+		expect(store.restOffset).toBe(75);
 		expect(store.autoScrollPaused).toBe(false);
 	});
 

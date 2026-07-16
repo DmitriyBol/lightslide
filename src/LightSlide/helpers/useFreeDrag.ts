@@ -18,10 +18,10 @@ import {usePointerGesture} from './usePointerGesture';
  * module (not helpers/constants.ts) deliberately: the constants chunk is shared with every
  * entry, and free-only tuning must not cost bundles that never import `lightslide/free`.
  */
-export const FREE_DECAY_MS = 325;
+const FREE_DECAY_MS = 325;
 
 /** Momentum (px/ms) below which the coast counts as stopped and settles. */
-export const FREE_MIN_VELOCITY = 0.02;
+const FREE_MIN_VELOCITY = 0.02;
 
 /** `snap` is the free-snap variant: coast the same distance, land on a slide boundary. */
 type FreeDragParams = {
