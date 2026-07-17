@@ -7,10 +7,10 @@
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, built-in navigation, pagination, autoplay,
-infinite loop, a continuous flow (ticker) mode, zero-CLS server rendering, and one typed
-analytics event stream — in a ~5.7 kB fully-typed core with zero runtime dependencies beyond
-React. Everything optional ships as a tree-shakeable entry, so you only pay for what you
-import.
+infinite loop, a continuous flow (ticker) mode, center align, zero-CLS server rendering, and
+one typed analytics event stream — in a ~5.8 kB fully-typed core with zero runtime
+dependencies beyond React. Everything optional ships as a tree-shakeable entry, so you only
+pay for what you import.
 
 **[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
 
@@ -27,7 +27,7 @@ import.
   [Auto-scroll](#auto-scroll), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [isLoop](#isloop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
-- [slidesPerView & gap](#slidesperview--gap) · [Responsive breakpoints](#responsive-breakpoints)
+- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Responsive breakpoints](#responsive-breakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -48,6 +48,9 @@ import.
 - **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek).
 - **gap** — px spacing between slides, folded into all geometry (snap, drag, loop, flow,
   fractional views) — no padding workarounds.
+- **Center align** (`align="center"`) — the active slide rests centred with its neighbours
+  peeking symmetrically (the hero / stories pattern); edges stay flush without loop, every
+  position is centred with it.
 - **breakpoints** — media-query overrides of `slidesPerView`/`gap`; the carousel listens and
   re-lays itself out, no resize code in your app.
 - **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
@@ -74,7 +77,7 @@ import.
   final layout: zero CLS, no unstyled flash, no hydration mismatches. See
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, flow, wheel gestures, free scrolling, and the a11y
-  layer ship as tree-shakeable entries; the core stays ~5.7 kB and an unused module never
+  layer ship as tree-shakeable entries; the core stays ~5.8 kB and an unused module never
   reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
@@ -96,7 +99,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.9 kB** core, +0.7–1.6 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
+| **lightslide** | **6.1 kB** core, +0.7–1.8 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -147,7 +150,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5.7 kB). Arrows, dots, the flow ticker, wheel
+The core ships only what every carousel needs (~5.8 kB). Arrows, dots, the flow ticker, wheel
 gestures, free scrolling, and the accessibility layer are separate tree-shakeable entries —
 import a module and pass its node to the matching slot prop; skip the import and none of its
 code or styles reaches your bundle.
@@ -172,6 +175,7 @@ payloads.
 | `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
 | `gap` | `number` | `0` | Horizontal space between slides, px (see [slidesPerView & gap](#slidesperview--gap)) |
+| `align` | `'start' \| 'center'` | `'start'` | Where the active slide rests (see [Center align](#center-align)) |
 | `breakpoints` | `Record<string, BreakpointOverrides>` | — | Media-query overrides of `slidesPerView`/`gap` (see [Responsive breakpoints](#responsive-breakpoints)) |
 | `initialIndex` | `number` | `0` | Starting position, uncontrolled (see [External control](#external-control)) |
 | `index` | `number` | — | Controlled position — the carousel navigates whenever it changes |
@@ -403,6 +407,9 @@ first render and hydration.
   `aspect-ratio` so off-window shells keep the track's height.
 - For plain images native `loading="lazy"` already defers the bytes — `lazyMount` is for
   deferring the React subtree itself.
+- Long strips (100+ slides) are exactly what this is for: mount time and DOM stay flat
+  because only the window's subtrees exist. For very long strips raise `margin` to cover
+  long flicks.
 
 ## Loading fallback
 
@@ -429,6 +436,24 @@ in every computation: each slide fills
 `slideWidth + gap`, a fractional view still lands the last slide flush against the right edge,
 and loop clones and the flow ticker space identically. No padding inside the slide, so card
 backgrounds and shadows span the full slide width.
+
+## Center align
+
+```tsx
+<LightSlide align="center" slidesPerView={1.4} gap={12} isLoop>
+```
+
+`align="center"` rests the **active slide in the middle of the viewport**, neighbours peeking
+symmetrically on both sides — the hero / stories pattern. Pair it with a fractional
+`slidesPerView` (there is nothing to centre against at exactly `1`, so the prop is a no-op
+then). Snapping, dragging, free-mode settling, the server-rendered first paint, and
+`lazyMount`'s window all follow the centred geometry.
+
+- **Without `isLoop`** the track never scrolls past its content (no blank space): the first
+  and last positions rest flush against the edges — Embla's `containScroll` behaviour — and
+  every position in between is centred. Add `isLoop` to keep the active slide centred
+  everywhere.
+- Ignored while `flow` runs — continuous motion has no resting position.
 
 ## Responsive breakpoints
 

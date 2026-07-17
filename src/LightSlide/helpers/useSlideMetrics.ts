@@ -21,27 +21,33 @@ type SlideMetrics = {
  * hook reads, so the hot paths size the transform from the cached value (no per-frame
  * offsetWidth read, and the transform can never drift from the slides' rendered width).
  * offsetWidth is touched only here, on mount and on each ResizeObserver callback.
+ * `store.centerInset` — the centring shift (container − slide) / 2, 0 unless centered — is
+ * measured in the same pass and stays imperative-only: nothing renders from it, the
+ * layout-resync snap re-applies it to the transform.
  */
 export function useSlideMetrics(
 	containerRef: RefObject<HTMLDivElement>,
 	storeRef: MutableRefObject<LightSlideStore>,
+	centered: boolean,
 ): SlideMetrics {
 	const [slideWidth, setSlideWidth] = useState(0);
 
 	const measureSlideWidth = useCallback(() => {
 		if (!containerRef.current) return;
 		const {slidesPerView, gap} = storeRef.current;
+		const {offsetWidth} = containerRef.current;
 		const visibleGaps = (Math.ceil(slidesPerView) - 1) * gap;
 		const w = Math.max(
 			0,
-			Math.floor(
-				(containerRef.current.offsetWidth - visibleGaps) / slidesPerView,
-			),
+			Math.floor((offsetWidth - visibleGaps) / slidesPerView),
 		);
+		storeRef.current.centerInset = centered
+			? Math.round((offsetWidth - w) / 2)
+			: 0;
 		if (w === storeRef.current.slideWidth) return;
 		storeRef.current.slideWidth = w;
 		setSlideWidth(w);
-	}, [containerRef, storeRef]);
+	}, [containerRef, storeRef, centered]);
 
 	useIsomorphicLayoutEffect(() => {
 		measureSlideWidth();

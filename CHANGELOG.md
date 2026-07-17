@@ -4,6 +4,40 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.16.0] — 2026-07-17
+
+### Added
+
+- `align?: 'start' | 'center'` (LIG-12): `'center'` rests the active slide in the middle of
+  the viewport with its neighbours peeking symmetrically — the hero / stories pattern, meant
+  for fractional `slidesPerView` (a no-op at exactly `1`). The centring inset is measured
+  with the slide width and folded into the whole geometry: snapping, dragging, free-mode
+  coasting and free-snap projection, the loop clone count (center adds the clones its left
+  peek and wrap-dance need), `lazyMount`'s window (extended left over the exposed peek), the
+  a11y focus guard's visible range, and the server-rendered critical CSS (the first paint is
+  already centred; the non-loop edge clamp ships as CSS `min()`). Without `isLoop` the track
+  never scrolls past its edges — first/last positions rest flush (Embla's `containScroll`
+  behaviour); with `isLoop` every position is centred. Ignored while `flow` runs.
+- Playground: an interactive Center align demo (`#align`) with a start/center switch and a
+  loop toggle; e2e specs assert the centred and flush-clamped positions against the live
+  layout.
+
+### Fixed
+
+- Loop backward wrap with a fractional `slidesPerView` animated one stride short of the last
+  slide's pre-wrap twin (hardcoded visual 0), producing a visible jump when the silent
+  re-snap landed. The wrap now targets `maxIndex + loopOffset − slideCount`.
+
+### Changed
+
+- Base-entry size budget 5.75 → 5.85 kB (center align lives in the core geometry path — it
+  cannot ship as a tree-shakeable entry). Actual: 5.80 kB brotli, 6.1 kB min+gzip; README /
+  playground marketing numbers updated to match. The planned slim-core extraction (LIG-21)
+  is expected to pull the budget back down.
+- Seam-context misuse errors (`useFlowSeam` outside its slot, etc.) now carry their full
+  message only outside production builds — consumer bundlers drop the long literals from
+  production bundles.
+
 ## [0.15.1] — 2026-07-17
 
 ### Fixed

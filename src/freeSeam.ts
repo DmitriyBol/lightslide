@@ -26,11 +26,18 @@ export type FreeSeamValue = {
 
 export const FreeContext = createContext<FreeSeamValue | null>(null);
 
-/** Using the plugin outside <LightSlide free={…}> is a wiring bug — fail loudly. */
+/**
+ * Using the plugin outside <LightSlide free={…}> is a wiring bug — fail loudly. The full
+ * message is dev-only; production builds throw the short marker.
+ */
 export function useFreeSeam(): FreeSeamValue {
 	const ctx = useContext(FreeContext);
 	if (!ctx) {
-		throw new Error('lightslide/free must be passed to <LightSlide free={…}>');
+		throw new Error(
+			process.env.NODE_ENV !== 'production'
+				? 'lightslide/free must be passed to <LightSlide free={…}>'
+				: 'lightslide seam',
+		);
 	}
 	return ctx;
 }

@@ -22,11 +22,18 @@ export type FlowSeamValue = {
 
 export const FlowContext = createContext<FlowSeamValue | null>(null);
 
-/** Using the plugin outside <LightSlide flow={…}> is a wiring bug — fail loudly. */
+/**
+ * Using the plugin outside <LightSlide flow={…}> is a wiring bug — fail loudly. The full
+ * message is dev-only; production builds throw the short marker.
+ */
 export function useFlowSeam(): FlowSeamValue {
 	const ctx = useContext(FlowContext);
 	if (!ctx) {
-		throw new Error('lightslide/flow must be passed to <LightSlide flow={…}>');
+		throw new Error(
+			process.env.NODE_ENV !== 'production'
+				? 'lightslide/flow must be passed to <LightSlide flow={…}>'
+				: 'lightslide seam',
+		);
 	}
 	return ctx;
 }

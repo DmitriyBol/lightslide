@@ -35,7 +35,7 @@ export function WheelExample() {
 	return (
 		<Demo
 			id="wheel"
-			number="14"
+			number="15"
 			title="Wheel & trackpad"
 			tag="wheel"
 			description={

@@ -31,7 +31,7 @@ export function ThumbnailsExample() {
 	return (
 		<Demo
 			id="thumbnails"
-			number="09"
+			number="10"
 			title="Thumbnails"
 			tag="two instances · one state"
 			description={

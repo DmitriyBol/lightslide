@@ -120,13 +120,15 @@ export function useFreeDrag({
 
 	const settleAt = (pos: number) => {
 		const store = storeRef.current;
-		const {isLoop, loopOffset, slideCount, slideWidth, gap} = store;
+		const {isLoop, loopOffset, slideCount, slideWidth, gap, centerInset} =
+			store;
 		store.restOffset = pos;
 		store.autoScrollPaused = false;
 		const stride = slideWidth + gap;
+		/** Boundaries sit at index × stride − centerInset, so the inset re-joins before rounding. */
 		let idx =
 			stride > 0
-				? Math.round(pos / stride) - (isLoop ? loopOffset : 0)
+				? Math.round((pos + centerInset) / stride) - (isLoop ? loopOffset : 0)
 				: store.currentIndex;
 		if (isLoop && slideCount > 0)
 			idx = ((idx % slideCount) + slideCount) % slideCount;
@@ -197,7 +199,7 @@ export function useFreeDrag({
 			store.autoScrollPaused = false;
 			return;
 		}
-		const {maxIndex, isLoop, loopOffset, slideWidth, gap} = store;
+		const {maxIndex, isLoop, loopOffset, slideWidth, gap, centerInset} = store;
 		const stride = slideWidth + gap;
 		const pos = freePos(dx, store);
 
@@ -205,7 +207,9 @@ export function useFreeDrag({
 			store.autoScrollPaused = false;
 			if (stride === 0) return;
 			const projected = pos - velocityX * FREE_DECAY_MS;
-			const idx = Math.round(projected / stride) - (isLoop ? loopOffset : 0);
+			const idx =
+				Math.round((projected + centerInset) / stride) -
+				(isLoop ? loopOffset : 0);
 			goToIndex(idx, 'drag');
 			return;
 		}

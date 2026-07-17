@@ -106,6 +106,46 @@ describe('trackOffset', () => {
 		});
 	});
 
+	describe('center mode (offsets shift left by centerInset, edges stay flush)', () => {
+		/**
+		 * 6 slides, 1.5 per view, 400px each, inset 100px. Boundaries sit at
+		 * index · 400 − 100; the [0, maxTrackOffset 1800] clamp keeps the first and last
+		 * positions flush against the viewport edges (Embla's containScroll behaviour).
+		 */
+		const store = createStore({
+			slideCount: 6,
+			slidesPerView: 1.5,
+			slideWidth: 400,
+			centerInset: 100,
+		});
+
+		it('clamps the first position flush instead of showing blank space', () => {
+			expect(trackOffset(0, store)).toBe(0);
+		});
+
+		it('centres intermediate positions by subtracting the inset', () => {
+			expect(trackOffset(2, store)).toBe(700);
+			expect(trackOffset(4, store)).toBe(1500);
+		});
+
+		it('clamps the final position to the flush right edge', () => {
+			expect(trackOffset(5, store)).toBe(1800);
+		});
+
+		it('never clamps in loop mode — the clones own both edges', () => {
+			const loop = createStore({
+				slideCount: 6,
+				slidesPerView: 1.5,
+				slideWidth: 400,
+				isLoop: true,
+				loopOffset: 3,
+				centerInset: 100,
+			});
+			expect(trackOffset(3, loop)).toBe(1100);
+			expect(trackOffset(1, loop)).toBe(300);
+		});
+	});
+
 	it('pins the offset at 0 when every slide already fits', () => {
 		const fits = createStore({slideCount: 3, slidesPerView: 3, slideWidth: 200});
 		expect(trackOffset(1, fits)).toBe(0);

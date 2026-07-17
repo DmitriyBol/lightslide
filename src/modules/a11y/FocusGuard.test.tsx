@@ -68,7 +68,13 @@ describe('FocusGuard', () => {
 		/** pre-mark the clones inert as the core would */
 		track.children[0].setAttribute('inert', '');
 		track.children[4].setAttribute('inert', '');
-		mount(track, {currentIndex: 0, slideCount: 3, slidesPerView: 1, isLoop: true});
+		mount(track, {
+			currentIndex: 0,
+			slideCount: 3,
+			slidesPerView: 1,
+			isLoop: true,
+			storeRef: {current: createStore({loopOffset: 1})},
+		});
 		expect(inert(track, 0)).toBe(true); /** clone stays inert */
 		expect(inert(track, 1)).toBe(false); /** real0 visible */
 		expect(inert(track, 2)).toBe(true); /** real1 off-screen */
@@ -88,12 +94,28 @@ describe('FocusGuard', () => {
 			isLoop: true,
 			isFlow: true,
 			autoMotion: true,
+			storeRef: {current: createStore({loopOffset: 1})},
 		});
 		expect(inert(track, 0)).toBe(true);
 		expect(inert(track, 1)).toBe(false);
 		expect(inert(track, 2)).toBe(false);
 		expect(inert(track, 3)).toBe(false);
 		expect(inert(track, 4)).toBe(true);
+	});
+
+	it('keeps the left peek interactive in center mode', () => {
+		/** centered at index 1, spv 1.5 → window [0, 2]: the centring inset exposes slide 0 */
+		const track = makeTrack(4);
+		mount(track, {
+			currentIndex: 1,
+			slideCount: 4,
+			slidesPerView: 1.5,
+			storeRef: {current: createStore({centerInset: 100})},
+		});
+		expect(inert(track, 0)).toBe(false);
+		expect(inert(track, 1)).toBe(false);
+		expect(inert(track, 2)).toBe(false);
+		expect(inert(track, 3)).toBe(true);
 	});
 
 	it('clears the guards it set on unmount', () => {
