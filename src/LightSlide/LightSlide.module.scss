@@ -1,3 +1,6 @@
+// Layout-critical declarations in this file are mirrored by helpers/ssrStyles.ts (the
+// SSR critical CSS served with the markup) — keep the two in sync.
+
 // Outer wrapper. Overflow stays visible so edge-anchored nav buttons are never clipped.
 .container {
 	position: relative;

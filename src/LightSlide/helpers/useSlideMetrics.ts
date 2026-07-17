@@ -1,8 +1,9 @@
-import {useCallback, useLayoutEffect, useState} from 'react';
+import {useCallback, useState} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
 import type {LightSlideStore} from './store';
+import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect';
 
 type SlideMetrics = {
 	slideWidth: number;
@@ -42,7 +43,7 @@ export function useSlideMetrics(
 		setSlideWidth(w);
 	}, [containerRef, storeRef]);
 
-	useLayoutEffect(() => {
+	useIsomorphicLayoutEffect(() => {
 		measureSlideWidth();
 		if (!containerRef.current) return;
 		const ro = new ResizeObserver(measureSlideWidth);

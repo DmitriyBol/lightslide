@@ -1,8 +1,9 @@
-import {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
+import {useCallback, useEffect, useRef} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
 import type {LightSlideStore} from './store';
+import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect';
 import type {PointerHandlers} from './usePointerGesture';
 import {usePointerGesture} from './usePointerGesture';
 
@@ -115,7 +116,7 @@ export function useFlow({
 	 * Position at the home offset before first paint, so the prepend clones never flash.
 	 * useSlideMetrics' layout effect runs first and seeds store.slideWidth, so it is ready.
 	 */
-	useLayoutEffect(() => {
+	useIsomorphicLayoutEffect(() => {
 		if (!enabled) return;
 		const {slideWidth, gap} = storeRef.current;
 		if (slideWidth > 0) applyTransform(slideWidth + gap);

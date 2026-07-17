@@ -6,6 +6,20 @@ import styles from './Navigation.module.scss';
 import type {NavigationProps} from './Navigation.types';
 
 /**
+ * Critical placement CSS served with the markup: the stylesheet is head-injected only when
+ * the JS bundle runs, so server-rendered buttons would otherwise paint as raw in-flow
+ * elements until hydration and shift the content below. Absolute positioning takes them
+ * out of the flow and `.hidden` (isReady is false on the server) keeps them invisible;
+ * both lose to the full stylesheet once it lands. Keep in sync with Navigation.module.scss.
+ */
+const ssrCss =
+	`.${styles.button},.${styles.slot}` +
+	`{position:absolute;top:50%;transform:translateY(-50%)}` +
+	`.${styles.prev},.${styles.slotPrev}{left:8px}` +
+	`.${styles.next},.${styles.slotNext}{right:8px}` +
+	`.${styles.hidden}{opacity:0}`;
+
+/**
  * Prev/next buttons, shipped as the tree-shakeable `lightslide/navigation` entry — pass to
  * `<LightSlide navigation={<Navigation />}>`. Hidden until the carousel has measured on the
  * client, so they never flash in an un-positioned spot during SSR / before first layout.
@@ -41,6 +55,7 @@ export function Navigation({
 
 	return (
 		<>
+			<style dangerouslySetInnerHTML={{__html: ssrCss}} />
 			{renderPrev ? (
 				<div
 					className={cx(

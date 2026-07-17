@@ -32,7 +32,7 @@ const ROWS: CompareRow[] = [
 		name: 'lightslide',
 		isOurs: true,
 		cells: [
-			{label: '5.7 kB core', isPositive: true},
+			{label: '5.9 kB core', isPositive: true},
 			{label: 'APG always on · +1 kB opt-in layer', isPositive: true},
 			{label: '✓ tree-shakeable', isPositive: true},
 			{label: '✓ typed events', isPositive: true},

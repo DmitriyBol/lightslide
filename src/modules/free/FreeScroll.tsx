@@ -1,7 +1,6 @@
-import {useLayoutEffect} from 'react';
-
 import {useFreeSeam} from '../../freeSeam';
 import {useFreeDrag} from '../../LightSlide/helpers/useFreeDrag';
+import {useIsomorphicLayoutEffect} from '../../LightSlide/helpers/useIsomorphicLayoutEffect';
 
 /**
  * `snap` picks the free-snap variant: the coast travels the same distance but lands on the
@@ -31,7 +30,7 @@ export function FreeScroll({snap = false}: FreeScrollProps) {
 	 * no activity re-check at the selection site (only flow is re-gated there), so an inactive
 	 * carousel must simply never register.
 	 */
-	useLayoutEffect(() => {
+	useIsomorphicLayoutEffect(() => {
 		if (!active) return;
 		setPointerHandlers(handlers);
 		return () => setPointerHandlers(null);
