@@ -18,6 +18,7 @@ import {CustomTimeoutExample} from './examples/CustomTimeoutExample';
 import {DragModeExample} from './examples/DragModeExample';
 import {FlowExample} from './examples/FlowExample';
 import {FlowPerfExample} from './examples/FlowPerfExample';
+import {LazyMountExample} from './examples/LazyMountExample';
 import {LinkCardsExample} from './examples/LinkCardsExample';
 import {LoadingExample} from './examples/LoadingExample';
 import {LoopExample} from './examples/LoopExample';
@@ -70,6 +71,7 @@ export function App() {
 				<LinkCardsExample />
 				<CustomTimeoutExample />
 				<LoadingExample />
+				<LazyMountExample />
 
 				<PhaseLabel label="Accessibility" />
 				<AccessibilityExample />
@@ -87,7 +89,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~5&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~5.5&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub

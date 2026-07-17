@@ -54,9 +54,25 @@ function cloneProps(child: ReactNode, key: string): Record<string, unknown> {
 	};
 }
 
-function decorate(child: ReactNode, props: Record<string, unknown>): ReactNode {
+/**
+ * An unmounted (lazy) slide keeps the consumer's element and every prop — width, className,
+ * style, the injected ARIA — but its children are replaced with null via cloneElement's
+ * children argument, so the box (and therefore all geometry) survives while the subtree
+ * stays unmounted. Non-element children can't be hollowed out and pass through as-is.
+ */
+function decorate(
+	child: ReactNode,
+	props: Record<string, unknown>,
+	isMounted: boolean,
+): ReactNode {
 	return isValidElement(child)
-		? cloneElement(child as ReactElement, props)
+		? cloneElement(
+				child as ReactElement,
+				props,
+				isMounted
+					? (child.props as {children?: ReactNode}).children
+					: null,
+			)
 		: child;
 }
 
@@ -64,19 +80,26 @@ function decorate(child: ReactNode, props: Record<string, unknown>): ReactNode {
  * Builds the rendered track children: every real slide decorated with its per-slide ARIA, plus —
  * in loop mode — clones of the last `loopOffset` slides prepended and the first `loopOffset`
  * appended (marked hidden/inert) so wrap-around looks continuous. With looping off (loopOffset 0)
- * it returns just the decorated real slides.
+ * it returns just the decorated real slides. `isSlideMounted` (the lazyMount window) empties
+ * slides outside it — clones follow their original's logical index, so a clone is mounted
+ * exactly when the slide it duplicates is.
  */
 export function buildDisplayChildren(
 	childArray: ReactNode[],
 	slideCount: number,
 	loopOffset: number,
 	slideLabel: SlideLabeler,
+	isSlideMounted: ((index: number) => boolean) | null = null,
 ): ReactNode[] {
+	const mounted = (index: number) =>
+		isSlideMounted == null || isSlideMounted(index);
+
 	const real = childArray.map((child, i) =>
 		isValidElement(child)
-			? cloneElement(
-					child as ReactElement,
+			? decorate(
+					child,
 					slideAria(child as ReactElement, i, slideCount, slideLabel),
+					mounted(i),
 				)
 			: child,
 	);
@@ -89,11 +112,19 @@ export function buildDisplayChildren(
 	 */
 	const prependClones = childArray
 		.slice(slideCount - loopOffset)
-		.map((child, i) => decorate(child, cloneProps(child, `__loop_pre_${i}`)));
+		.map((child, i) =>
+			decorate(
+				child,
+				cloneProps(child, `__loop_pre_${i}`),
+				mounted(slideCount - loopOffset + i),
+			),
+		);
 
 	const appendClones = childArray
 		.slice(0, loopOffset)
-		.map((child, i) => decorate(child, cloneProps(child, `__loop_post_${i}`)));
+		.map((child, i) =>
+			decorate(child, cloneProps(child, `__loop_post_${i}`), mounted(i)),
+		);
 
 	return [...prependClones, ...real, ...appendClones];
 }

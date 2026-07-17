@@ -8,7 +8,7 @@
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, built-in navigation, pagination, autoplay,
 infinite loop, a continuous flow (ticker) mode, and one typed analytics event stream —
-in a ~5 kB fully-typed core with zero runtime dependencies beyond React. Everything
+in a ~5.5 kB fully-typed core with zero runtime dependencies beyond React. Everything
 optional ships as a tree-shakeable entry, so you only pay for what you import.
 
 **[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
@@ -25,7 +25,7 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
   [Navigation](#navigation-lightslidenavigation), [Pagination](#pagination-lightslidepagination),
   [Auto-scroll](#auto-scroll), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
-- [isLoop](#isloop) · [Loading fallback](#loading-fallback)
+- [isLoop](#isloop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
 - [slidesPerView & gap](#slidesperview--gap) · [Responsive breakpoints](#responsive-breakpoints)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -49,6 +49,9 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
 - **breakpoints** — media-query overrides of `slidesPerView`/`gap`; the carousel listens and
   re-lays itself out, no resize code in your app.
 - **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
+- **Lazy slide mounting** (`lazyMount`) — slides outside the visible window render as empty
+  shells: the box (and all geometry) stays, the React subtree inside waits for navigation to
+  approach. Fewer nodes at first paint, lighter hydration, zero layout shift on mount.
 - **Navigation buttons** (`lightslide/navigation`) — prev/next, fully styleable, or bring your
   own element via `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at
   the edges.
@@ -65,7 +68,7 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
   turns one page per flick, with the inertia tail filtered out; vertical page scrolling over
   the carousel is never intercepted. During flow the same gesture drifts the strip.
 - **Pay for what you use** — arrows, dots, flow, wheel gestures, free scrolling, and the a11y
-  layer ship as tree-shakeable entries; the core stays ~5 kB and an unused module never
+  layer ship as tree-shakeable entries; the core stays ~5.5 kB and an unused module never
   reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
@@ -87,7 +90,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.3 kB** core, +0.7–1.6 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
+| **lightslide** | **5.7 kB** core, +0.7–1.6 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -138,7 +141,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5 kB). Arrows, dots, the flow ticker, wheel
+The core ships only what every carousel needs (~5.5 kB). Arrows, dots, the flow ticker, wheel
 gestures, free scrolling, and the accessibility layer are separate tree-shakeable entries —
 import a module and pass its node to the matching slot prop; skip the import and none of its
 code or styles reaches your bundle.
@@ -175,6 +178,7 @@ payloads.
 | `free` | `ReactNode` | — | Momentum drag physics from `lightslide/free` — pass `<FreeScroll />` (see [Free scrolling](#free-scrolling-lightslidefree)) |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop |
+| `lazyMount` | `boolean \| LazyMountConfig` | `false` | Mount only slides near the current position (see [Lazy slide mounting](#lazy-slide-mounting)) |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
 | `fallback` | `ReactNode` | — | Placeholder shown while `loading` (omit → renders nothing) |
 
@@ -371,6 +375,28 @@ boundary instead of resting anywhere.
 `Math.ceil(slidesPerView)` slides are cloned at each end; when a snap lands on a clone, the track
 silently repositions to the matching real slide before the next interaction. Prev/next buttons
 are never disabled while looping, and `carousel_reached_end` is never fired. No-op when `maxIndex === 0`.
+
+## Lazy slide mounting
+
+```tsx
+<LightSlide lazyMount>…</LightSlide>
+<LightSlide lazyMount={{ margin: 2 }}>…</LightSlide>
+```
+
+With `lazyMount`, slides outside the visible window (± `margin` slides on each side, default
+`1`) render as **empty shells**: the consumer's slide element keeps its size, class, style,
+and ARIA — geometry, snapping, and loop clones behave exactly as if everything were mounted —
+but the children inside don't mount until the window approaches. Mounting can't shift layout
+(the box never changes), and heavy subtrees (embeds, charts, product cards) stay out of the
+first render and hydration.
+
+- The window follows the settled position — during a multi-slide flick or a free-mode coast a
+  shell can be briefly visible before the position settles; raise `margin` if that matters.
+- Ignored while `flow` runs: continuous motion has no resting window, so every slide mounts.
+- If a slide's height would come from its lazy content, give slides an explicit height or
+  `aspect-ratio` so off-window shells keep the track's height.
+- For plain images native `loading="lazy"` already defers the bytes — `lazyMount` is for
+  deferring the React subtree itself.
 
 ## Loading fallback
 
@@ -637,7 +663,7 @@ slides.
 import type {
   AnalyticsConfig, AnalyticsEvent, AutoScrollConfig, BreakpointOverrides,
   InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
-  NavigationButtonPayload, PaginationClickPayload,
+  NavigationButtonPayload, PaginationClickPayload, LazyMountConfig,
   LightSlideProps, LightSlideHandle, SlideProps, SlideData,
 } from "lightslide";
 
@@ -669,6 +695,7 @@ src/
 │       ├── store.ts                #   single core-data store (LightSlideStore<T>)
 │       ├── slideData.ts            #   collectSlideData (+ test)
 │       ├── loopClones.ts           #   buildDisplayChildren: per-slide ARIA + loop clones (+ test)
+│       ├── lazyMount.ts            #   index-window mount predicate for lazyMount (+ test)
 │       ├── useLatestRef.ts         #   latest-ref for stable callbacks
 │       ├── useNavigation.ts        #   navigateToIndex — the single navigation path (+ test)
 │       ├── useExternalControl.ts   #   controlled index prop + LightSlideHandle ref
@@ -721,7 +748,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 276 integration tests (Jest + jsdom) across 30 suites
+npm test             # 293 integration tests (Jest + jsdom) across 31 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

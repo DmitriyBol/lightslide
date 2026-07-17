@@ -36,6 +36,15 @@ export type BreakpointOverrides = {
 };
 
 /**
+ * Config form of `lazyMount`. `margin` is how many off-screen slides stay mounted on each
+ * side of the visible window (default 1): raise it to pre-mount further ahead (long flicks,
+ * free mode), lower it to 0 for the tightest window.
+ */
+export type LazyMountConfig = {
+	margin?: number;
+};
+
+/**
  * Main carousel props. Generic over the slide `data` shape `T` (carried through to the
  * analytics payloads), defaulting to `unknown`. Write `<LightSlide<Product> …>` to type the
  * whole chain; omit it and everything still works with an unspecified data type.
@@ -70,6 +79,15 @@ export type BreakpointOverrides = {
  *   Free replaces the drag-to-snap gesture with momentum scrolling (`<FreeScroll />` rests
  *   anywhere, `<FreeScroll snap />` lands on a boundary); flow, when running, still owns the
  *   track.
+ * - `lazyMount` — defer mounting far-away slides: `true` or `{margin}` renders slides
+ *   outside the visible window (± `margin` slides, default 1) as empty shells. The shell is
+ *   the consumer's own slide element with all its props — size, class, style, ARIA — so
+ *   geometry, snap, and loop stay exact and mounting causes no layout shift; only the
+ *   children (images, embeds, heavy cards) wait for the window to approach. Loop clones
+ *   follow their original slide. Ignored while `flow` runs (continuous motion has no
+ *   resting window — every slide mounts). Give slides an explicit height when the height
+ *   would come from lazy content, and keep using native `loading="lazy"` for plain images —
+ *   this defers React subtrees, not image bytes.
  * - `loading` — when true, the carousel renders `fallback` instead of the slides — useful
  *   while async slide data is still being fetched. With no `fallback` it renders nothing.
  * - `fallback` — node rendered in place of the track while `loading` is true (your own
@@ -98,6 +116,7 @@ export type LightSlideProps<T = unknown> = {
 	free?: ReactNode;
 	a11y?: ReactNode;
 	isLoop?: boolean;
+	lazyMount?: boolean | LazyMountConfig;
 	loading?: boolean;
 	fallback?: ReactNode;
 };
