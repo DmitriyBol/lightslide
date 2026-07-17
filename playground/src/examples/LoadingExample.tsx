@@ -48,7 +48,7 @@ export function LoadingExample() {
 	return (
 		<Demo
 			id="loading"
-			number="18"
+			number="19"
 			title="Loading fallback"
 			tag="loading · fallback"
 			description={

@@ -11,6 +11,8 @@ infinite loop, a continuous flow (ticker) mode, and one typed analytics event st
 in a ~5 kB fully-typed core with zero runtime dependencies beyond React. Everything
 optional ships as a tree-shakeable entry, so you only pay for what you import.
 
+**[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
+
 > **Status: pre-1.0.** The API is settling and the project is in active testing — the goal is
 > to find and fix as many issues as possible before 1.0.0. Bug reports are very welcome.
 
@@ -25,7 +27,7 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [isLoop](#isloop) · [Loading fallback](#loading-fallback)
 - [slidesPerView & gap](#slidesperview--gap) · [Responsive breakpoints](#responsive-breakpoints)
-- [External control](#external-control)
+- [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
 - [Accessibility](#accessibility)
 - [Styling](#styling) · [Exported types](#exported-types)
@@ -464,6 +466,44 @@ Semantics worth knowing:
   methods are ignored, and `getIndex` reports the last settled position. `pause()`/`resume()`
   are the exception — they hold and release the flow drift too.
 
+### Thumbnails / synced carousels
+
+The product-page classic needs no plugin — two instances and one piece of state:
+
+```tsx
+const [index, setIndex] = useState(0);
+
+<LightSlide index={index} navigation={<Navigation />} onIndexChange={setIndex}>
+  {images.map((src) => (
+    <Slide key={src}>
+      <img src={src} alt="" />
+    </Slide>
+  ))}
+</LightSlide>
+
+<LightSlide index={index} slidesPerView={4.5} gap={8}>
+  {images.map((src, i) => (
+    <Slide key={src}>
+      <button type="button" aria-pressed={i === index} onClick={() => setIndex(i)}>
+        <img src={src} alt="" />
+      </button>
+    </Slide>
+  ))}
+</LightSlide>
+```
+
+- A thumb click sets the state and the gallery follows its controlled `index`; the gallery's
+  own arrows/drag report back through `onIndexChange`, moving the `aria-pressed` highlight
+  your CSS hangs on.
+- The strip deliberately gets no `onIndexChange` — dragging it browses the thumbs without
+  changing the selection.
+- The strip reads the same shared `index`, and out-of-range values clamp to each instance's
+  own range — that is what keeps the active thumb scrolled into view for free.
+- The same shape syncs any two carousels 1:1: give both `index` and `onIndexChange` and they
+  mirror each other.
+
+See it live in the playground's [Thumbnails demo](https://lightslide.vercel.app/#thumbnails).
+
 ## Analytics
 
 All analytics flow through **one** handler — `analytics.onEvent`. It receives every event as a
@@ -687,7 +727,7 @@ npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
 npm run build        # Rollup CJS + ESM + d.ts
 npm run size         # bundle size check (after build)
-npm run playground   # Vite dev server (playground/)
+npm run playground   # Vite dev server (playground/ — deployed at lightslide.vercel.app)
 ```
 
 ### Tests

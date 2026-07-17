@@ -23,7 +23,11 @@ export function Demo({
 	children,
 }: DemoProps) {
 	return (
-		<section id={id} data-reveal className={`${styles.block} reveal`}>
+		<section
+			id={id}
+			data-reveal
+			data-number={number}
+			className={`${styles.block} reveal`}>
 			<div className={`${styles.num} tnum`}>{number}</div>
 			<div className={styles.body}>
 				<div className={styles.head}>

@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.14.2] — 2026-07-17
+
+### Added
+
+- Thumbnails / synced carousels recipe (docs + demo, no new package code): a README section
+  under External control showing two instances wired through one piece of state, a live
+  playground demo (`#thumbnails`), and e2e coverage of the sync in both directions.
+- Playground: a fixed scrollspy side rail (wide viewports) listing every demo by phase —
+  click to jump to a section, with the active one tracked while scrolling.
+- README now links the live demo (lightslide.vercel.app) from the header; `homepage` in
+  package.json points there too, so npm surfaces it.
+
 ## [0.14.1] — 2026-07-17
 
 ### Changed

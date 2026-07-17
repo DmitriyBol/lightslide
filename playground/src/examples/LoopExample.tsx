@@ -36,7 +36,7 @@ export function LoopExample() {
 	return (
 		<Demo
 			id="loop"
-			number="10"
+			number="11"
 			title="Seamless loop"
 			tag="isLoop"
 			description={

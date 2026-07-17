@@ -4,6 +4,7 @@ import {Logo} from './components/Logo';
 import {Nav} from './components/Nav';
 import {PhaseLabel} from './components/PhaseLabel';
 import {ScrollProgress} from './components/ScrollProgress';
+import {SideNav} from './components/SideNav';
 import {useReveal} from './components/useReveal';
 import {useTheme} from './components/useTheme';
 import {AccessibilityExample} from './examples/AccessibilityExample';
@@ -25,6 +26,7 @@ import {NavigationExample} from './examples/NavigationExample';
 import {PaginationExample} from './examples/PaginationExample';
 import {ProductCardsExample} from './examples/ProductCardsExample';
 import {SlidesPerViewExample} from './examples/SlidesPerViewExample';
+import {ThumbnailsExample} from './examples/ThumbnailsExample';
 import {WheelExample} from './examples/WheelExample';
 import {GITHUB_URL, INSTALL_COMMAND, NPM_URL} from './meta';
 
@@ -36,6 +38,7 @@ export function App() {
 		<>
 			<ScrollProgress />
 			<Nav theme={theme} onToggle={toggle} />
+			<SideNav />
 			<Hero />
 
 			<hr className={styles.rule} />
@@ -52,6 +55,7 @@ export function App() {
 				<NavigationExample />
 				<PaginationExample />
 				<ControlledExample />
+				<ThumbnailsExample />
 
 				<PhaseLabel label="Motion" />
 				<AutoScrollExample />

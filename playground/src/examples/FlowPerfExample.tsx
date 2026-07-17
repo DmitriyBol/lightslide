@@ -164,7 +164,7 @@ export function FlowPerfExample() {
 	return (
 		<Demo
 			id="flow-perf"
-			number="12"
+			number="13"
 			title="Flow performance"
 			tag="cached width"
 			description={
