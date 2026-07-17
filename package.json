@@ -121,7 +121,7 @@
     "type": "git",
     "url": "git+https://github.com/DmitriyBol/lightslide.git"
   },
-  "homepage": "https://github.com/DmitriyBol/lightslide#readme",
+  "homepage": "https://lightslide.vercel.app",
   "bugs": {
     "url": "https://github.com/DmitriyBol/lightslide/issues"
   },

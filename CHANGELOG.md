@@ -13,6 +13,8 @@ All notable changes to this project are documented here. The format follows
   playground demo (`#thumbnails`), and e2e coverage of the sync in both directions.
 - Playground: a fixed scrollspy side rail (wide viewports) listing every demo by phase —
   click to jump to a section, with the active one tracked while scrolling.
+- README now links the live demo (lightslide.vercel.app) from the header; `homepage` in
+  package.json points there too, so npm surfaces it.
 
 ## [0.14.1] — 2026-07-17
 

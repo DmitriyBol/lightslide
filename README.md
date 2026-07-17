@@ -11,6 +11,8 @@ infinite loop, a continuous flow (ticker) mode, and one typed analytics event st
 in a ~5 kB fully-typed core with zero runtime dependencies beyond React. Everything
 optional ships as a tree-shakeable entry, so you only pay for what you import.
 
+**[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
+
 > **Status: pre-1.0.** The API is settling and the project is in active testing — the goal is
 > to find and fix as many issues as possible before 1.0.0. Bug reports are very welcome.
 
@@ -725,7 +727,7 @@ npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
 npm run build        # Rollup CJS + ESM + d.ts
 npm run size         # bundle size check (after build)
-npm run playground   # Vite dev server (playground/)
+npm run playground   # Vite dev server (playground/ — deployed at lightslide.vercel.app)
 ```
 
 ### Tests
