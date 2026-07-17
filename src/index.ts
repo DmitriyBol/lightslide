@@ -6,6 +6,7 @@ export type {
 	AutoScrollConfig,
 	BreakpointOverrides,
 	InViewportPayload,
+	LazyMountConfig,
 	LightSlideHandle,
 	LightSlideProps,
 	NavigationButtonPayload,

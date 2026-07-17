@@ -20,6 +20,7 @@ import type {LightSlideHandle, LightSlideProps} from '../types';
 import {cx} from '../utils/cx';
 import {WheelContext} from '../wheelSeam';
 import {DEFAULT_SLIDE_LABEL, DEFAULT_VIEWED_TIMEOUT} from './helpers/constants';
+import {buildMountPredicate, DEFAULT_LAZY_MARGIN} from './helpers/lazyMount';
 import {buildDisplayChildren} from './helpers/loopClones';
 import {collectSlideData} from './helpers/slideData';
 import {createStore} from './helpers/store';
@@ -80,6 +81,7 @@ function LightSlideInner<T = unknown>(
 		free,
 		a11y,
 		isLoop = false,
+		lazyMount,
 		loading = false,
 		fallback,
 	}: LightSlideProps<T>,
@@ -294,9 +296,50 @@ function LightSlideInner<T = unknown>(
 		e.preventDefault();
 	}, []);
 
+	/**
+	 * Lazy mounting keys off the settled currentIndex (cheap, synchronous with the
+	 * geometry), so it only applies where the track has a resting window — flow's
+	 * continuous motion turns it off. While active, the children derivation below
+	 * recomputes per navigation; memoized slides whose window state didn't change skip.
+	 */
+	const lazyActive = lazyMount ? !effectiveFlow : false;
+	const lazyMargin =
+		typeof lazyMount === 'object'
+			? (lazyMount.margin ?? DEFAULT_LAZY_MARGIN)
+			: DEFAULT_LAZY_MARGIN;
+	const isSlideMounted = useMemo(
+		() =>
+			lazyActive
+				? buildMountPredicate(
+						currentIndex,
+						slideCount,
+						slidesPerView,
+						maxIndex,
+						effectiveLoop,
+						lazyMargin,
+					)
+				: null,
+		[
+			lazyActive,
+			currentIndex,
+			slideCount,
+			slidesPerView,
+			maxIndex,
+			effectiveLoop,
+			lazyMargin,
+		],
+	);
+
 	const displayChildren = useMemo(
-		() => buildDisplayChildren(childArray, slideCount, loopOffset, slideLabel),
-		[childArray, slideCount, loopOffset, slideLabel],
+		() =>
+			buildDisplayChildren(
+				childArray,
+				slideCount,
+				loopOffset,
+				slideLabel,
+				isSlideMounted,
+			),
+		[childArray, slideCount, loopOffset, slideLabel, isSlideMounted],
 	);
 
 	/**

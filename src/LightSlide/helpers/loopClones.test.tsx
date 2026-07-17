@@ -122,4 +122,42 @@ describe('buildDisplayChildren', () => {
 		expect(propsOf(result[0])['aria-label']).toBe('1 / 3');
 		expect(propsOf(result[2])['aria-label']).toBe('3 / 3');
 	});
+
+	it('hollows out slides outside the lazy window but keeps their props and ARIA', () => {
+		const styled = [
+			<div key="a" className="card" style={{height: 100}}>
+				A
+			</div>,
+			<div key="b">B</div>,
+			<div key="c">C</div>,
+		];
+		const result = buildDisplayChildren(styled, 3, 0, label, i => i > 0);
+
+		const hollow = propsOf(result[0]);
+		expect(hollow.children).toBeNull();
+		expect(hollow.className).toBe('card');
+		expect((hollow.style as {height?: number}).height).toBe(100);
+		expect(hollow['aria-label']).toBe('1 of 3');
+
+		expect(propsOf(result[1]).children).toBe('B');
+		expect(propsOf(result[2]).children).toBe('C');
+	});
+
+	it('mounts a loop clone exactly when its original slide is mounted', () => {
+		/** window = slide 0 only: the append clone (of slide 0) keeps content, the prepend clone (of slide 2) is hollow */
+		const result = buildDisplayChildren(slides, 3, 1, label, i => i === 0);
+
+		expect(propsOf(result[0]).children).toBeNull();
+		expect(propsOf(result[4]).children).toBe('A');
+		expect(propsOf(result[1]).children).toBe('A');
+		expect(propsOf(result[2]).children).toBeNull();
+		expect(propsOf(result[3]).children).toBeNull();
+	});
+
+	it('passes non-element children through even outside the lazy window', () => {
+		const mixed = ['plain text', <div key="b">B</div>];
+		const result = buildDisplayChildren(mixed, 2, 0, label, () => false);
+		expect(result[0]).toBe('plain text');
+		expect(propsOf(result[1]).children).toBeNull();
+	});
 });

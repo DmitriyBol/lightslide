@@ -4,6 +4,27 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.15.0] — 2026-07-17
+
+### Added
+
+- `lazyMount` prop — lazy slide mounting: `lazyMount` / `lazyMount={{margin}}` renders slides
+  outside the visible window (± `margin` slides, default 1) as empty shells. The consumer's
+  slide element keeps its size, class, style, and ARIA, so geometry, snapping, and loop
+  clones are unaffected and mounting can't shift layout; only the slide's children (heavy
+  React subtrees) wait for the window to approach. Loop clones mount exactly when their
+  original does; the window wraps across the loop seam; the flush-clamped last position with
+  a fractional `slidesPerView` keeps its half-visible slide mounted. Ignored while `flow`
+  runs (continuous motion has no resting window). New exported type: `LazyMountConfig`.
+- Playground: `#lazy-mount` demo with a per-subtree mount visualisation, margin control, and
+  on/off toggle; e2e spec covering the window, navigation, margin, and shell geometry.
+
+### Changed
+
+- Base-entry size budget raised 5.4 → 5.5 kB (the feature costs ~200 B in the core render
+  path — it cannot ship as a tree-shakeable entry). Actual: 5.45 kB brotli, 5.7 kB min+gzip;
+  README/playground marketing numbers updated to match.
+
 ## [0.14.2] — 2026-07-17
 
 ### Added

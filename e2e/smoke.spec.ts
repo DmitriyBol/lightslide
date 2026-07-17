@@ -24,6 +24,7 @@ const SECTION_IDS = [
 	'link-cards',
 	'custom-timeout',
 	'loading',
+	'lazy-mount',
 	'a11y',
 	'compare',
 ];

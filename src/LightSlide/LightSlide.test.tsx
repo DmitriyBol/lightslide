@@ -7,7 +7,7 @@ import {Flow} from '../modules/flow';
 import {Navigation} from '../modules/Navigation';
 import {Pagination} from '../modules/Pagination';
 import {Slide} from '../Slide/Slide';
-import type {AnalyticsEvent} from '../types';
+import type {AnalyticsEvent, LightSlideHandle} from '../types';
 import {LightSlide} from './LightSlide';
 
 import '@testing-library/jest-dom';
@@ -559,5 +559,64 @@ describe('LightSlide a11y', () => {
 		);
 		/** The LiveRegion resolves the seam context and announces the active slide. */
 		expect(screen.getByText('Slide 1 of 2')).toBeInTheDocument();
+	});
+});
+
+describe('LightSlide lazy mounting', () => {
+	function renderLazy(
+		props: Partial<React.ComponentProps<typeof LightSlide>> = {},
+		ref?: React.Ref<LightSlideHandle>,
+	) {
+		return render(
+			<LightSlide ref={ref} lazyMount {...props}>
+				{[1, 2, 3, 4, 5, 6].map(n => (
+					<Slide key={n}>
+						<div>{`Card ${n}`}</div>
+					</Slide>
+				))}
+			</LightSlide>,
+		);
+	}
+
+	it('renders far slides as empty shells that keep their slide ARIA', () => {
+		renderLazy();
+		/** window at index 0 with the default margin 1 → slides 1–2 mounted */
+		expect(screen.getByText('Card 1')).toBeInTheDocument();
+		expect(screen.getByText('Card 2')).toBeInTheDocument();
+		expect(screen.queryByText('Card 4')).not.toBeInTheDocument();
+
+		const shell = screen.getByRole('group', {name: '4 of 6'});
+		expect(shell).toBeEmptyDOMElement();
+	});
+
+	it('honours a custom margin', () => {
+		renderLazy({lazyMount: {margin: 0}});
+		expect(screen.getByText('Card 1')).toBeInTheDocument();
+		expect(screen.queryByText('Card 2')).not.toBeInTheDocument();
+	});
+
+	it('mounts slides as navigation moves the window and unmounts the ones left behind', () => {
+		const ref = React.createRef<LightSlideHandle>();
+		renderLazy({}, ref);
+		expect(screen.queryByText('Card 4')).not.toBeInTheDocument();
+
+		act(() => ref.current?.goTo(3));
+
+		expect(screen.getByText('Card 4')).toBeInTheDocument();
+		expect(screen.queryByText('Card 1')).not.toBeInTheDocument();
+	});
+
+	it('wraps the lazy window across the loop seam', () => {
+		renderLazy({isLoop: true});
+		/** at index 0 the margin reaches back to the last slide (real + its clone) */
+		expect(screen.getAllByText('Card 6').length).toBeGreaterThanOrEqual(1);
+		expect(screen.queryByText('Card 3')).not.toBeInTheDocument();
+	});
+
+	it('mounts everything while flow runs', () => {
+		renderLazy({flow: <Flow />});
+		for (const n of [1, 2, 3, 4, 5, 6]) {
+			expect(screen.getAllByText(`Card ${n}`).length).toBeGreaterThanOrEqual(1);
+		}
 	});
 });
