@@ -4,6 +4,7 @@ import {Logo} from './components/Logo';
 import {Nav} from './components/Nav';
 import {PhaseLabel} from './components/PhaseLabel';
 import {ScrollProgress} from './components/ScrollProgress';
+import {SideNav} from './components/SideNav';
 import {useReveal} from './components/useReveal';
 import {useTheme} from './components/useTheme';
 import {AccessibilityExample} from './examples/AccessibilityExample';
@@ -37,6 +38,7 @@ export function App() {
 		<>
 			<ScrollProgress />
 			<Nav theme={theme} onToggle={toggle} />
+			<SideNav />
 			<Hero />
 
 			<hr className={styles.rule} />

@@ -1,0 +1,91 @@
+// Fixed scrollspy rail in the left gutter (wide viewports only): phase groups + demo
+// numbers hung on their own hairline, echoing the demo column's spine. It fades in only
+// while the demo column is on screen, so the hero and footer keep the stage to themselves.
+.rail {
+	position: fixed;
+	top: 84px;
+	bottom: 32px;
+	left: 24px;
+	z-index: 40;
+	display: none;
+	width: 188px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	opacity: 0;
+	transform: translateX(-6px);
+	pointer-events: none;
+	transition:
+		opacity 320ms var(--ease-out),
+		transform 320ms var(--ease-out);
+}
+
+.isOnScreen {
+	opacity: 1;
+	transform: none;
+	pointer-events: auto;
+}
+
+@media (width >= 1200px) {
+	.rail {
+		display: block;
+	}
+}
+
+.group + .group {
+	margin-top: 20px;
+}
+
+.groupLabel {
+	padding: 0 0 6px 14px;
+	font-family: var(--font-mono);
+	font-size: 0.625rem;
+	font-weight: 500;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--text-faint);
+}
+
+.list {
+	list-style: none;
+	border-left: 1px solid var(--hairline);
+}
+
+.link {
+	display: flex;
+	gap: 9px;
+	align-items: baseline;
+	padding: 4px 8px 4px 13px;
+	margin-left: -1px;
+	font-size: 0.75rem;
+	color: var(--text-muted);
+	border-left: 1px solid transparent;
+	transition:
+		color 140ms var(--ease-out),
+		border-color 140ms var(--ease-out);
+
+	&:hover {
+		color: var(--text);
+	}
+}
+
+.num {
+	font-family: var(--font-mono);
+	font-size: 0.625rem;
+	color: var(--text-faint);
+	transition: color 140ms var(--ease-out);
+}
+
+.isActive {
+	color: var(--text);
+	border-left-color: var(--accent);
+
+	.num {
+		color: var(--accent);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rail {
+		transition: none;
+	}
+}

@@ -11,6 +11,8 @@ All notable changes to this project are documented here. The format follows
 - Thumbnails / synced carousels recipe (docs + demo, no new package code): a README section
   under External control showing two instances wired through one piece of state, a live
   playground demo (`#thumbnails`), and e2e coverage of the sync in both directions.
+- Playground: a fixed scrollspy side rail (wide viewports) listing every demo by phase —
+  click to jump to a section, with the active one tracked while scrolling.
 
 ## [0.14.1] — 2026-07-17
 
