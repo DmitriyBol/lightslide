@@ -24,6 +24,7 @@ import {buildDisplayChildren} from './helpers/loopClones';
 import {collectSlideData} from './helpers/slideData';
 import {buildSsrCss} from './helpers/ssrStyles';
 import {createStore} from './helpers/store';
+import {centerLead} from './helpers/trackOffset';
 import {useAutoScroll} from './helpers/useAutoScroll';
 import {useBreakpoints} from './helpers/useBreakpoints';
 import {useDragGesture} from './helpers/useDragGesture';
@@ -70,6 +71,7 @@ function LightSlideInner<T = unknown>(
 		analytics,
 		slidesPerView: slidesPerViewProp = 1,
 		gap: gapProp = 0,
+		align = 'start',
 		breakpoints,
 		initialIndex = 0,
 		index,
@@ -146,7 +148,20 @@ function LightSlideInner<T = unknown>(
 	const effectiveFlow =
 		flow != null && flow !== false && maxIndex > 0 && !loading && motionAllowed;
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
-	const loopOffset = effectiveLoop ? Math.ceil(slidesPerView) : 0;
+
+	/**
+	 * With exactly one slide per view there is nothing to centre against, so center mode
+	 * only engages past 1. Looping then needs centerLead extra clones per side: the centring
+	 * inset exposes slides left of the active one, and the backward wrap-dance parks that
+	 * far into the prepend strip (capped — clones can't outnumber the slides they copy).
+	 */
+	const isCentered = align === 'center' && slidesPerView > 1;
+	const loopOffset = effectiveLoop
+		? Math.min(
+				slideCount,
+				Math.ceil(slidesPerView) + (isCentered ? centerLead(slidesPerView) : 0),
+			)
+		: 0;
 
 	/**
 	 * True while any auto motion runs — it turns on the hover/focus pause listeners, and the
@@ -195,6 +210,7 @@ function LightSlideInner<T = unknown>(
 	const {slideWidth, measureSlideWidth} = useSlideMetrics(
 		containerRef,
 		storeRef,
+		isCentered,
 	);
 
 	const {snapToVisual, snapTrack} = useTrackSnap(trackRef, storeRef);
@@ -207,6 +223,7 @@ function LightSlideInner<T = unknown>(
 		setCurrentIndex,
 		slidesPerView,
 		gap,
+		centered: isCentered,
 		isLoop,
 		flowEnabled: effectiveFlow,
 		loading,
@@ -318,6 +335,7 @@ function LightSlideInner<T = unknown>(
 						maxIndex,
 						effectiveLoop,
 						lazyMargin,
+						isCentered,
 					)
 				: null,
 		[
@@ -328,6 +346,7 @@ function LightSlideInner<T = unknown>(
 			maxIndex,
 			effectiveLoop,
 			lazyMargin,
+			isCentered,
 		],
 	);
 
@@ -356,6 +375,8 @@ function LightSlideInner<T = unknown>(
 			slidesPerView,
 			gap,
 			startVisual: loopOffset + Math.min(startIndex, maxIndex),
+			centered: isCentered,
+			isLoop: effectiveLoop,
 		}),
 	);
 

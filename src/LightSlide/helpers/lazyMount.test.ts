@@ -11,6 +11,7 @@ function mountedIndices(window: {
 	maxIndex: number;
 	isLoop: boolean;
 	margin: number;
+	centered?: boolean;
 }): number[] {
 	const predicate = buildMountPredicate(
 		window.currentIndex,
@@ -19,6 +20,7 @@ function mountedIndices(window: {
 		window.maxIndex,
 		window.isLoop,
 		window.margin,
+		window.centered ?? false,
 	);
 	return Array.from({length: window.slideCount}, (_, i) => i).filter(predicate);
 }
@@ -130,6 +132,51 @@ describe('buildMountPredicate', () => {
 				margin: 1,
 			}),
 		).toEqual([0, 4, 5]);
+	});
+
+	it('extends the window left for the centred peek', () => {
+		/** centered at spv 1.5: the inset exposes slide 4 left of the active 5, even at margin 0 */
+		expect(
+			mountedIndices({
+				currentIndex: 5,
+				slideCount: 10,
+				slidesPerView: 1.5,
+				maxIndex: 9,
+				isLoop: false,
+				margin: 0,
+				centered: true,
+			}),
+		).toEqual([4, 5, 6]);
+	});
+
+	it('grows the centred lead with slidesPerView', () => {
+		/** spv 4 centred → centerLead ceil(3/2) = 2 slides peek left of the active one */
+		expect(
+			mountedIndices({
+				currentIndex: 5,
+				slideCount: 12,
+				slidesPerView: 4,
+				maxIndex: 8,
+				isLoop: false,
+				margin: 0,
+				centered: true,
+			}),
+		).toEqual([3, 4, 5, 6, 7, 8]);
+	});
+
+	it('wraps the centred lead across the loop seam', () => {
+		/** centered loop at index 0: the left peek is the last slide's clone → slide 5 mounts */
+		expect(
+			mountedIndices({
+				currentIndex: 0,
+				slideCount: 6,
+				slidesPerView: 1.5,
+				maxIndex: 5,
+				isLoop: true,
+				margin: 0,
+				centered: true,
+			}),
+		).toEqual([0, 1, 5]);
 	});
 
 	it('mounts every slide when the loop window covers the whole strip', () => {

@@ -35,7 +35,7 @@ export function ControlledExample() {
 	return (
 		<Demo
 			id="controlled"
-			number="08"
+			number="09"
 			title="External control"
 			tag="index / onIndexChange / ref"
 			description={

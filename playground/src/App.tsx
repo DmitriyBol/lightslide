@@ -8,6 +8,7 @@ import {SideNav} from './components/SideNav';
 import {useReveal} from './components/useReveal';
 import {useTheme} from './components/useTheme';
 import {AccessibilityExample} from './examples/AccessibilityExample';
+import {AlignExample} from './examples/AlignExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
 import {BasicExample} from './examples/BasicExample';
 import {BreakpointsExample} from './examples/BreakpointsExample';
@@ -52,6 +53,7 @@ export function App() {
 
 				<PhaseLabel label="Navigation" />
 				<SlidesPerViewExample />
+				<AlignExample />
 				<BreakpointsExample />
 				<NavigationExample />
 				<PaginationExample />
@@ -89,7 +91,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~5.7&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~5.8&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub

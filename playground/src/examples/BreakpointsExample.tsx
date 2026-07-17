@@ -54,7 +54,7 @@ export function BreakpointsExample() {
 	return (
 		<Demo
 			id="breakpoints"
-			number="05"
+			number="06"
 			title="breakpoints"
 			tag="breakpoints={{'(min-width: …)': {…}}}"
 			description={

@@ -23,6 +23,10 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  * mount/resize and read by every motion/gesture/snap path so the hot loop never touches layout
  * (offsetWidth). `gap` is the px space between adjacent slides (CSS column-gap on the track);
  * every offset computation steps by the stride `slideWidth + gap`.
+ * `centerInset` is the px shift that centres the active slide — (container − slide) / 2,
+ * written by useSlideMetrics alongside slideWidth (0 unless align is center with more than
+ * one slide per view) and subtracted by trackOffset, so every snap/drag/settle path centres
+ * through the same cached value; a positive value doubles as "center mode is on".
  * `autoScrollPaused` is set while a drag is in progress so auto motion (auto-scroll/flow) pauses.
  * `hovered` / `focusWithin` mirror user engagement with the carousel (pointer over, keyboard
  * focus inside), written by useHoverFocus; auto-scroll and flow read them on their own cadence
@@ -43,6 +47,7 @@ export type LightSlideStore<T = unknown> = {
 	maxIndex: number;
 	slidesPerView: number;
 	gap: number;
+	centerInset: number;
 	viewedTimeout: number;
 	effectiveFlow: boolean;
 	isLoop: boolean;
@@ -67,6 +72,7 @@ export function createStore<T = unknown>(
 		maxIndex: 0,
 		slidesPerView: 1,
 		gap: 0,
+		centerInset: 0,
 		viewedTimeout: DEFAULT_VIEWED_TIMEOUT,
 		effectiveFlow: false,
 		isLoop: false,

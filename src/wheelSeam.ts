@@ -23,11 +23,18 @@ export type WheelSeamValue = {
 
 export const WheelContext = createContext<WheelSeamValue | null>(null);
 
-/** Using the plugin outside <LightSlide wheel={…}> is a wiring bug — fail loudly. */
+/**
+ * Using the plugin outside <LightSlide wheel={…}> is a wiring bug — fail loudly. The full
+ * message is dev-only; production builds throw the short marker.
+ */
 export function useWheelSeam(): WheelSeamValue {
 	const ctx = useContext(WheelContext);
 	if (!ctx) {
-		throw new Error('lightslide/wheel must be passed to <LightSlide wheel={…}>');
+		throw new Error(
+			process.env.NODE_ENV !== 'production'
+				? 'lightslide/wheel must be passed to <LightSlide wheel={…}>'
+				: 'lightslide seam',
+		);
 	}
 	return ctx;
 }

@@ -158,6 +158,31 @@ describe('useNavigation — loop wrap dance', () => {
 		/** Landing on maxIndex via a wrap is not "reaching the end". */
 		expect(fireTerminalIfNeeded).not.toHaveBeenCalled();
 	});
+
+	it('targets maxIndex’s pre-wrap twin, not visual 0, with a fractional slidesPerView', () => {
+		/**
+		 * count 5, spv 1.5 → maxIndex 4, loopOffset 2. The twin of visual maxIdx + offset = 6
+		 * one content-width left is 6 − 5 = 1; animating to 0 instead would land a full
+		 * stride short and jump at the silent re-snap.
+		 */
+		const {navigate, snapToVisual} = setupNavigation({
+			isLoop: true,
+			loopOffset: 2,
+			slidesPerView: 1.5,
+			maxIndex: 4,
+			slideCount: 5,
+			currentIndex: 0,
+		});
+		navigate(-1, 'button');
+		expect(snapToVisual).toHaveBeenCalledWith(1, true, expect.any(Function));
+		const [, , onComplete] = snapToVisual.mock.calls[0] as [
+			number,
+			boolean,
+			() => void,
+		];
+		onComplete();
+		expect(snapToVisual).toHaveBeenLastCalledWith(6, false);
+	});
 });
 
 describe('useNavigation — per-source analytics', () => {

@@ -32,7 +32,7 @@ const ROWS: CompareRow[] = [
 		name: 'lightslide',
 		isOurs: true,
 		cells: [
-			{label: '5.9 kB core', isPositive: true},
+			{label: '6.1 kB core', isPositive: true},
 			{label: 'APG always on · +1 kB opt-in layer', isPositive: true},
 			{label: '✓ tree-shakeable', isPositive: true},
 			{label: '✓ typed events', isPositive: true},
@@ -112,7 +112,7 @@ export function CompareExample() {
 	return (
 		<Demo
 			id="compare"
-			number="22"
+			number="23"
 			title="How it compares"
 			tag="honest numbers"
 			description={

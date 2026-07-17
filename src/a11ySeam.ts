@@ -42,13 +42,16 @@ export const A11yContext = createContext<A11yContextType | null>(null);
 
 /**
  * Plugins must be rendered inside <LightSlide a11y={…}>; using one anywhere else is a wiring bug,
- * so fail loudly rather than silently no-op.
+ * so fail loudly rather than silently no-op. The full message is dev-only — consumer bundlers
+ * substitute NODE_ENV and drop the long literal from production builds.
  */
 export function useA11yContext(): A11yContextType {
 	const ctx = useContext(A11yContext);
 	if (!ctx) {
 		throw new Error(
-			'lightslide/a11y components must be passed to <LightSlide a11y={…}>',
+			process.env.NODE_ENV !== 'production'
+				? 'lightslide/a11y components must be passed to <LightSlide a11y={…}>'
+				: 'lightslide seam',
 		);
 	}
 	return ctx;

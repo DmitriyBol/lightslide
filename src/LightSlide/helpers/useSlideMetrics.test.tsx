@@ -46,7 +46,7 @@ describe('useSlideMetrics', () => {
 	it('mirrors floor(offsetWidth / slidesPerView) onto the store and state on mount', () => {
 		const storeRef = {current: createStore({slidesPerView: 2})};
 		const {result} = renderHook(() =>
-			useSlideMetrics({current: container(600)}, storeRef),
+			useSlideMetrics({current: container(600)}, storeRef, false),
 		);
 		/** 600 / 2 = 300, the value every motion/gesture/snap path now reads. */
 		expect(storeRef.current.slideWidth).toBe(300);
@@ -55,7 +55,7 @@ describe('useSlideMetrics', () => {
 
 	it('floors a non-integer per-slide width so the transform stays pixel-aligned', () => {
 		const storeRef = {current: createStore({slidesPerView: 3})};
-		renderHook(() => useSlideMetrics({current: container(1000)}, storeRef));
+		renderHook(() => useSlideMetrics({current: container(1000)}, storeRef, false));
 		/** 1000 / 3 = 333.33… → floored to 333. */
 		expect(storeRef.current.slideWidth).toBe(333);
 	});
@@ -63,27 +63,47 @@ describe('useSlideMetrics', () => {
 	it('subtracts the visible gaps before dividing when gap is set', () => {
 		/** 2 per view shows 1 gap: (620 − 20) / 2 = 300. */
 		const storeRef = {current: createStore({slidesPerView: 2, gap: 20})};
-		renderHook(() => useSlideMetrics({current: container(620)}, storeRef));
+		renderHook(() => useSlideMetrics({current: container(620)}, storeRef, false));
 		expect(storeRef.current.slideWidth).toBe(300);
 	});
 
 	it('counts ceil(slidesPerView) − 1 gaps for a fractional view', () => {
 		/** 1.5 per view still shows the full gap before the half slide: (620 − 20) / 1.5 = 400. */
 		const storeRef = {current: createStore({slidesPerView: 1.5, gap: 20})};
-		renderHook(() => useSlideMetrics({current: container(620)}, storeRef));
+		renderHook(() => useSlideMetrics({current: container(620)}, storeRef, false));
 		expect(storeRef.current.slideWidth).toBe(400);
 	});
 
 	it('never goes below zero when the gaps exceed the container', () => {
 		const storeRef = {current: createStore({slidesPerView: 2, gap: 700})};
-		renderHook(() => useSlideMetrics({current: container(600)}, storeRef));
+		renderHook(() => useSlideMetrics({current: container(600)}, storeRef, false));
 		expect(storeRef.current.slideWidth).toBe(0);
+	});
+
+	it('measures the centring inset alongside the width in center mode', () => {
+		/** 1.5 per view centred: slide 400 → inset (600 − 400) / 2 = 100. */
+		const storeRef = {current: createStore({slidesPerView: 1.5})};
+		renderHook(() =>
+			useSlideMetrics({current: container(600)}, storeRef, true),
+		);
+		expect(storeRef.current.slideWidth).toBe(400);
+		expect(storeRef.current.centerInset).toBe(100);
+	});
+
+	it('zeroes the inset when not centred', () => {
+		const storeRef = {
+			current: createStore({slidesPerView: 1.5, centerInset: 100}),
+		};
+		renderHook(() =>
+			useSlideMetrics({current: container(600)}, storeRef, false),
+		);
+		expect(storeRef.current.centerInset).toBe(0);
 	});
 
 	it('re-measures into the store and state when the ResizeObserver fires', () => {
 		const el = container(600);
 		const storeRef = {current: createStore({slidesPerView: 2})};
-		const {result} = renderHook(() => useSlideMetrics({current: el}, storeRef));
+		const {result} = renderHook(() => useSlideMetrics({current: el}, storeRef, false));
 		expect(storeRef.current.slideWidth).toBe(300);
 
 		/** Container grows → the ResizeObserver callback re-measures. */

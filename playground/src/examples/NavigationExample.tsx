@@ -46,7 +46,7 @@ export function NavigationExample() {
 	return (
 		<Demo
 			id="navigation"
-			number="06"
+			number="07"
 			title="Navigation arrows"
 			tag="navigation"
 			description={

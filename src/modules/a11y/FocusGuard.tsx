@@ -9,8 +9,10 @@ import {useA11yContext} from '../../a11ySeam';
  * `inert` on nothing else, so it never fights React over an attribute the core owns.
  *
  * The visible window is [currentIndex, currentIndex + ⌈slidesPerView⌉ − 1] — ceil so a fractional
- * `slidesPerView` keeps its partially-visible peek slide interactive. DOM child positions map
- * back to logical slide indices (clones sit below 0 or at ≥ slideCount and are skipped); on
+ * `slidesPerView` keeps its partially-visible peek slide interactive; center mode extends it one
+ * slide left, the peek the centring inset exposes. DOM child positions map back to logical slide
+ * indices through the store's loopOffset (center mode prepends extra clones, so it is not
+ * derivable from slidesPerView here); clones sit below 0 or at ≥ slideCount and are skipped. On
  * unmount every guard this plugin set is cleared, so slides are interactive again.
  *
  * While the flow ticker runs the guard suspends and every real slide stays interactive: the
@@ -19,14 +21,22 @@ import {useA11yContext} from '../../a11ySeam';
  * drifting slides impossible to grab.
  */
 export function FocusGuard() {
-	const {trackRef, currentIndex, slideCount, slidesPerView, isLoop, isFlow} =
-		useA11yContext();
+	const {
+		trackRef,
+		storeRef,
+		currentIndex,
+		slideCount,
+		slidesPerView,
+		isLoop,
+		isFlow,
+	} = useA11yContext();
 
 	useEffect(() => {
 		const track = trackRef.current;
 		if (!track) return;
 
-		const loopOffset = isLoop ? Math.ceil(slidesPerView) : 0;
+		const {loopOffset, centerInset} = storeRef.current;
+		const firstVisible = centerInset > 0 ? currentIndex - 1 : currentIndex;
 		const lastVisible = currentIndex + Math.ceil(slidesPerView) - 1;
 		const {children} = track;
 
@@ -40,7 +50,7 @@ export function FocusGuard() {
 
 		for (const {el, logical} of realSlides) {
 			const visible =
-				isFlow || (logical >= currentIndex && logical <= lastVisible);
+				isFlow || (logical >= firstVisible && logical <= lastVisible);
 			if (visible) el.removeAttribute('inert');
 			else el.setAttribute('inert', '');
 		}
@@ -48,7 +58,7 @@ export function FocusGuard() {
 		return () => {
 			for (const {el} of realSlides) el.removeAttribute('inert');
 		};
-	}, [trackRef, currentIndex, slideCount, slidesPerView, isLoop, isFlow]);
+	}, [trackRef, storeRef, currentIndex, slideCount, slidesPerView, isLoop, isFlow]);
 
 	return null;
 }

@@ -56,6 +56,13 @@ export type LazyMountConfig = {
  * - `gap` — horizontal space between adjacent slides, px (default 0). Applied as CSS
  *   `column-gap` on the track and folded into all geometry: slide width, snap positions,
  *   the fractional flush of the last slide, loop clones, and flow.
+ * - `align` — where the active slide rests in the viewport (default `'start'`, the left
+ *   edge). `'center'` centres it, with the neighbours peeking symmetrically — the hero /
+ *   stories pattern; pair it with a fractional `slidesPerView` (e.g. 1.2), since with
+ *   exactly one slide per view there is nothing to centre against and the prop is a no-op.
+ *   Without `isLoop` the track never scrolls past its edges (no blank space): the first and
+ *   last positions rest flush against them, so only looping keeps every slide perfectly
+ *   centred. Ignored while `flow` runs — continuous motion has no resting position.
  * - `breakpoints` — responsive overrides: each key is a media query, its value replaces
  *   `slidesPerView`/`gap` while the query matches, e.g.
  *   `{'(min-width: 768px)': {slidesPerView: 2}, '(min-width: 1200px)': {slidesPerView: 3}}`.
@@ -104,6 +111,7 @@ export type LightSlideProps<T = unknown> = {
 	analytics?: AnalyticsConfig<T>;
 	slidesPerView?: number;
 	gap?: number;
+	align?: 'start' | 'center';
 	breakpoints?: Record<string, BreakpointOverrides>;
 	initialIndex?: number;
 	index?: number;

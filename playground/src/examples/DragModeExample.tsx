@@ -51,7 +51,7 @@ export function DragModeExample() {
 	return (
 		<Demo
 			id="drag-mode"
-			number="15"
+			number="16"
 			title="Free scrolling"
 			tag={
 				mode === 'snap'

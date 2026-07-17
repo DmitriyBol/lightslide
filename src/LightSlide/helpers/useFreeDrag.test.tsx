@@ -18,6 +18,7 @@ type Overrides = {
 	slideWidth?: number;
 	gap?: number;
 	restOffset?: number;
+	centerInset?: number;
 };
 
 function setupFreeDrag(overrides: Overrides = {}) {
@@ -35,6 +36,7 @@ function setupFreeDrag(overrides: Overrides = {}) {
 		slideWidth: overrides.slideWidth ?? 300,
 		gap: overrides.gap ?? 0,
 		restOffset: overrides.restOffset ?? 0,
+		centerInset: overrides.centerInset ?? 0,
 	});
 	const storeRef = {current: store};
 	const {result} = renderHook(() =>
@@ -188,6 +190,24 @@ describe('useFreeDrag — free', () => {
 		expect(navigate).not.toHaveBeenCalled();
 	});
 
+	it('settles on the centred boundary nearest the rest position in center mode', () => {
+		/** Inset 100: boundaries sit at idx × 300 − 100 (idx 1 → 200, idx 2 → 500). */
+		const {result, navigate, store} = setupFreeDrag({
+			currentIndex: 1,
+			restOffset: 200,
+			centerInset: 100,
+		});
+		result.current.onPointerDown(downEvent(500));
+		jest.setSystemTime(100);
+		result.current.onPointerMove(moveEvent(230)); /** dx -270, fast */
+		jest.setSystemTime(1100);
+		result.current.onPointerMove(moveEvent(220)); /** dx -280, velocity ≈ 0 */
+		result.current.onPointerUp(moveEvent(220));
+		/** Rest 480: (480 + 100) / 300 rounds to boundary 2, not the un-inset 480/300 → 2. */
+		expect(navigate).toHaveBeenCalledWith(2, 'settle');
+		expect(store.restOffset).toBe(480);
+	});
+
 	it('suppresses the click that follows a real drag', () => {
 		const {result} = setupFreeDrag({});
 		result.current.onPointerDown(downEvent(500));
@@ -236,6 +256,21 @@ describe('useFreeDrag — free-snap', () => {
 		result.current.onPointerUp(moveEvent(360));
 		/** 140 px < half a slide, yet nearest is still index 0 by rounding, not thresholds. */
 		expect(navigate).toHaveBeenCalledWith(0, 'drag');
+	});
+
+	it('re-joins the centring inset before quantising the projection', () => {
+		const {result, navigate} = setupFreeDrag({
+			snap: true,
+			currentIndex: 1,
+			restOffset: 200,
+			centerInset: 100,
+		});
+		result.current.onPointerDown(downEvent(500));
+		jest.setSystemTime(100);
+		result.current.onPointerMove(moveEvent(400)); /** dx -100, velocity -1 px/ms */
+		result.current.onPointerUp(moveEvent(400));
+		/** 300 dragged-to + 325 projected = 625 → (625 + 100) / 300 → boundary 2. */
+		expect(navigate).toHaveBeenCalledWith(2, 'drag');
 	});
 
 	it('accounts for the loop clone offset when picking the boundary', () => {

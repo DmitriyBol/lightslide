@@ -119,7 +119,15 @@ export function useNavigation<T>({
 			}
 
 			if (isBackwardWrap) {
-				snapToVisual(0, true, () => snapToVisual(maxIdx + offset, false));
+				/**
+				 * The animated target is maxIdx's pre-wrap twin one content-width to the left —
+				 * maxIdx + offset − slideCount, NOT a hardcoded 0: with a fractional slidesPerView
+				 * (or center's extra clones) the twin sits above visual 0, and landing short of it
+				 * would jump at the silent re-snap.
+				 */
+				snapToVisual(maxIdx + offset - count, true, () =>
+					snapToVisual(maxIdx + offset, false),
+				);
 			} else if (isForwardWrap) {
 				snapToVisual(count + offset, true, () => snapToVisual(offset, false));
 			} else if (source !== 'settle') {

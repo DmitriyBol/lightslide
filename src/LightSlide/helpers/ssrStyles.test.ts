@@ -11,6 +11,8 @@ describe('buildSsrCss', () => {
 			slidesPerView: 1,
 			gap: 0,
 			startVisual: 0,
+			centered: false,
+			isLoop: false,
 		});
 
 		expect(css).toContain('.container,.stage{position:relative;width:100%}');
@@ -24,6 +26,8 @@ describe('buildSsrCss', () => {
 			slidesPerView: 2.5,
 			gap: 16,
 			startVisual: 0,
+			centered: false,
+			isLoop: false,
 		});
 
 		expect(css).toContain(
@@ -37,17 +41,52 @@ describe('buildSsrCss', () => {
 			slidesPerView: 1,
 			gap: 8,
 			startVisual: 0,
+			centered: false,
+			isLoop: false,
 		});
 		const offset = buildSsrCss({
 			slidesId: ':r1:',
 			slidesPerView: 1,
 			gap: 8,
 			startVisual: 3,
+			centered: false,
+			isLoop: true,
 		});
 
 		expect(atStart).not.toContain('transform');
 		expect(offset).toContain(
 			'transform:translateX(calc(((100% - 0px)/1 + 8px)*-3))',
+		);
+	});
+
+	it('adds the centring inset to the rest transform and clamps it without loop', () => {
+		const centred = buildSsrCss({
+			slidesId: ':r1:',
+			slidesPerView: 1.5,
+			gap: 0,
+			startVisual: 0,
+			centered: true,
+			isLoop: false,
+		});
+
+		/** min(0px, …): trackOffset rests the first position flush at offset 0. */
+		expect(centred).toContain(
+			'transform:translateX(min(0px,calc(((100% - 0px)/1.5 + 0px)*0 + (100% - ((100% - 0px)/1.5))/2)))',
+		);
+	});
+
+	it('pre-positions a centred loop without the edge clamp', () => {
+		const css = buildSsrCss({
+			slidesId: ':r1:',
+			slidesPerView: 1.5,
+			gap: 8,
+			startVisual: 3,
+			centered: true,
+			isLoop: true,
+		});
+
+		expect(css).toContain(
+			'transform:translateX(calc(((100% - 8px)/1.5 + 8px)*-3 + (100% - ((100% - 8px)/1.5))/2))',
 		);
 	});
 
@@ -57,6 +96,8 @@ describe('buildSsrCss', () => {
 			slidesPerView: 3,
 			gap: 10,
 			startVisual: 4,
+			centered: false,
+			isLoop: true,
 		});
 
 		expect(css.match(/\[id="«r7»"\]/g)).toHaveLength(2);
