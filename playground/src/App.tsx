@@ -25,6 +25,7 @@ import {NavigationExample} from './examples/NavigationExample';
 import {PaginationExample} from './examples/PaginationExample';
 import {ProductCardsExample} from './examples/ProductCardsExample';
 import {SlidesPerViewExample} from './examples/SlidesPerViewExample';
+import {ThumbnailsExample} from './examples/ThumbnailsExample';
 import {WheelExample} from './examples/WheelExample';
 import {GITHUB_URL, INSTALL_COMMAND, NPM_URL} from './meta';
 
@@ -52,6 +53,7 @@ export function App() {
 				<NavigationExample />
 				<PaginationExample />
 				<ControlledExample />
+				<ThumbnailsExample />
 
 				<PhaseLabel label="Motion" />
 				<AutoScrollExample />

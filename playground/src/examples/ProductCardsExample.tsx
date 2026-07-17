@@ -73,7 +73,7 @@ export function ProductCardsExample() {
 	return (
 		<Demo
 			id="product-cards"
-			number="15"
+			number="16"
 			title="Product cards"
 			tag="slidesPerView={1.5}"
 			description={

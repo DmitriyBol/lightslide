@@ -54,7 +54,7 @@ export function AutoScrollExample() {
 	return (
 		<Demo
 			id="auto-scroll"
-			number="09"
+			number="10"
 			title="Auto-scroll"
 			tag="autoScroll"
 			description={

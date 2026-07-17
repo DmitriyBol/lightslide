@@ -13,6 +13,7 @@ const SECTION_IDS = [
 	'navigation',
 	'pagination',
 	'controlled',
+	'thumbnails',
 	'auto-scroll',
 	'loop',
 	'flow',

@@ -15,7 +15,7 @@ export function CustomTimeoutExample() {
 	return (
 		<Demo
 			id="custom-timeout"
-			number="17"
+			number="18"
 			title="Terminal event exclusion"
 			tag="viewedTimeout={5}"
 			description={
