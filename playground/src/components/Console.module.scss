@@ -59,13 +59,15 @@
 	}
 }
 
+// Fixed height (not min/max): consoles keep logging while the reader is further down the
+// page (auto-scroll demos fire on their own), and a growing feed would shift everything
+// below it. A constant box turns new rows into internal scroll instead of layout shift.
 .feed {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 	padding: 10px 14px;
-	min-height: 84px;
-	max-height: 172px;
+	height: 172px;
 	overflow-y: auto;
 	font-size: 0.75rem;
 	line-height: 1.7;

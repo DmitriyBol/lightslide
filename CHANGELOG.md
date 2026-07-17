@@ -19,6 +19,12 @@ All notable changes to this project are documented here. The format follows
 - Playground: `#lazy-mount` demo with a per-subtree mount visualisation, margin control, and
   on/off toggle; e2e spec covering the window, navigation, margin, and shell geometry.
 
+### Fixed
+
+- Playground: the analytics console has a fixed height instead of growing with its first
+  events — auto-firing demos above no longer shift the page under a reader further down
+  (guarded by a smoke e2e).
+
 ### Changed
 
 - Base-entry size budget raised 5.4 → 5.5 kB (the feature costs ~200 B in the core render
