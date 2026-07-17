@@ -1,5 +1,7 @@
 // Static slide styling. The concrete px width is dynamic
-// (containerWidth / slidesPerView) and is applied inline by the component.
+// (containerWidth / slidesPerView) and is applied inline by the component; before the
+// client measures, the carousel's SSR critical CSS (helpers/ssrStyles.ts) provides a
+// calc() width instead — keep these declarations in sync with it.
 .slide {
 	box-sizing: border-box;
 	flex-shrink: 0;

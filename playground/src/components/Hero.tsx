@@ -32,7 +32,7 @@ export function Hero() {
 			<div className={styles.inner}>
 				<p className={styles.eyebrow}>
 					<span className={styles.dot} />
-					ZERO-DEP · ~5.5 KB CORE · ACCESSIBLE BY DEFAULT
+					ZERO-DEP · ~5.7 KB CORE · ACCESSIBLE BY DEFAULT
 				</p>
 
 				<h1 className={styles.headline}>
@@ -43,7 +43,7 @@ export function Hero() {
 				<p className={styles.lede}>
 					A tiny, fully-typed React slider — accessible by default, batteries
 					included. Drag, loop, flow, paginate — no dependencies, no styling
-					opinions, ~5.5&nbsp;kB core — arrows, dots, flow and a11y ship as
+					opinions, ~5.7&nbsp;kB core — arrows, dots, flow and a11y ship as
 					tree-shakeable modules.
 				</p>
 

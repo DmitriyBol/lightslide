@@ -1,3 +1,6 @@
+// Placement declarations here are mirrored by the SSR critical CSS in Navigation.tsx —
+// keep the two in sync.
+
 // Shared placement for the built-in buttons and the custom-render slots: vertically
 // centred over the track, layered above it. @extend groups the selectors in the
 // emitted CSS (one rule, comma-joined) instead of repeating the block per class.

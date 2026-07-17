@@ -4,6 +4,41 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.15.1] — 2026-07-17
+
+### Fixed
+
+- Zero-CLS server rendering (Next.js App Router audit, LIG-11). The stylesheet is
+  head-injected only when the JS bundle executes, so server-rendered HTML painted unstyled
+  until hydration — the track a vertical stack of full-width slides, nav buttons raw in-flow
+  elements — and collapsing to the real layout measured **CLS 0.33** with realistically
+  delayed JS. Every instance now inlines its critical layout CSS into the markup: container
+  and viewport geometry, the flex track, the pre-measure slide width as a `calc()` mirror of
+  the measuring formula, and the loop track's resting transform (loop pages no longer paint
+  their tail clones first). Navigation inlines its placement + hidden rules and Pagination
+  reserves its exact final box, so the controls' post-hydration reveal shifts nothing. The
+  same audit now measures **CLS 0** with the pre-hydration paint identical to the final
+  layout; hydration is mismatch-free (React 18 and 19).
+- Layout effects are isomorphic (`useEffect` on the server): React 18's legacy server
+  renderer no longer prints a `useLayoutEffect does nothing on the server` warning per
+  carousel.
+
+### Added
+
+- README: a Server-side rendering section — what ships in the server markup, the zero-CLS
+  mechanics, the `"use client"` leaf-wrapper pattern for App Router pages, and the
+  `breakpoints`-on-SSR caveat (server HTML always uses base geometry).
+- SSR regression tests: a node-environment `renderToString` smoke (content + critical CSS in
+  the server HTML, loop pre-positioning) and a `hydrateRoot` test asserting the server markup
+  is adopted without mismatches or recoverable errors.
+
+### Changed
+
+- Base-entry size budget raised 5.5 → 5.75 kB (the critical CSS must live in the core render
+  path — it cannot ship as a tree-shakeable entry). Actual: 5.65 kB brotli, 5.95 kB min+gzip;
+  README/playground marketing numbers updated to match (~5.7 kB core, 5.9 kB in the
+  comparison table).
+
 ## [0.15.0] — 2026-07-17
 
 ### Added

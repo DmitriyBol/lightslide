@@ -1,8 +1,7 @@
-import {useLayoutEffect} from 'react';
-
 import type {Dispatch, MutableRefObject, SetStateAction} from 'react';
 
 import type {LightSlideStore} from './store';
+import {useIsomorphicLayoutEffect} from './useIsomorphicLayoutEffect';
 
 /** The layout-shape inputs plus the measure/snap machinery they drive. */
 type LayoutResyncParams = {
@@ -38,7 +37,7 @@ export function useLayoutResync({
 	flowEnabled,
 	loading,
 }: LayoutResyncParams): void {
-	useLayoutEffect(() => {
+	useIsomorphicLayoutEffect(() => {
 		measureSlideWidth();
 		const s = storeRef.current;
 		const newMax = Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));

@@ -7,9 +7,10 @@
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, built-in navigation, pagination, autoplay,
-infinite loop, a continuous flow (ticker) mode, and one typed analytics event stream —
-in a ~5.5 kB fully-typed core with zero runtime dependencies beyond React. Everything
-optional ships as a tree-shakeable entry, so you only pay for what you import.
+infinite loop, a continuous flow (ticker) mode, zero-CLS server rendering, and one typed
+analytics event stream — in a ~5.7 kB fully-typed core with zero runtime dependencies beyond
+React. Everything optional ships as a tree-shakeable entry, so you only pay for what you
+import.
 
 **[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
 
@@ -27,6 +28,7 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [isLoop](#isloop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
 - [slidesPerView & gap](#slidesperview--gap) · [Responsive breakpoints](#responsive-breakpoints)
+- [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
 - [Accessibility](#accessibility)
@@ -67,8 +69,12 @@ optional ships as a tree-shakeable entry, so you only pay for what you import.
 - **Wheel & trackpad** (`lightslide/wheel`) — a horizontal two-finger swipe (or shift+wheel)
   turns one page per flick, with the inertia tail filtered out; vertical page scrolling over
   the carousel is never intercepted. During flow the same gesture drifts the strip.
+- **SSR / App Router friendly** — the server markup carries the full carousel (slides, ARIA,
+  controls) plus its own critical layout CSS, so the pre-hydration paint already matches the
+  final layout: zero CLS, no unstyled flash, no hydration mismatches. See
+  [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, flow, wheel gestures, free scrolling, and the a11y
-  layer ship as tree-shakeable entries; the core stays ~5.5 kB and an unused module never
+  layer ship as tree-shakeable entries; the core stays ~5.7 kB and an unused module never
   reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
@@ -90,7 +96,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.7 kB** core, +0.7–1.6 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
+| **lightslide** | **5.9 kB** core, +0.7–1.6 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -141,7 +147,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5.5 kB). Arrows, dots, the flow ticker, wheel
+The core ships only what every carousel needs (~5.7 kB). Arrows, dots, the flow ticker, wheel
 gestures, free scrolling, and the accessibility layer are separate tree-shakeable entries —
 import a module and pass its node to the matching slot prop; skip the import and none of its
 code or styles reaches your bundle.
@@ -451,6 +457,62 @@ Only the geometry props participate by design: everything else (plugin slots, `a
 `isLoop`) is plain React you can switch on your own media-query state without the carousel's
 help.
 
+## Server-side rendering (Next.js App Router)
+
+LightSlide is a client component that server-renders correctly out of the box — no plugin,
+no config:
+
+- **Full HTML on the server.** Slides, ARIA semantics, and controls are all in the server
+  markup — good for SEO and readable before (or without) JavaScript.
+- **Zero layout shift.** Each instance inlines its critical layout CSS into the markup: the
+  flex track, the pre-measure slide width as a `calc()` mirror of the client formula, and the
+  loop track pre-positioned past its clones. The pre-hydration paint already matches the
+  final layout, so nothing moves when the JS bundle lands. Controls need JS anyway, so they
+  stay invisible until hydration — the buttons live outside the flow and the dot row
+  reserves its exact final box, so their reveal shifts nothing either. Audited with the
+  Layout Instability API against a production App Router build: **CLS 0** even with the JS
+  bundle delayed by seconds (the same page measured 0.33 without the inlined CSS).
+- **Clean hydration.** Ids come from `useId`, `matchMedia` access is guarded, layout effects
+  are isomorphic — no mismatch warnings on either React 18 or 19.
+
+In the App Router, keep pages as server components and wrap the carousel in a minimal
+`"use client"` leaf:
+
+```tsx
+// components/ProductCarousel.tsx
+"use client";
+
+import { LightSlide, Slide } from "lightslide";
+import { Navigation } from "lightslide/navigation";
+
+export function ProductCarousel({ products }: { products: Product[] }) {
+  return (
+    <LightSlide label="Products" slidesPerView={3} gap={16} navigation={<Navigation />}>
+      {products.map((p) => (
+        <Slide key={p.id} data={p}>
+          <ProductCard product={p} />
+        </Slide>
+      ))}
+    </LightSlide>
+  );
+}
+```
+
+```tsx
+// app/page.tsx — stays a server component
+import { ProductCarousel } from "../components/ProductCarousel";
+
+export default async function Page() {
+  const products = await getProducts();
+  return <ProductCarousel products={products} />;
+}
+```
+
+One caveat: `breakpoints` resolve through `matchMedia`, which doesn't exist on the server,
+so the server HTML always uses the base `slidesPerView`/`gap`. On viewports where an
+override applies, the carousel re-lays out once at hydration — pick base props that match
+your most common viewport if that single shift matters to you.
+
 ## External control
 
 Drive the carousel from outside — the building blocks for thumbnails, synced carousels, and
@@ -688,6 +750,8 @@ src/
 │   ├── LightSlide.tsx              # Main carousel (orchestrator), generic over slide data
 │   ├── LightSlide.test.tsx
 │   ├── LightSlideControl.test.tsx  # external-control API (index / onIndexChange / ref)
+│   ├── LightSlide.ssr.test.tsx     # server-rendering smoke (node env, renderToString)
+│   ├── LightSlide.hydration.test.tsx # hydrateRoot adopts server markup w/o mismatches
 │   ├── LightSlide.module.scss      # Container / stage / viewport / track styles
 │   └── helpers/                    # Internal hooks & pure helpers
 │       ├── constants.ts            #   tuning constants
@@ -696,6 +760,8 @@ src/
 │       ├── slideData.ts            #   collectSlideData (+ test)
 │       ├── loopClones.ts           #   buildDisplayChildren: per-slide ARIA + loop clones (+ test)
 │       ├── lazyMount.ts            #   index-window mount predicate for lazyMount (+ test)
+│       ├── ssrStyles.ts            #   critical layout CSS served with the markup (+ test)
+│       ├── useIsomorphicLayoutEffect.ts # layout effect that is SSR-silent
 │       ├── useLatestRef.ts         #   latest-ref for stable callbacks
 │       ├── useNavigation.ts        #   navigateToIndex — the single navigation path (+ test)
 │       ├── useExternalControl.ts   #   controlled index prop + LightSlideHandle ref
@@ -748,7 +814,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 293 integration tests (Jest + jsdom) across 31 suites
+npm test             # 302 unit/integration tests (Jest + jsdom) across 34 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

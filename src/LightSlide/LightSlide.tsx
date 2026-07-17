@@ -3,7 +3,6 @@ import {
 	forwardRef,
 	useCallback,
 	useId,
-	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -23,12 +22,14 @@ import {DEFAULT_SLIDE_LABEL, DEFAULT_VIEWED_TIMEOUT} from './helpers/constants';
 import {buildMountPredicate, DEFAULT_LAZY_MARGIN} from './helpers/lazyMount';
 import {buildDisplayChildren} from './helpers/loopClones';
 import {collectSlideData} from './helpers/slideData';
+import {buildSsrCss} from './helpers/ssrStyles';
 import {createStore} from './helpers/store';
 import {useAutoScroll} from './helpers/useAutoScroll';
 import {useBreakpoints} from './helpers/useBreakpoints';
 import {useDragGesture} from './helpers/useDragGesture';
 import {useExternalControl} from './helpers/useExternalControl';
 import {useHoverFocus} from './helpers/useHoverFocus';
+import {useIsomorphicLayoutEffect} from './helpers/useIsomorphicLayoutEffect';
 import {useLatestRef} from './helpers/useLatestRef';
 import {useLayoutResync} from './helpers/useLayoutResync';
 import {useNavigation} from './helpers/useNavigation';
@@ -106,7 +107,7 @@ function LightSlideInner<T = unknown>(
 
 	/** Controls stay at opacity 0 until the first client commit — no un-positioned SSR flash. */
 	const [isReady, setIsReady] = useState(false);
-	useLayoutEffect(() => {
+	useIsomorphicLayoutEffect(() => {
 		setIsReady(true);
 	}, []);
 
@@ -343,6 +344,22 @@ function LightSlideInner<T = unknown>(
 	);
 
 	/**
+	 * Critical layout CSS served inside the markup so the server paint already matches the
+	 * final layout (the head stylesheet only exists once the JS bundle runs). Computed once:
+	 * the server text and the first client render must agree for hydration, and after mount
+	 * the measured px slide width and the imperative track transform override these rules —
+	 * they go inert and must not chase prop or navigation changes.
+	 */
+	const [ssrCss] = useState(() =>
+		buildSsrCss({
+			slidesId,
+			slidesPerView,
+			gap,
+			startVisual: loopOffset + Math.min(startIndex, maxIndex),
+		}),
+	);
+
+	/**
 	 * Split contexts: slides consume only geometry, controls consume nav state — navigating
 	 * never re-renders the slides. navigateToIndex doubles as the contexts' goToIndex.
 	 */
@@ -369,6 +386,7 @@ function LightSlideInner<T = unknown>(
 					aria-label={label}
 					className={cx(styles.container, className)}
 					style={style}>
+					<style dangerouslySetInnerHTML={{__html: ssrCss}} />
 					<div className={styles.stage}>
 						<div
 							className={styles.viewport}

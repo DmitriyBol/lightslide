@@ -12,6 +12,8 @@ import styles from './Slide.module.scss';
  * `...rest` forwards anything else onto the slide node: the per-slide ARIA the carousel
  * injects via cloneElement (role / aria-roledescription / aria-label, or the hidden+inert
  * markers on loop clones), and any native attribute a consumer sets on <Slide>.
+ * No inline width until the client has measured — the carousel's SSR critical CSS owns
+ * the pre-measure calc() width, so server and first client paint agree.
  */
 function SlideInner<T>(
 	{children, style, className, data, ...rest}: SlideProps<T>,
@@ -25,7 +27,7 @@ function SlideInner<T>(
 			{...rest}
 			className={cx(styles.slide, className)}
 			style={{
-				width: slideWidth > 0 ? `${slideWidth}px` : '100%',
+				width: slideWidth > 0 ? `${slideWidth}px` : undefined,
 				...style,
 			}}>
 			{children}

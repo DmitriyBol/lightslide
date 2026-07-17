@@ -58,7 +58,10 @@ export default [
       "react/prop-types": "off",
       "react/display-name": "warn",
       "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/exhaustive-deps": [
+        "warn",
+        { additionalHooks: "(useIsomorphicLayoutEffect)" },
+      ],
 
       // ── Import order: React → externals → relatives ─────────────────
       "simple-import-sort/imports": [
