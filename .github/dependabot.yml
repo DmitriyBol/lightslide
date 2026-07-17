@@ -6,8 +6,13 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
     groups:
+      # Majors stay out of the group and arrive as individual PRs — one
+      # incompatible major must not poison the whole weekly batch (see LIG-20).
       dev-dependencies:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
