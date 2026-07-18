@@ -87,4 +87,29 @@ describe('useTrackSnap', () => {
 		expect(track.style.transform).toBe('translateX(600px)');
 		expect(store.restOffset).toBe(600);
 	});
+
+	it('drops a superseded snap’s pending onComplete so an interrupted wrap re-snap never fires late', () => {
+		const {result, track} = setupTrackSnap();
+		const staleComplete = jest.fn();
+		result.current.snapToVisual(3, true, staleComplete);
+		/** A second snap before the first transition ends supersedes it. */
+		const nextComplete = jest.fn();
+		result.current.snapToVisual(1, true, nextComplete);
+		/** The one transition that completes belongs to the second snap only. */
+		track.dispatchEvent(new Event('transitionend'));
+		expect(staleComplete).not.toHaveBeenCalled();
+		expect(nextComplete).toHaveBeenCalledTimes(1);
+	});
+
+	it('discards onComplete on transitioncancel and never defers it onto a later transition', () => {
+		const {result, track} = setupTrackSnap();
+		const onComplete = jest.fn();
+		result.current.snapToVisual(3, true, onComplete);
+		/** A drag clearing the transition mid-animation fires transitioncancel, not -end. */
+		track.dispatchEvent(new Event('transitioncancel'));
+		expect(onComplete).not.toHaveBeenCalled();
+		/** A later, unrelated transition completing must not resurrect the discarded re-snap. */
+		track.dispatchEvent(new Event('transitionend'));
+		expect(onComplete).not.toHaveBeenCalled();
+	});
 });

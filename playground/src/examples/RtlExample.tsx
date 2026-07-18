@@ -72,7 +72,7 @@ export function RtlExample() {
 				<LightSlide
 					key={String(isRtl)}
 					dir={isRtl ? 'rtl' : 'ltr'}
-					isLoop
+					loop
 					free={isFree ? <FreeScroll /> : undefined}
 					analytics={<Analytics onEvent={onEvent} />}
 					navigation={<Navigation />}

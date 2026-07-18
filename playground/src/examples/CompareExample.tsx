@@ -119,7 +119,7 @@ export function CompareExample() {
 				<>
 					Sizes are min+gzip via Bundlephobia (July 2026); lightslide's core is
 					measured the same way from its ESM build, and each opt-in module adds
-					0.9–1.5 kB. To be fair: Embla is headless on purpose (and shadcn/ui's
+					0.4–1.9 kB. To be fair: Embla is headless on purpose (and shadcn/ui's
 					default) — pick it to own every byte of markup; Swiper's size buys the
 					biggest feature set. lightslide's lane is the intersection — small,
 					maintained, accessible and complete out of the box.

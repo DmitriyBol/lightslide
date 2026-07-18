@@ -39,7 +39,7 @@ function setupFreeDrag(overrides: Overrides = {}) {
 		centerInset: overrides.centerInset ?? 0,
 	});
 	const storeRef = {current: store};
-	const {result} = renderHook(() =>
+	const {result, unmount} = renderHook(() =>
 		useFreeDrag({
 			snap: overrides.snap ?? false,
 			trackRef: {current: track},
@@ -47,7 +47,7 @@ function setupFreeDrag(overrides: Overrides = {}) {
 			goToIndex: navigate,
 		}),
 	);
-	return {result, navigate, store, track};
+	return {result, navigate, store, track, unmount};
 }
 
 const downEvent = (x: number, y = 100) =>
@@ -129,6 +129,19 @@ describe('useFreeDrag — free', () => {
 		/** ~1.5 px/ms × 325 ms decay ≈ +490 px of coast → rests ≈ 560-570 → nearest index 2. */
 		expect(navigate).toHaveBeenCalledWith(2, 'settle');
 		expect(track.style.transform).toBe(`translateX(${-store.restOffset}px)`);
+		expect(store.autoScrollPaused).toBe(false);
+		/** The forward flick's direction is recorded for analytics (correct even across a wrap). */
+		expect(store.settleForward).toBe(true);
+	});
+
+	it('clears the drag-pause flag when unmounted mid-coast so a coexisting Autoplay never freezes', () => {
+		const {result, store, unmount} = setupFreeDrag({});
+		result.current.onPointerDown(downEvent(500));
+		jest.setSystemTime(50);
+		result.current.onPointerMove(moveEvent(425)); /** dx -75, velocity -1.5 px/ms */
+		result.current.onPointerUp(moveEvent(425));
+		expect(store.autoScrollPaused).toBe(true); /** coasting → paused */
+		unmount();
 		expect(store.autoScrollPaused).toBe(false);
 	});
 

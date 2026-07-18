@@ -238,7 +238,7 @@ describe('LightSlide — dir', () => {
 	});
 });
 
-describe('LightSlide — isLoop', () => {
+describe('LightSlide — loop', () => {
 	beforeEach(() => jest.useFakeTimers());
 	afterEach(() => {
 		jest.useRealTimers();
@@ -247,7 +247,7 @@ describe('LightSlide — isLoop', () => {
 
 	it('renders all real slide content even when clones are added', () => {
 		render(
-			<LightSlide isLoop>
+			<LightSlide loop>
 				<Slide>Alpha</Slide>
 				<Slide>Beta</Slide>
 				<Slide>Gamma</Slide>
@@ -259,9 +259,9 @@ describe('LightSlide — isLoop', () => {
 		expect(screen.getAllByText('Gamma').length).toBeGreaterThanOrEqual(1);
 	});
 
-	it('does not disable navigation buttons at first or last index when isLoop is true', () => {
+	it('does not disable navigation buttons at first or last index when loop is true', () => {
 		render(
-			<LightSlide isLoop navigation={<Navigation />}>
+			<LightSlide loop navigation={<Navigation />}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
@@ -271,11 +271,11 @@ describe('LightSlide — isLoop', () => {
 		expect(screen.getByLabelText('Next slide')).not.toBeDisabled();
 	});
 
-	it('does not fire carousel_reached_end when isLoop is active', () => {
+	it('does not fire carousel_reached_end when loop is active', () => {
 		const onEvent = makeOnEvent();
 		render(
 			<LightSlide
-				isLoop
+				loop
 				analytics={<Analytics onEvent={onEvent} />}
 				navigation={<Navigation />}>
 				<Slide>A</Slide>
@@ -283,7 +283,7 @@ describe('LightSlide — isLoop', () => {
 				<Slide>C</Slide>
 			</LightSlide>,
 		);
-		/** At maxIndex with isLoop, the reached-end terminal must never fire (loop wrap suppresses it). */
+		/** At maxIndex with loop, the reached-end terminal must never fire (loop wrap suppresses it). */
 		expect(eventsOfType(onEvent, 'carousel_reached_end')).toHaveLength(0);
 	});
 });
@@ -402,7 +402,7 @@ describe('LightSlide — flow', () => {
 		jest.clearAllMocks();
 	});
 
-	it('enables loop clones automatically when flow is on (without isLoop)', () => {
+	it('enables loop clones automatically when flow is on (without loop)', () => {
 		render(
 			<LightSlide flow={<Flow />}>
 				<Slide>Alpha</Slide>
@@ -542,9 +542,9 @@ describe('LightSlide a11y', () => {
 	});
 
 	it('hides loop clones from assistive tech and the tab order', () => {
-		const {container} = renderA11y({isLoop: true});
+		const {container} = renderA11y({loop: true});
 		const clones = container.querySelectorAll('[aria-hidden="true"]');
-		/** isLoop at slidesPerView 1 clones one slide at each end */
+		/** loop at slidesPerView 1 clones one slide at each end */
 		expect(clones).toHaveLength(2);
 		clones.forEach(el => expect(el).toHaveAttribute('inert'));
 	});
@@ -623,7 +623,7 @@ describe('LightSlide lazy mounting', () => {
 	});
 
 	it('wraps the lazy window across the loop seam', () => {
-		renderLazy({isLoop: true});
+		renderLazy({loop: true});
 		/** at index 0 the margin reaches back to the last slide (real + its clone) */
 		expect(screen.getAllByText('Card 6').length).toBeGreaterThanOrEqual(1);
 		expect(screen.queryByText('Card 3')).not.toBeInTheDocument();

@@ -55,7 +55,7 @@ describe('LightSlide hydration', () => {
 				label="Products"
 				slidesPerView={2}
 				gap={12}
-				isLoop
+				loop
 				navigation={<Navigation />}
 				pagination={<Pagination />}>
 				{['One', 'Two', 'Three'].map(name => (

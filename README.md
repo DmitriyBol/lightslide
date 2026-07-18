@@ -15,9 +15,6 @@ for what you import.
 
 **[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
 
-> **Status: pre-1.0.** The API is settling and the project is in active testing — the goal is
-> to find and fix as many issues as possible before 1.0.0. Bug reports are very welcome.
-
 ## Contents
 
 - [What it can do](#what-it-can-do)
@@ -27,14 +24,15 @@ for what you import.
   [Navigation](#navigation-lightslidenavigation), [Pagination](#pagination-lightslidepagination),
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
-- [isLoop](#isloop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
+- [loop](#loop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
 - [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
 - [Accessibility](#accessibility)
 - [Styling](#styling) · [Exported types](#exported-types)
-- [Project structure](#project-structure) · [Development](#development) · [License](#license)
+- [Versioning & stability](#versioning--stability)
+- [Project structure](#project-structure) · [Development](#development) · [Contributing](#contributing) · [License](#license)
 
 ## What it can do
 
@@ -61,7 +59,7 @@ for what you import.
 - **Responsive breakpoints** (`lightslide/breakpoints`) — a `useBreakpoints` hook resolving
   any props per media query; the carousel re-lays itself out on a flip, no resize code in
   your app.
-- **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
+- **loop** — seamless infinite loop via cloned edge slides (no first-paint flash).
 - **Lazy slide mounting** (`lazyMount`) — slides outside the visible window render as empty
   shells: the box (and all geometry) stays, the React subtree inside waits for navigation to
   approach. Fewer nodes at first paint, lighter hydration, zero layout shift on mount.
@@ -212,7 +210,7 @@ function FullCarousel({ products }: { products: Product[] }) {
   return (
     <LightSlide
       label="Products"
-      isLoop
+      loop
       lazyMount
       {...layout}
       {...carouselKit}
@@ -267,7 +265,7 @@ itself is not generic.)
 | `free` | `ReactNode` | — | Momentum drag physics from `lightslide/free` — pass `<FreeScroll />` (see [Free scrolling](#free-scrolling-lightslidefree)) |
 | `analytics` | `ReactNode` | — | Typed event stream from `lightslide/analytics` — pass `<Analytics onEvent={…} />` (see [Analytics](#analytics)) |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
-| `isLoop` | `boolean` | `false` | Seamless infinite loop |
+| `loop` | `boolean` | `false` | Seamless infinite loop |
 | `lazyMount` | `boolean \| LazyMountConfig` | `false` | Mount only slides near the current position (see [Lazy slide mounting](#lazy-slide-mounting)) |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
 | `fallback` | `ReactNode` | — | Placeholder shown while `loading` (omit → renders nothing) |
@@ -316,7 +314,7 @@ import { Navigation } from "lightslide/navigation";
 
 Buttons are absolutely positioned over the **track** (centered, prev-left / next-right) — the
 pagination row below never offsets them. They dim to 50% opacity and disable at the first/last
-slide unless `isLoop` is active, and are held invisible until the carousel has measured on the
+slide unless `loop` is active, and are held invisible until the carousel has measured on the
 client (no SSR/pre-layout flash). For a custom label or element, use `renderPrev`/`renderNext`.
 
 **`NavigationProps`**
@@ -338,7 +336,7 @@ un-clipped, and the slot dims to 50% at the boundary by default.
 | Key | Type | Description |
 |---|---|---|
 | `onClick` | `() => void` | Triggers navigation (+ `carousel_slide` / `carousel_nav_button`) |
-| `disabled` | `boolean` | Boundary state. Always `false` when `isLoop` is active |
+| `disabled` | `boolean` | Boundary state. Always `false` when `loop` is active |
 | `direction` | `"left" \| "right" \| "up" \| "down"` | Where this button points (`up`/`down` on a [vertical carousel](#vertical-axis-axisy)) |
 
 ### Pagination (`lightslide/pagination`)
@@ -424,7 +422,7 @@ import { Wheel } from "lightslide/wheel";
 ```
 
 A horizontal two-finger trackpad swipe (or shift+wheel on a mouse; line-based mouse deltas
-are normalized to px) turns one page per flick, wrapping when `isLoop` is on. Deltas
+are normalized to px) turns one page per flick, wrapping when `loop` is on. Deltas
 accumulate until `threshold`, then the gesture commits and the inertia tail a trackpad keeps
 emitting is swallowed — 150 ms of silence or a sharply rising delta starts the next gesture.
 Vertical-dominant wheel events are never touched, so page scrolling over the carousel stays
@@ -450,7 +448,7 @@ while the plugin is mounted:
 
 - **`<FreeScroll />`** — the release keeps its momentum: the track coasts with exponentially
   decaying inertia and rests wherever it stops, boundary or not. At the edges (non-loop) the
-  drag rubber-bands and the coast stops flush; with `isLoop` the coast wraps seamlessly
+  drag rubber-bands and the coast stops flush; with `loop` the coast wraps seamlessly
   through the clones. Once it rests, the **nearest slide becomes the active index** —
   pagination, `onIndexChange`, and a single `carousel_slide` (from the drag's start index to
   the settled one) all fire then, and the track is left exactly where the momentum ended.
@@ -467,10 +465,10 @@ plugin owns the track — free scrolling stands by until it stops.
 **`FreeScrollProps`**: `snap?: boolean` (default `false`) — land on the nearest slide
 boundary instead of resting anywhere.
 
-## isLoop
+## loop
 
 ```tsx
-<LightSlide isLoop>…</LightSlide>
+<LightSlide loop>…</LightSlide>
 ```
 
 `Math.ceil(slidesPerView)` slides are cloned at each end; when a snap lands on a clone, the track
@@ -521,7 +519,7 @@ style the placeholder. With no `fallback`, the area renders empty.
 `slidesPerView` accepts any positive number, including floats — `1.5` shows one full slide plus
 a peek of the next. `maxIndex = ⌈slideCount − slidesPerView⌉`.
 
-`gap` adds horizontal space between slides (px, CSS `column-gap` on the track) and participates
+`gap` adds space between slides along the scroll axis (px, CSS `gap` on the track) and participates
 in every computation: each slide fills
 `(containerWidth − (⌈slidesPerView⌉ − 1) × gap) / slidesPerView` px, navigation steps by
 `slideWidth + gap`, a fractional view still lands the last slide flush against the right edge,
@@ -531,7 +529,7 @@ backgrounds and shadows span the full slide width.
 ## Center align
 
 ```tsx
-<LightSlide align="center" slidesPerView={1.4} gap={12} isLoop>
+<LightSlide align="center" slidesPerView={1.4} gap={12} loop>
 ```
 
 `align="center"` rests the **active slide in the middle of the viewport**, neighbours peeking
@@ -540,16 +538,16 @@ symmetrically on both sides — the hero / stories pattern. Pair it with a fract
 then). Snapping, dragging, free-mode settling, the server-rendered first paint, and
 `lazyMount`'s window all follow the centred geometry.
 
-- **Without `isLoop`** the track never scrolls past its content (no blank space): the first
+- **Without `loop`** the track never scrolls past its content (no blank space): the first
   and last positions rest flush against the edges — Embla's `containScroll` behaviour — and
-  every position in between is centred. Add `isLoop` to keep the active slide centred
+  every position in between is centred. Add `loop` to keep the active slide centred
   everywhere.
 - Ignored while `flow` runs — continuous motion has no resting position.
 
 ## Right-to-left (`dir="rtl"`)
 
 ```tsx
-<LightSlide dir="rtl" isLoop navigation={<Navigation />}>
+<LightSlide dir="rtl" loop navigation={<Navigation />}>
 ```
 
 `dir="rtl"` mirrors the whole carousel for right-to-left locales: the container gets the
@@ -572,7 +570,7 @@ glyphs; loop wrap-around, center align, free momentum, and `lazyMount` follow au
 ## Vertical axis (`axis="y"`)
 
 ```tsx
-<LightSlide axis="y" isLoop style={{height: 420}} navigation={<Navigation />}>
+<LightSlide axis="y" loop style={{height: 420}} navigation={<Navigation />}>
 ```
 
 `axis="y"` stacks the slides top-to-bottom and turns the whole input surface with them:
@@ -626,7 +624,7 @@ jump. On the server (or any client without `matchMedia`) the base resolves, and 
 apply on hydration.
 
 The hook is generic over the base shape, so it is not limited to geometry — anything you can
-put in props can respond to a breakpoint (`align`, `isLoop`, even plugin slots), and because
+put in props can respond to a breakpoint (`align`, `loop`, even plugin slots), and because
 it runs in *your* component, the resolved values are already in the very first render.
 
 ## Server-side rendering (Next.js App Router)
@@ -697,8 +695,8 @@ const ref = useRef<LightSlideHandle>(null);
 <LightSlide ref={ref} initialIndex={2} onIndexChange={setPosition}>…</LightSlide>;
 
 ref.current?.goTo(4); // animate to a position (clamped into range, never wraps)
-ref.current?.next(); // one step right (wraps under isLoop)
-ref.current?.prev(); // one step left (wraps under isLoop)
+ref.current?.next(); // one step right (wraps under loop)
+ref.current?.prev(); // one step left (wraps under loop)
 ref.current?.getIndex(); // current settled position
 ref.current?.pause(); // hold autoplay / flow (the APG pause control)
 ref.current?.resume(); // release the hold
@@ -906,7 +904,7 @@ slides.
 
 ```ts
 import type {
-  LazyMountConfig, LightSlideProps, LightSlideHandle, SlideProps,
+  LazyMountConfig, LightSlideProps, LightSlideHandle, SlideDirection, SlideProps,
 } from "lightslide";
 
 import type {
@@ -923,6 +921,27 @@ import type { FlowProps } from "lightslide/flow";
 import type { WheelProps } from "lightslide/wheel";
 import type { FreeScrollProps } from "lightslide/free";
 ```
+
+## Versioning & stability
+
+From **1.0.0** onward, `lightslide` follows [SemVer](https://semver.org):
+
+- **Major** (`2.0.0`) — a breaking change to the public API.
+- **Minor** (`1.1.0`) — new, backward-compatible features.
+- **Patch** (`1.0.1`) — backward-compatible bug fixes.
+
+**What the public API covers** — the semver contract applies to: the exports of the root
+`lightslide` entry and every `lightslide/*` subpath, the documented component props, the ref
+handle (`LightSlideHandle`), the exported types, and the analytics event names and payload
+shapes. It does **not** cover internal module paths, the generated (hashed) CSS class names,
+exact bundle byte counts, or anything documented as internal.
+
+**Deprecation policy** — an API bound for removal is first marked `@deprecated` in a minor
+release and keeps working for the rest of that major; it is removed no earlier than the next
+major, and every removal is called out in the [changelog](CHANGELOG.md).
+
+Releases before 1.0.0 were pre-release — `0.x` minors sometimes carried breaking changes
+(each noted in the changelog). That settling period is over; 1.0.0 freezes the surface above.
 
 ## Project structure
 
@@ -1003,7 +1022,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 337 unit/integration tests (Jest + jsdom) across 37 suites
+npm test             # 360 unit/integration tests (Jest + jsdom) across 38 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
@@ -1030,6 +1049,16 @@ npm run test:e2e                  # headless; boots the playground automatically
 npm run test:e2e:ui               # interactive UI mode
 ```
 
+## Contributing
+
+Bug reports, feature requests, and pull requests are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and the
+[Code of Conduct](CODE_OF_CONDUCT.md). Planned work and known gaps live in the
+[issue tracker](https://github.com/DmitriyBol/lightslide/issues); security issues go through a
+[private advisory](https://github.com/DmitriyBol/lightslide/security/advisories/new), never a
+public issue.
+
 ## License
 
 MIT
+

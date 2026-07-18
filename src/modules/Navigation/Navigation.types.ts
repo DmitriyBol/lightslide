@@ -1,5 +1,7 @@
 import type {CSSProperties, ReactNode} from 'react';
 
+import type {SlideDirection} from '../../types';
+
 /**
  * Props handed to a custom render function for a navigation button. Wire `onClick` to your
  * element to drive navigation — it is the same handler the default button uses, so the
@@ -8,7 +10,7 @@ import type {CSSProperties, ReactNode} from 'react';
  * carousel, 'up'/'down' on a vertical one (`axis: 'y'`).
  */
 export type NavButtonRenderProps = {
-	direction: 'left' | 'right' | 'up' | 'down';
+	direction: SlideDirection;
 	onClick: () => void;
 	disabled: boolean;
 };

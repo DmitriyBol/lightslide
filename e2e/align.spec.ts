@@ -6,7 +6,7 @@ import {carousel} from './support/carousel';
 /**
  * align="center" geometry against the live layout: the #align demo renders 5 slides at
  * slidesPerView 1.6 / gap 12, centred + looped by default, with a start/center Segmented
- * and an isLoop Toggle. Real slides carry the automatic "N of 5" group name; loop clones
+ * and a loop Toggle. Real slides carry the automatic "N of 5" group name; loop clones
  * are aria-hidden, so role-based lookups always hit the real slide. Assertions poll the
  * live distance until the snap animation lands — a one-shot read races the 300 ms
  * transition.

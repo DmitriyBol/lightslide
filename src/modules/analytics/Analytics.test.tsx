@@ -34,7 +34,7 @@ beforeAll(() => {
 function renderCarousel(
 	onEvent: (payload: AnalyticsEvent<string>) => void,
 	options: {
-		isLoop?: boolean;
+		loop?: boolean;
 		initialIndex?: number;
 		dir?: 'ltr' | 'rtl';
 		axis?: 'x' | 'y';
@@ -45,7 +45,7 @@ function renderCarousel(
 		<LightSlide
 			ref={handle}
 			label="Cards"
-			isLoop={options.isLoop}
+			loop={options.loop}
 			initialIndex={options.initialIndex}
 			dir={options.dir}
 			axis={options.axis}
@@ -97,7 +97,7 @@ describe('Analytics', () => {
 
 	it('reports a forward loop wrap as rightward motion and never as reaching the end', () => {
 		const onEvent = jest.fn<void, [AnalyticsEvent<string>]>();
-		const {handle} = renderCarousel(onEvent, {isLoop: true, initialIndex: 2});
+		const {handle} = renderCarousel(onEvent, {loop: true, initialIndex: 2});
 
 		act(() => handle.current?.next());
 
@@ -130,7 +130,7 @@ describe('Analytics', () => {
 	it('reports an rtl forward loop wrap as leftward motion and never as reaching the end', () => {
 		const onEvent = jest.fn<void, [AnalyticsEvent<string>]>();
 		const {handle} = renderCarousel(onEvent, {
-			isLoop: true,
+			loop: true,
 			initialIndex: 2,
 			dir: 'rtl',
 		});
@@ -167,7 +167,7 @@ describe('Analytics', () => {
 		const onEvent = jest.fn<void, [AnalyticsEvent<string>]>();
 		const {handle} = renderCarousel(onEvent, {
 			axis: 'y',
-			isLoop: true,
+			loop: true,
 			initialIndex: 2,
 		});
 

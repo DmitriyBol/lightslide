@@ -6,6 +6,11 @@ import {defineConfig} from 'vite';
 export default defineConfig({
 	plugins: [react()],
 	resolve: {
+		// The library is aliased to ../src (source below), so its own `import 'react'` resolves
+		// from the repo root while the app resolves from playground/node_modules — two React
+		// copies, and hooks crash at runtime ("Cannot read properties of null (reading
+		// 'useRef')"). Dedupe forces a single React / react-dom instance across both.
+		dedupe: ['react', 'react-dom'],
 		// Order matters: the more specific subpath alias must come first, otherwise the bare
 		// `lightslide` alias would swallow `lightslide/a11y` and mis-resolve it.
 		alias: [

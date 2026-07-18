@@ -4,7 +4,7 @@ import {carousel} from './support/carousel';
 import {dragX, dragY} from './support/gestures';
 
 /**
- * #vertical is a single axis="y" isLoop carousel (5 slides, slidesPerView 1, gap 12) with an
+ * #vertical is a single axis="y" loop carousel (5 slides, slidesPerView 1, gap 12) with an
  * explicit 420px height, default arrows, pagination, a free-momentum toggle, and a <Console>
  * logging carousel_slide as "from → to (direction)". The axis only exists where logical pixels
  * meet physical ones, and jsdom has no layout — so everything here is e2e territory: slides

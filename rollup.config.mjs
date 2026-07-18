@@ -37,10 +37,13 @@ export default [
         exports: "named",
       },
       {
+        // ESM emitted as .mjs so native Node ESM (`import 'lightslide'`) parses it as a
+        // module — a .js ESM file under this default-CommonJS package would throw
+        // SyntaxError. Bundlers are unaffected (they read the `import`/`module` field).
         dir: "dist",
         format: "esm",
-        entryFileNames: "[name].esm.js",
-        chunkFileNames: "shared/[name]-[hash].esm.js",
+        entryFileNames: "[name].mjs",
+        chunkFileNames: "shared/[name]-[hash].mjs",
         sourcemap: true,
       },
     ],

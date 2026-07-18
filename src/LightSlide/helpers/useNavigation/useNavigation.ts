@@ -75,9 +75,15 @@ export function useNavigation({
 			 * jumps 0 → maxIdx yet the track visibly moves left. The direction is the VISUAL
 			 * truth, so under rtl a forward step reports 'left' (analytics resolves the wrap
 			 * contradiction through the same dirSign), and a vertical carousel reports
-			 * 'down' / 'up' (no mirroring — vertical order has no reading direction).
+			 * 'down' / 'up' (no mirroring — vertical order has no reading direction). A free
+			 * coast wraps its offset without the wrap dance, so for 'settle' the visual
+			 * direction comes from the recorded coast sign, not the (inverted-on-wrap) delta.
 			 */
-			const isForward = isForwardWrap || (!isBackwardWrap && clamped > from);
+			const isForward =
+				isForwardWrap ||
+				(source === 'settle'
+					? storeRef.current.settleForward
+					: !isBackwardWrap && clamped > from);
 			const {dirSign, vertical} = storeRef.current;
 			let direction: NavDirection;
 			if (vertical) direction = isForward ? 'down' : 'up';

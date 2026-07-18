@@ -37,6 +37,11 @@ import type {EmitNav} from './navigation';
  * it (the rest position is not derivable from currentIndex when the track rests between
  * boundaries), and navigation compares it against the boundary offset to re-align an
  * off-boundary track.
+ * `settleForward` is the free plugin's mailbox for a coasting settle's visual direction: in
+ * loop mode a coast wraps its pixel offset, so the settled index delta can't tell forward
+ * from backward (a forward flick past the last slide lands on index 0). useFreeDrag records
+ * the coast's velocity sign here (true = forward) and navigateToIndex reads it for the
+ * 'settle' source so analytics reports the gesture's real direction.
  * `emitNav` is the analytics plugin's mailbox: navigateToIndex calls it on every committed
  * position change, and the `lightslide/analytics` plugin assigns/clears it through the seam
  * (null while the plugin isn't mounted — the core never builds an event object itself).
@@ -71,6 +76,7 @@ export type LightSlideStore = {
 	apiPaused: boolean;
 	wheelDeltaX: number;
 	restOffset: number;
+	settleForward: boolean;
 	emitNav: EmitNav | null;
 };
 
@@ -97,6 +103,7 @@ export function createStore(
 		apiPaused: false,
 		wheelDeltaX: 0,
 		restOffset: 0,
+		settleForward: false,
 		emitNav: null,
 		...overrides,
 	};

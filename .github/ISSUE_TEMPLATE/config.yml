@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/DmitriyBol/lightslide/security/advisories/new
+    about: Please report security issues privately here — never in a public issue.
+  - name: Live demo & examples
+    url: https://lightslide.vercel.app
+    about: Every feature as an interactive example.
+  - name: Documentation
+    url: https://github.com/DmitriyBol/lightslide#readme
+    about: Props, recipes, SSR, accessibility, and the full API.

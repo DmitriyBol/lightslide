@@ -101,10 +101,16 @@ export function useFreeDrag({
 	/** A coast can outlive the component — kill the frame loop on unmount. */
 	useEffect(() => {
 		const c = coast.current;
+		const store = storeRef.current;
 		return () => {
 			if (c.raf !== null) cancelAnimationFrame(c.raf);
+			/**
+			 * Unmounting mid-coast (or mid-drag) must not strand the drag-pause flag true — it
+			 * would freeze a coexisting Autoplay/Flow forever, since only this plugin clears it.
+			 */
+			store.autoScrollPaused = false;
 		};
-	}, []);
+	}, [storeRef]);
 
 	const applyPos = (pos: number) => {
 		if (trackRef.current)
@@ -119,11 +125,12 @@ export function useFreeDrag({
 		}
 	};
 
-	const settleAt = (pos: number) => {
+	const settleAt = (pos: number, forward: boolean) => {
 		const store = storeRef.current;
 		const {isLoop, loopOffset, slideCount, slideWidth, gap, centerInset} =
 			store;
 		store.restOffset = pos;
+		store.settleForward = forward;
 		store.autoScrollPaused = false;
 		const stride = slideWidth + gap;
 		/** Boundaries sit at index × stride − centerInset, so the inset re-joins before rounding. */
@@ -137,8 +144,14 @@ export function useFreeDrag({
 	};
 
 	const startCoast = (pos: number, velocity: number) => {
+		/**
+		 * A coast only decays, never reverses, so the release velocity's sign is the whole
+		 * gesture's visual direction — recorded for the settle since a loop coast's wrapped
+		 * offset makes the index delta an unreliable direction cue.
+		 */
+		const forward = velocity > 0;
 		if (prefersReducedMotion() || Math.abs(velocity) < FREE_MIN_VELOCITY) {
-			settleAt(pos);
+			settleAt(pos, forward);
 			return;
 		}
 		const c = coast.current;
@@ -168,7 +181,7 @@ export function useFreeDrag({
 			applyPos(c.pos);
 			if (Math.abs(c.velocity) < FREE_MIN_VELOCITY) {
 				c.raf = null;
-				settleAt(c.pos);
+				settleAt(c.pos, forward);
 				return;
 			}
 			c.raf = requestAnimationFrame(step);

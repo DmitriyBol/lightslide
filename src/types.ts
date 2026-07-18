@@ -10,6 +10,14 @@ export type LazyMountConfig = {
 };
 
 /**
+ * The visual direction of a slide change or navigation button. `'left' | 'right'` on a
+ * horizontal carousel (a forward step is `'left'` under `dir="rtl"`), `'up' | 'down'` on a
+ * vertical one (`axis="y"`, forward is `'down'`). Shared by the analytics `direction`
+ * payload field and the navigation render-prop.
+ */
+export type SlideDirection = 'left' | 'right' | 'up' | 'down';
+
+/**
  * Main carousel props.
  *
  * - `label` — accessible name for the carousel region. When set, the container is a labelled
@@ -39,9 +47,12 @@ export type LazyMountConfig = {
  *   edge). `'center'` centres it, with the neighbours peeking symmetrically — the hero /
  *   stories pattern; pair it with a fractional `slidesPerView` (e.g. 1.2), since with
  *   exactly one slide per view there is nothing to centre against and the prop is a no-op.
- *   Without `isLoop` the track never scrolls past its edges (no blank space): the first and
+ *   Without `loop` the track never scrolls past its edges (no blank space): the first and
  *   last positions rest flush against them, so only looping keeps every slide perfectly
  *   centred. Ignored while `flow` runs — continuous motion has no resting position.
+ * - `loop` — infinite looping via cloned edge slides (default `false`): `next`/`prev` wrap
+ *   around, the navigation buttons never disable, and `carousel_reached_end` never fires. A
+ *   no-op when there is only one scroll position (`maxIndex === 0`).
  * - `initialIndex` — starting position (0..maxIndex, clamped). Uncontrolled: the carousel owns
  *   the index afterwards — read changes via `onIndexChange`, drive them via `index`/the ref.
  * - `index` — controlled position: whenever the value changes, the carousel animates to it. It
@@ -99,7 +110,7 @@ export type LightSlideProps = {
 	autoplay?: ReactNode;
 	analytics?: ReactNode;
 	a11y?: ReactNode;
-	isLoop?: boolean;
+	loop?: boolean;
 	lazyMount?: boolean | LazyMountConfig;
 	loading?: boolean;
 	fallback?: ReactNode;
@@ -125,7 +136,7 @@ export type SlideProps<T = unknown> = AriaAttributes & {
  * Imperative handle exposed through `ref` on `<LightSlide>`. All indices are scroll positions
  * (0..maxIndex — the same positions pagination dots represent; with an integer slidesPerView
  * that is one per slide). `goTo` clamps out-of-range targets; `next`/`prev` step one position
- * and wrap around when `isLoop` is on. While `flow` runs the track has no discrete position,
+ * and wrap around when `loop` is on. While `flow` runs the track has no discrete position,
  * so the navigation methods no-op and `getIndex` reports the last settled index.
  * `pause`/`resume` hold and release all auto motion (`autoplay` and `flow`) — wire them to a
  * visible button for the WAI-ARIA APG pause control; manual navigation keeps working while

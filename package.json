@@ -1,59 +1,59 @@
 {
   "name": "lightslide",
-  "version": "0.19.0",
-  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~5 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
+  "version": "1.0.0",
+  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~5.5 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
-  "module": "dist/index.esm.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.esm.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
     "./a11y": {
       "types": "./dist/a11y.d.ts",
-      "import": "./dist/a11y.esm.js",
+      "import": "./dist/a11y.mjs",
       "require": "./dist/a11y.js"
     },
     "./navigation": {
       "types": "./dist/navigation.d.ts",
-      "import": "./dist/navigation.esm.js",
+      "import": "./dist/navigation.mjs",
       "require": "./dist/navigation.js"
     },
     "./pagination": {
       "types": "./dist/pagination.d.ts",
-      "import": "./dist/pagination.esm.js",
+      "import": "./dist/pagination.mjs",
       "require": "./dist/pagination.js"
     },
     "./flow": {
       "types": "./dist/flow.d.ts",
-      "import": "./dist/flow.esm.js",
+      "import": "./dist/flow.mjs",
       "require": "./dist/flow.js"
     },
     "./wheel": {
       "types": "./dist/wheel.d.ts",
-      "import": "./dist/wheel.esm.js",
+      "import": "./dist/wheel.mjs",
       "require": "./dist/wheel.js"
     },
     "./free": {
       "types": "./dist/free.d.ts",
-      "import": "./dist/free.esm.js",
+      "import": "./dist/free.mjs",
       "require": "./dist/free.js"
     },
     "./autoplay": {
       "types": "./dist/autoplay.d.ts",
-      "import": "./dist/autoplay.esm.js",
+      "import": "./dist/autoplay.mjs",
       "require": "./dist/autoplay.js"
     },
     "./analytics": {
       "types": "./dist/analytics.d.ts",
-      "import": "./dist/analytics.esm.js",
+      "import": "./dist/analytics.mjs",
       "require": "./dist/analytics.js"
     },
     "./breakpoints": {
       "types": "./dist/breakpoints.d.ts",
-      "import": "./dist/breakpoints.esm.js",
+      "import": "./dist/breakpoints.mjs",
       "require": "./dist/breakpoints.js"
     },
     "./package.json": "./package.json"
@@ -101,52 +101,52 @@
   },
   "size-limit": [
     {
-      "path": "dist/index.esm.js",
-      "limit": "5.35 kB"
+      "path": "dist/index.mjs",
+      "limit": "5.5 kB"
     },
     {
       "name": "lightslide/a11y (with shared chunks)",
-      "path": "dist/a11y.esm.js",
+      "path": "dist/a11y.mjs",
       "limit": "2 kB"
     },
     {
       "name": "lightslide/navigation (with shared chunks)",
-      "path": "dist/navigation.esm.js",
+      "path": "dist/navigation.mjs",
       "limit": "1.5 kB"
     },
     {
       "name": "lightslide/pagination (with shared chunks)",
-      "path": "dist/pagination.esm.js",
+      "path": "dist/pagination.mjs",
       "limit": "1.5 kB"
     },
     {
       "name": "lightslide/flow (with shared chunks)",
-      "path": "dist/flow.esm.js",
+      "path": "dist/flow.mjs",
       "limit": "1.8 kB"
     },
     {
       "name": "lightslide/wheel (with shared chunks)",
-      "path": "dist/wheel.esm.js",
+      "path": "dist/wheel.mjs",
       "limit": "1 kB"
     },
     {
       "name": "lightslide/free (with shared chunks)",
-      "path": "dist/free.esm.js",
+      "path": "dist/free.mjs",
       "limit": "1.8 kB"
     },
     {
       "name": "lightslide/autoplay (with shared chunks)",
-      "path": "dist/autoplay.esm.js",
+      "path": "dist/autoplay.mjs",
       "limit": "1 kB"
     },
     {
       "name": "lightslide/analytics (with shared chunks)",
-      "path": "dist/analytics.esm.js",
+      "path": "dist/analytics.mjs",
       "limit": "1.85 kB"
     },
     {
       "name": "lightslide/breakpoints (with shared chunks)",
-      "path": "dist/breakpoints.esm.js",
+      "path": "dist/breakpoints.mjs",
       "limit": "0.6 kB"
     }
   ],
@@ -220,5 +220,6 @@
     "swipe",
     "responsive"
   ],
+  "author": "Dmitriy Bol",
   "license": "MIT"
 }

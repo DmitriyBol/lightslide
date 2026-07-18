@@ -2,8 +2,8 @@
 
 ## Supported versions
 
-`lightslide` is pre-1.0: only the latest published `0.x` release receives security
-fixes. Once `1.0.0` ships, the latest major will be supported.
+The latest published `1.x` release receives security fixes. Older `0.x` pre-releases are
+no longer supported — upgrade to the current release.
 
 ## Reporting a vulnerability
 
