@@ -12,5 +12,21 @@ export type NavigateSource =
 	| 'api'
 	| 'settle';
 
-/** The single navigation function shared between LightSlide and its gesture/auto-scroll hooks. */
+/** The visual direction the track moved — a loop wrap reports the motion, not the index delta. */
+export type NavDirection = 'left' | 'right';
+
+/** The single navigation function shared between LightSlide and its gesture/plugin hooks. */
 export type NavigateFn = (nextIndex: number, source: NavigateSource) => void;
+
+/**
+ * The per-navigation hook the analytics plugin assigns to `store.emitNav`: flat arguments
+ * (the plugin builds the event objects), called by navigateToIndex after every committed
+ * position change. A loop wrap is recoverable from the arguments alone — the direction
+ * contradicts the index delta (`right` with `to <= from`, or `left` with `to >= from`).
+ */
+export type EmitNav = (
+	from: number,
+	to: number,
+	direction: NavDirection,
+	source: NavigateSource,
+) => void;

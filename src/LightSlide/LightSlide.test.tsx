@@ -3,11 +3,13 @@ import React from 'react';
 import {act, render, screen} from '@testing-library/react';
 
 import {A11y} from '../modules/a11y';
+import type {AnalyticsEvent} from '../modules/analytics';
+import {Analytics} from '../modules/analytics';
 import {Flow} from '../modules/flow';
 import {Navigation} from '../modules/Navigation';
 import {Pagination} from '../modules/Pagination';
 import {Slide} from '../Slide/Slide';
-import type {AnalyticsEvent, LightSlideHandle} from '../types';
+import type {LightSlideHandle} from '../types';
 import {LightSlide} from './LightSlide';
 
 import '@testing-library/jest-dom';
@@ -74,7 +76,11 @@ function renderLightSlide(
 ) {
 	return render(
 		<LightSlide
-			analytics={onEvent ? {onEvent, viewedTimeout} : undefined}
+			analytics={
+				onEvent ? (
+					<Analytics onEvent={onEvent} viewedTimeout={viewedTimeout} />
+				) : undefined
+			}
 			slidesPerView={slidesPerView}>
 			<Slide data={{id: 1, name: 'Slide 1'}}>
 				<div>Slide 1</div>
@@ -128,50 +134,6 @@ describe('LightSlide', () => {
 			</LightSlide>,
 		);
 		expect(track?.style.columnGap).toBe('');
-	});
-
-	it('applies breakpoint overrides while their query matches and reverts when it stops', () => {
-		const matching = new Set<string>();
-		const listeners = new Set<() => void>();
-		const original = window.matchMedia;
-		window.matchMedia = ((query: string) => ({
-			get matches() {
-				return matching.has(query);
-			},
-			media: query,
-			addEventListener: (_type: string, l: () => void) => listeners.add(l),
-			removeEventListener: (_type: string, l: () => void) =>
-				listeners.delete(l),
-		})) as unknown as typeof window.matchMedia;
-
-		try {
-			render(
-				<LightSlide gap={8} breakpoints={{'(min-width: 768px)': {gap: 24}}}>
-					<Slide>
-						<div>Slide 1</div>
-					</Slide>
-					<Slide>
-						<div>Slide 2</div>
-					</Slide>
-				</LightSlide>,
-			);
-			const track = screen.getByRole('group', {name: '1 of 2'}).parentElement;
-			expect(track).toHaveStyle({columnGap: '8px'});
-
-			act(() => {
-				matching.add('(min-width: 768px)');
-				listeners.forEach(l => l());
-			});
-			expect(track).toHaveStyle({columnGap: '24px'});
-
-			act(() => {
-				matching.delete('(min-width: 768px)');
-				listeners.forEach(l => l());
-			});
-			expect(track).toHaveStyle({columnGap: '8px'});
-		} finally {
-			window.matchMedia = original;
-		}
 	});
 
 	it('fires carousel_in_viewport once when carousel enters viewport', () => {
@@ -263,7 +225,10 @@ describe('LightSlide — isLoop', () => {
 	it('does not fire carousel_reached_end when isLoop is active', () => {
 		const onEvent = makeOnEvent();
 		render(
-			<LightSlide isLoop analytics={{onEvent}} navigation={<Navigation />}>
+			<LightSlide
+				isLoop
+				analytics={<Analytics onEvent={onEvent} />}
+				navigation={<Navigation />}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
@@ -366,7 +331,7 @@ describe('LightSlide — viewed-slides opt-in', () => {
 		const onEvent = makeOnEvent();
 		/** Provide onEvent but NOT viewedTimeout — viewed tracking must stay off. */
 		render(
-			<LightSlide analytics={{onEvent}}>
+			<LightSlide analytics={<Analytics onEvent={onEvent} />}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 			</LightSlide>,
@@ -404,7 +369,7 @@ describe('LightSlide — flow', () => {
 	it('does not fire carousel_reached_end while the flow is running', () => {
 		const onEvent = makeOnEvent();
 		render(
-			<LightSlide flow={<Flow />} analytics={{onEvent}}>
+			<LightSlide flow={<Flow />} analytics={<Analytics onEvent={onEvent} />}>
 				<Slide>A</Slide>
 				<Slide>B</Slide>
 				<Slide>C</Slide>
@@ -417,24 +382,26 @@ describe('LightSlide — flow', () => {
 describe('LightSlide — typed data chain', () => {
 	type Product = {id: number; name: string};
 
-	it('types the analytics payload slide data as the LightSlide type argument', () => {
+	it('types the analytics payload slide data as the Analytics type argument', () => {
 		const names: string[] = [];
 		render(
-			<LightSlide<Product>
-				analytics={{
-					/**
-					 * Narrowing on `event` gives `slides: SlideData<Product>[]`, so `s.data.name`
-					 * only compiles because the type parameter flows through the chain.
-					 */
-					onEvent: e => {
-						if (
-							e.event === 'carousel_reached_end' ||
-							e.event === 'carousel_viewed_slides'
-						) {
-							for (const s of e.slides) if (s.data) names.push(s.data.name);
-						}
-					},
-				}}>
+			<LightSlide
+				analytics={
+					<Analytics<Product>
+						/**
+						 * Narrowing on `event` gives `slides: SlideData<Product>[]`, so `s.data.name`
+						 * only compiles because the type parameter flows through the chain.
+						 */
+						onEvent={e => {
+							if (
+								e.event === 'carousel_reached_end' ||
+								e.event === 'carousel_viewed_slides'
+							) {
+								for (const s of e.slides) if (s.data) names.push(s.data.name);
+							}
+						}}
+					/>
+				}>
 				<Slide<Product> data={{id: 1, name: 'A'}}>A</Slide>
 				<Slide<Product> data={{id: 2, name: 'B'}}>B</Slide>
 			</LightSlide>,

@@ -1,10 +1,11 @@
-import {useFlowSeam} from '../../flowSeam';
 import {
 	DEFAULT_FLOW_RESUME_DELAY,
 	DEFAULT_FLOW_SPEED,
 } from '../../LightSlide/helpers/constants';
-import {useFlow} from '../../LightSlide/helpers/useFlow';
-import {useIsomorphicLayoutEffect} from '../../LightSlide/helpers/useIsomorphicLayoutEffect';
+import {useFlow} from '../../LightSlide/helpers/useFlow/useFlow';
+import {useHoverFocus} from '../../LightSlide/helpers/useHoverFocus/useHoverFocus';
+import {useIsomorphicLayoutEffect} from '../../LightSlide/helpers/useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
+import {useFlowSeam} from '../../seams/flowSeam';
 
 /**
  * Continuous-ticker tuning: `speed` in px per second (default 40), `resumeDelay` the pause in
@@ -33,7 +34,11 @@ export function Flow({
 	pauseOnHover = true,
 	pauseOnFocus = true,
 }: FlowProps) {
-	const {trackRef, storeRef, active, setPointerHandlers} = useFlowSeam();
+	const {containerRef, trackRef, storeRef, active, setPointerHandlers} =
+		useFlowSeam();
+
+	/** The drift pauses on engagement per pauseOnHover/pauseOnFocus — the plugin mirrors it. */
+	useHoverFocus({enabled: active, containerRef, storeRef});
 
 	const handlers = useFlow({
 		enabled: active,

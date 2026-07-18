@@ -1,7 +1,10 @@
 import {useRef, useState} from 'react';
 
-import type {AnalyticsConfig, LightSlideHandle} from 'lightslide';
+import type {LightSlideHandle} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
+import {Autoplay} from 'lightslide/autoplay';
 import {Navigation} from 'lightslide/navigation';
 import {Pagination} from 'lightslide/pagination';
 
@@ -43,12 +46,10 @@ export function AutoScrollExample() {
 		setIsPaused(!isPaused);
 	};
 
-	const analytics: AnalyticsConfig = {
-		onEvent: e => {
-			if (e.event === 'carousel_in_viewport') log('viewport');
-			else if (e.event === 'carousel_slide')
-				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-		},
+	const onEvent = (e: AnalyticsEvent) => {
+		if (e.event === 'carousel_in_viewport') log('viewport');
+		else if (e.event === 'carousel_slide')
+			log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
 	};
 
 	return (
@@ -56,13 +57,14 @@ export function AutoScrollExample() {
 			id="auto-scroll"
 			number="11"
 			title="Auto-scroll"
-			tag="autoScroll"
+			tag="autoplay={<Autoplay interval={…} />}"
 			description={
 				<>
-					<code>autoScroll</code> cycles slides on an interval and pauses while
-					you drag, hover, or keep keyboard focus inside (the WAI-ARIA APG
-					behaviour — opt out via <code>pauseOnHover</code> /{' '}
-					<code>pauseOnFocus</code>). The visible pause button is the APG pause
+					<code>{'autoplay={<Autoplay interval={…} />}'}</code> cycles slides on
+					an interval and pauses while you drag, hover, or keep keyboard focus
+					inside (the WAI-ARIA APG behaviour — opt out via{' '}
+					<code>pauseOnHover</code> / <code>pauseOnFocus</code>). The visible
+					pause button is the APG pause
 					control, wired to <code>ref.pause()</code> / <code>resume()</code>. It
 					loops back to the first slide after the last —{' '}
 					<code>carousel_reached_end</code> never fires on wrap-around.
@@ -99,8 +101,8 @@ export function AutoScrollExample() {
 				<LightSlide
 					key={`${enabled}-${intervalMs}`}
 					ref={apiRef}
-					analytics={analytics}
-					autoScroll={{enabled, interval: intervalMs}}
+					analytics={<Analytics onEvent={onEvent} />}
+					autoplay={enabled ? <Autoplay interval={intervalMs} /> : undefined}
 					navigation={<Navigation />}
 					pagination={
 						<Pagination

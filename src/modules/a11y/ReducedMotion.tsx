@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 
-import {useA11yContext} from '../../a11ySeam';
+import {useA11yContext} from '../../seams/a11ySeam';
 
 /**
  * Honours `prefers-reduced-motion: reduce` for automatic movement: while the user prefers reduced

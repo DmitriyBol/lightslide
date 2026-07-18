@@ -1,7 +1,7 @@
 import {useCallback} from 'react';
 
-import {useNavContext} from '../../lightSlideContext';
-import {cx} from '../../utils/cx';
+import {useNavContext} from '../../seams/lightSlideContext';
+import {cx} from '../../utils/cx/cx';
 import styles from './Pagination.module.scss';
 import type {PaginationProps} from './Pagination.types';
 
@@ -45,7 +45,11 @@ export function Pagination({
 
 	return (
 		<div
-			className={cx(styles.container, !isReady && styles.hidden, className)}
+			className={cx(
+				styles.container,
+				isReady ? undefined : styles.hidden,
+				className,
+			)}
 			style={style}>
 			<style dangerouslySetInnerHTML={{__html: ssrCss}} />
 			{Array.from({length: dotCount}, (_, i) => {
@@ -58,7 +62,7 @@ export function Pagination({
 						aria-current={isActive ? 'true' : undefined}
 						className={cx(
 							styles.dot,
-							isActive && styles.active,
+							isActive ? styles.active : undefined,
 							dotClassName,
 							isActive ? activeDotClassName : undefined,
 						)}

@@ -1,7 +1,7 @@
 {
   "name": "lightslide",
-  "version": "0.16.0",
-  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, built-in navigation, pagination, autoplay, infinite loop, continuous flow (ticker) mode, center align, and typed analytics. SSR-friendly with zero-CLS hydration, ~5.8 kB core, zero runtime dependencies beyond React.",
+  "version": "0.17.0",
+  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~4.9 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -41,6 +41,21 @@
       "import": "./dist/free.esm.js",
       "require": "./dist/free.js"
     },
+    "./autoplay": {
+      "types": "./dist/autoplay.d.ts",
+      "import": "./dist/autoplay.esm.js",
+      "require": "./dist/autoplay.js"
+    },
+    "./analytics": {
+      "types": "./dist/analytics.d.ts",
+      "import": "./dist/analytics.esm.js",
+      "require": "./dist/analytics.js"
+    },
+    "./breakpoints": {
+      "types": "./dist/breakpoints.d.ts",
+      "import": "./dist/breakpoints.esm.js",
+      "require": "./dist/breakpoints.js"
+    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
@@ -50,7 +65,10 @@
       "pagination": ["dist/pagination.d.ts"],
       "flow": ["dist/flow.d.ts"],
       "wheel": ["dist/wheel.d.ts"],
-      "free": ["dist/free.d.ts"]
+      "free": ["dist/free.d.ts"],
+      "autoplay": ["dist/autoplay.d.ts"],
+      "analytics": ["dist/analytics.d.ts"],
+      "breakpoints": ["dist/breakpoints.d.ts"]
     }
   },
   "sideEffects": [
@@ -84,7 +102,7 @@
   "size-limit": [
     {
       "path": "dist/index.esm.js",
-      "limit": "5.85 kB"
+      "limit": "5 kB"
     },
     {
       "name": "lightslide/a11y (with shared chunks)",
@@ -104,7 +122,7 @@
     {
       "name": "lightslide/flow (with shared chunks)",
       "path": "dist/flow.esm.js",
-      "limit": "1.55 kB"
+      "limit": "1.75 kB"
     },
     {
       "name": "lightslide/wheel (with shared chunks)",
@@ -115,6 +133,21 @@
       "name": "lightslide/free (with shared chunks)",
       "path": "dist/free.esm.js",
       "limit": "1.75 kB"
+    },
+    {
+      "name": "lightslide/autoplay (with shared chunks)",
+      "path": "dist/autoplay.esm.js",
+      "limit": "1 kB"
+    },
+    {
+      "name": "lightslide/analytics (with shared chunks)",
+      "path": "dist/analytics.esm.js",
+      "limit": "1.85 kB"
+    },
+    {
+      "name": "lightslide/breakpoints (with shared chunks)",
+      "path": "dist/breakpoints.esm.js",
+      "limit": "0.6 kB"
     }
   ],
   "repository": {

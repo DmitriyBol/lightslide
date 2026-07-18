@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 
 import {LightSlide, Slide} from 'lightslide';
+import {useBreakpoints} from 'lightslide/breakpoints';
 
 import {Demo, Well} from '../components/Demo';
 import slides from '../components/slides.module.scss';
@@ -50,24 +51,26 @@ function useActiveBreakpointLabel() {
 
 export function BreakpointsExample() {
 	const label = useActiveBreakpointLabel();
+	const layout = useBreakpoints({slidesPerView: 1.2, gap: 8}, BREAKPOINTS);
 
 	return (
 		<Demo
 			id="breakpoints"
 			number="06"
 			title="breakpoints"
-			tag="breakpoints={{'(min-width: …)': {…}}}"
+			tag="useBreakpoints(base, {'(min-width: …)': {…}})"
 			description={
 				<>
-					Responsive without a resize listener: keys are media queries, values
-					override <code>slidesPerView</code> and <code>gap</code> while they
-					match. Later entries win, so ordering them mobile-first works the way
-					CSS does. <strong>Resize the window</strong> — one column and a peek on
-					phones, two from 720px, three from 1080px.
+					Responsive without a resize listener: the{' '}
+					<code>lightslide/breakpoints</code> hook resolves your base props
+					through media queries and you spread the result. Later entries win, so
+					ordering them mobile-first works the way CSS does.{' '}
+					<strong>Resize the window</strong> — one column and a peek on phones,
+					two from 720px, three from 1080px.
 				</>
 			}>
 			<Well>
-				<LightSlide slidesPerView={1.2} gap={8} breakpoints={BREAKPOINTS}>
+				<LightSlide {...layout}>
 					{ITEMS.map((item, i) => (
 						<Slide key={item}>
 							<div

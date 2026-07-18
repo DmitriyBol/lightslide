@@ -1,5 +1,6 @@
-import type {AnalyticsConfig} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 import {Navigation} from 'lightslide/navigation';
 
 import {Console} from '../components/Console';
@@ -34,13 +35,11 @@ function Arrow({dir}: {dir: 'left' | 'right'}) {
 export function NavigationExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig = {
-		onEvent: e => {
-			if (e.event === 'carousel_nav_button')
-				log('nav', `${e.direction} · ${e.fromIndex} → ${e.toIndex}`);
-			else if (e.event === 'carousel_slide')
-				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-		},
+	const onEvent = (e: AnalyticsEvent) => {
+		if (e.event === 'carousel_nav_button')
+			log('nav', `${e.direction} · ${e.fromIndex} → ${e.toIndex}`);
+		else if (e.event === 'carousel_slide')
+			log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
 	};
 
 	return (
@@ -58,7 +57,9 @@ export function NavigationExample() {
 				</>
 			}>
 			<Well>
-				<LightSlide analytics={analytics} navigation={<Navigation />}>
+				<LightSlide
+					analytics={<Analytics onEvent={onEvent} />}
+					navigation={<Navigation />}>
 					{ITEMS.map((label, i) => (
 						<Slide key={label}>
 							<div

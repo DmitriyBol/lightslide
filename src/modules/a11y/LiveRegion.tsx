@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 
-import {useA11yContext} from '../../a11ySeam';
+import {useA11yContext} from '../../seams/a11ySeam';
 
 /**
  * Standard visually-hidden (screen-reader-only) box: present in the a11y tree, invisible on

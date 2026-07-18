@@ -1,5 +1,6 @@
-import type {AnalyticsConfig} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 import {Flow} from 'lightslide/flow';
 import {Pagination} from 'lightslide/pagination';
 import {Wheel} from 'lightslide/wheel';
@@ -25,11 +26,9 @@ const FLOW_ITEMS = [
 export function WheelExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig = {
-		onEvent: e => {
-			if (e.event === 'carousel_slide')
-				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-		},
+	const onEvent = (e: AnalyticsEvent) => {
+		if (e.event === 'carousel_slide')
+			log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
 	};
 
 	return (
@@ -49,7 +48,7 @@ export function WheelExample() {
 			}>
 			<Well>
 				<LightSlide
-					analytics={analytics}
+					analytics={<Analytics onEvent={onEvent} />}
 					wheel={<Wheel />}
 					pagination={
 						<Pagination

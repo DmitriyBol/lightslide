@@ -4,6 +4,70 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.17.0] — 2026-07-18
+
+Slim-core release (LIG-21): the features not every carousel needs moved out of the base
+entry into tree-shakeable modules. The core drops **5.80 → 4.87 kB** brotli (budget
+5.85 → 5 kB) while every feature survives as a first-party entry — "pay only for what you
+use" now covers analytics, autoplay, and breakpoints too.
+
+### Changed (breaking — pre-1.0 minor)
+
+- **Analytics is the `lightslide/analytics` entry** (~1.73 kB). The `analytics` prop is now
+  a plugin slot: `analytics={{onEvent, viewedTimeout}}` →
+  `analytics={<Analytics onEvent={…} viewedTimeout={…} />}`. `AnalyticsConfig` is replaced
+  by `AnalyticsProps` (`onEvent` is required there — a handler-less plugin is pointless);
+  `AnalyticsEvent`, the six payload types, and `SlideData` now export from
+  `lightslide/analytics`, not the root. The slide-data generic moved with them:
+  `<LightSlide<Product>>` → `<Analytics<Product>>` (the container is no longer generic;
+  `<Slide<T>>` is unchanged). Internally the core reports every committed navigation
+  through one optional `store.emitNav(from, to, direction, source)` mailbox and builds no
+  event objects itself.
+- **Autoplay is the `lightslide/autoplay` entry** (~0.70 kB). The `autoScroll` config prop
+  is now the `autoplay` slot: `autoScroll={{enabled, interval}}` →
+  `autoplay={<Autoplay interval={…} />}` (presence-based — toggle by passing the node
+  conditionally; `pauseOnHover`/`pauseOnFocus` stay, `AutoScrollConfig` is gone). The ref
+  handle's `pause()`/`resume()`, the flow precedence, and the a11y reduced-motion gate keep
+  working unchanged through the core's store flags.
+- **Breakpoints are the `lightslide/breakpoints` entry** (~0.39 kB). The `breakpoints` prop
+  is now a hook composed above the carousel:
+  `useBreakpoints(base, {'(min-width: …)': overrides})` returns the resolved object to
+  spread as props. Because it runs in the consumer's render, the resolved values are in the
+  first render (no flash — the blocker that kept a slot-based extraction off the table),
+  and it is generic: any prop set can respond to media queries now, not just
+  `slidesPerView`/`gap`. `BreakpointOverrides` is gone.
+- `ClassValue` (the `cx` input type) narrowed to `string | undefined` — class name slots
+  accept a class or nothing, not `false`/`null`/numbers/arrays; internal call sites use
+  ternaries instead of `&&`.
+
+### Changed
+
+- Flow runs its own hover/focus pause listeners (the core no longer hosts them for it);
+  flow entry 1.52 → 1.71 kB, budget 1.55 → 1.75 kB.
+- `LightSlide.tsx` reorganised into labelled phases (identity → render state → geometry →
+  store sync → motion & control → plugin seams → children & critical CSS → contexts &
+  markup) over three new helper hooks (`useDisplayChildren`, `useGestureHandlers`,
+  `useSeamValues`) — ~490 → ~330 lines, no behaviour change.
+- The SSR critical-CSS builder coerces its numeric inputs (`slidesPerView`/`gap`/start
+  index) to finite numbers, so a malformed value from an untyped JS consumer can never
+  reach the inlined `<style>` text.
+
+### Added
+
+- New entries wired end-to-end: `exports`/`typesVersions` subpaths, size-limit budgets
+  (autoplay 1 kB, analytics 1.85 kB, breakpoints 0.6 kB), playground aliases + migrated
+  examples, and plugin tests (seam registration, fails-loudly-outside-slot, wrap/terminal
+  event building).
+
+### Internal
+
+- Source layout: every helper and util now lives in its own folder next to its test
+  (`helpers/useTrackSnap/useTrackSnap.ts` + `.test.tsx`); only the imperative core stays
+  flat in `helpers/` (`store.ts`, `constants.ts`, `navigation.ts`). All seam contexts moved
+  from the `src/` root into `src/seams/` (including `lightSlideContext.ts` — NavContext is
+  the seam the navigation/pagination entries bind to). Import-path-only change, nothing
+  public moved.
+
 ## [0.16.0] — 2026-07-17
 
 ### Added

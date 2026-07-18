@@ -1,6 +1,6 @@
 import {useEffect, useRef} from 'react';
 
-import {useA11yContext} from '../../a11ySeam';
+import {useA11yContext} from '../../seams/a11ySeam';
 
 const EDITABLE = /^(INPUT|TEXTAREA|SELECT)$/;
 

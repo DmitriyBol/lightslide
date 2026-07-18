@@ -2,13 +2,14 @@ import React from 'react';
 
 import type {ForwardedRef, ReactElement, Ref} from 'react';
 
-import {useSlideMetricsContext} from '../lightSlideContext';
+import {useSlideMetricsContext} from '../seams/lightSlideContext';
 import type {SlideProps} from '../types';
-import {cx} from '../utils/cx';
+import {cx} from '../utils/cx/cx';
 import styles from './Slide.module.scss';
 
 /**
- * `data` is read by the parent (analytics), never rendered — kept out of the DOM props.
+ * `data` is read by the `lightslide/analytics` plugin (event payloads), never rendered —
+ * kept out of the DOM props.
  * `...rest` forwards anything else onto the slide node: the per-slide ARIA the carousel
  * injects via cloneElement (role / aria-roledescription / aria-label, or the hidden+inert
  * markers on loop clones), and any native attribute a consumer sets on <Slide>.

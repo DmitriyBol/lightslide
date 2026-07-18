@@ -1,5 +1,6 @@
-import type {AnalyticsConfig} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 import {Navigation} from 'lightslide/navigation';
 import {Pagination} from 'lightslide/pagination';
 
@@ -52,22 +53,17 @@ const PRODUCTS: Product[] = [
 export function ProductCardsExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig<Product> = {
-		onEvent: e => {
-			switch (e.event) {
-				case 'carousel_slide':
-					return log(
-						'slide',
-						`${e.fromIndex} → ${e.toIndex} (${e.direction})`,
-					);
-				case 'carousel_reached_end':
-					return log('end', 'last card reached');
-				case 'carousel_nav_button':
-					return log('nav', `${e.direction} · ${e.fromIndex} → ${e.toIndex}`);
-				case 'carousel_pagination_click':
-					return log('pagination', `${e.fromIndex} → ${e.toIndex}`);
-			}
-		},
+	const onEvent = (e: AnalyticsEvent<Product>) => {
+		switch (e.event) {
+			case 'carousel_slide':
+				return log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+			case 'carousel_reached_end':
+				return log('end', 'last card reached');
+			case 'carousel_nav_button':
+				return log('nav', `${e.direction} · ${e.fromIndex} → ${e.toIndex}`);
+			case 'carousel_pagination_click':
+				return log('pagination', `${e.fromIndex} → ${e.toIndex}`);
+		}
 	};
 
 	return (
@@ -84,8 +80,8 @@ export function ProductCardsExample() {
 				</>
 			}>
 			<Well>
-				<LightSlide<Product>
-					analytics={analytics}
+				<LightSlide
+					analytics={<Analytics<Product> onEvent={onEvent} />}
 					slidesPerView={1.5}
 					navigation={<Navigation />}
 					pagination={

@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 
-import {useA11yContext} from '../../a11ySeam';
+import {useA11yContext} from '../../seams/a11ySeam';
 
 /**
  * Keeps the tab order in sync with what's on screen: real slides outside the visible window get

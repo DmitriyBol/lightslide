@@ -1,6 +1,7 @@
-import type {AnalyticsConfig} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
 import {A11y} from 'lightslide/a11y';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 import {Flow} from 'lightslide/flow';
 import {Navigation} from 'lightslide/navigation';
 import {Pagination} from 'lightslide/pagination';
@@ -77,16 +78,16 @@ function Row({
 export function AccessibilityExample() {
 	const {entries, log, clear} = useConsole();
 
-	// One shared console; each carousel prefixes its payload with a source so analytics reads per
-	// demo (the category set is fixed — the source lives in the payload).
-	const analyticsFor = (source: string): AnalyticsConfig => ({
-		onEvent: e => {
-			if (e.event === 'carousel_slide')
-				log('slide', `${source} · ${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-			else if (e.event === 'carousel_reached_end')
-				log('end', `${source} · reached end`);
-		},
-	});
+	/**
+	 * One shared console; each carousel prefixes its payload with a source so analytics reads per
+	 * demo (the category set is fixed — the source lives in the payload).
+	 */
+	const analyticsFor = (source: string) => (e: AnalyticsEvent) => {
+		if (e.event === 'carousel_slide')
+			log('slide', `${source} · ${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+		else if (e.event === 'carousel_reached_end')
+			log('end', `${source} · reached end`);
+	};
 
 	return (
 		<Demo
@@ -110,7 +111,7 @@ export function AccessibilityExample() {
 				note="drag, or Tab to a control and use the arrows; each slide holds a real link that focus-guard hides when off-screen">
 				<LightSlide
 					label="Product highlights"
-					analytics={analyticsFor('drag')}
+					analytics={<Analytics onEvent={analyticsFor('drag')} />}
 					navigation={<Navigation />}
 					pagination={<Pagination />}
 					a11y={<A11y />}>
@@ -127,7 +128,7 @@ export function AccessibilityExample() {
 				note="infinite loop — the cloned edge slides are aria-hidden + inert, so a screen reader never reads them twice">
 				<LightSlide
 					label="Trending — loop"
-					analytics={analyticsFor('loop')}
+					analytics={<Analytics onEvent={analyticsFor('loop')} />}
 					navigation={<Navigation />}
 					isLoop
 					a11y={<A11y />}>
@@ -145,7 +146,7 @@ export function AccessibilityExample() {
 				<LightSlide
 					label="Gallery — 3 up"
 					slidesPerView={3}
-					analytics={analyticsFor('gallery')}
+					analytics={<Analytics onEvent={analyticsFor('gallery')} />}
 					navigation={<Navigation />}
 					pagination={<Pagination />}
 					a11y={<A11y />}>
