@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.17.1] — 2026-07-18
+
+Security hardening pass (LIG-24). No changes to the published package — the audit found the
+runtime surface clean (zero runtime deps; the SSR critical-CSS string is fully guarded).
+
+### Security
+
+- Dev-dependency chain: `npm audit fix` — `form-data` CRLF injection (high,
+  GHSA-hmw2-7cc7-3qxx, via jsdom) and `js-yaml` quadratic-complexity DoS (moderate,
+  GHSA-h67p-54hq-rp68, via the istanbul chain). Lockfile-only, zero vulnerabilities left.
+- CI: the workflow `GITHUB_TOKEN` is now read-only (`permissions: contents: read`).
+- Added `SECURITY.md` — private vulnerability reporting via GitHub security advisories,
+  supported-versions and scope notes.
+
 ## [0.17.0] — 2026-07-18
 
 Slim-core release (LIG-21): the features not every carousel needs moved out of the base
