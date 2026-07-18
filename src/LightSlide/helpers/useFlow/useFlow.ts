@@ -3,6 +3,7 @@ import {useCallback, useEffect, useRef} from 'react';
 import type {MutableRefObject, RefObject} from 'react';
 
 import type {LightSlideStore} from '../store';
+import {trackTransform} from '../trackTransform/trackTransform';
 import {useIsomorphicLayoutEffect} from '../useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
 import type {PointerHandlers} from '../usePointerGesture/usePointerGesture';
 import {usePointerGesture} from '../usePointerGesture/usePointerGesture';
@@ -90,9 +91,13 @@ export function useFlow({
 		(stride: number) => {
 			const track = trackRef.current;
 			if (!track) return;
-			const base = storeRef.current.loopOffset * stride;
+			const store = storeRef.current;
+			const base = store.loopOffset * stride;
 			track.style.transition = '';
-			track.style.transform = `translateX(${-(base + flow.current.offset)}px)`;
+			track.style.transform = trackTransform(
+				base + flow.current.offset,
+				store.dirSign,
+			);
 		},
 		[trackRef, storeRef],
 	);
@@ -183,10 +188,13 @@ export function useFlow({
 		(dx: number) => {
 			const track = trackRef.current;
 			if (!track) return;
-			const {slideWidth, gap, loopOffset} = storeRef.current;
+			const {slideWidth, gap, loopOffset, dirSign} = storeRef.current;
 			const base = loopOffset * (slideWidth + gap);
 			track.style.transition = '';
-			track.style.transform = `translateX(${-(base + flow.current.offsetAtStart) + dx}px)`;
+			track.style.transform = trackTransform(
+				base + flow.current.offsetAtStart - dx,
+				dirSign,
+			);
 		},
 		[trackRef, storeRef],
 	);
@@ -212,5 +220,5 @@ export function useFlow({
 		scheduleResume();
 	}, [scheduleResume]);
 
-	return usePointerGesture({trackRef, onStart, onMove, onEnd, onCancel});
+	return usePointerGesture({trackRef, storeRef, onStart, onMove, onEnd, onCancel});
 }

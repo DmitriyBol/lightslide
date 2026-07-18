@@ -21,6 +21,7 @@ const SECTION_IDS = [
 	'flow-perf',
 	'wheel',
 	'drag-mode',
+	'rtl',
 	'product-cards',
 	'link-cards',
 	'custom-timeout',

@@ -40,9 +40,15 @@ import type {EmitNav} from './navigation';
  * `emitNav` is the analytics plugin's mailbox: navigateToIndex calls it on every committed
  * position change, and the `lightslide/analytics` plugin assigns/clears it through the seam
  * (null while the plugin isn't mounted — the core never builds an event object itself).
+ * `dirSign` is the reading direction as a multiplier (1 ltr, −1 rtl), written from the `dir`
+ * prop each render. RTL is a sign, not a mirror: the browser mirrors the flex layout under
+ * `dir="rtl"`, so all 1-D math stays direction-agnostic — pointer/wheel deltas are multiplied
+ * by it once at the primitive boundary and the track transform negates through it once in
+ * trackTransform; everything in between never sees the direction.
  */
 export type LightSlideStore = {
 	currentIndex: number;
+	dirSign: 1 | -1;
 	slideCount: number;
 	maxIndex: number;
 	slidesPerView: number;
@@ -67,6 +73,7 @@ export function createStore(
 ): LightSlideStore {
 	return {
 		currentIndex: 0,
+		dirSign: 1,
 		slideCount: 0,
 		maxIndex: 0,
 		slidesPerView: 1,

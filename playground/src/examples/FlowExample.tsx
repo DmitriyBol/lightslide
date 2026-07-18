@@ -18,7 +18,7 @@ const ITEMS = [
 	'ESLint',
 	'Prettier',
 	'Zero deps',
-	'~4.9 kB',
+	'~5 kB',
 ];
 
 const SPEEDS = [

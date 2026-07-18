@@ -66,4 +66,15 @@ describe('Keyboard', () => {
 		fireEvent.keyDown(input, {key: 'ArrowRight'});
 		expect(goToIndex).not.toHaveBeenCalled();
 	});
+
+	it('follows the visual direction under rtl: ArrowLeft steps forward (APG)', () => {
+		const {container, goToIndex} = setup({
+			currentIndex: 2,
+			storeRef: {current: createStore({dirSign: -1})},
+		});
+		fireEvent.keyDown(container, {key: 'ArrowLeft'});
+		expect(goToIndex).toHaveBeenCalledWith(3, 'button');
+		fireEvent.keyDown(container, {key: 'ArrowRight'});
+		expect(goToIndex).toHaveBeenCalledWith(1, 'button');
+	});
 });

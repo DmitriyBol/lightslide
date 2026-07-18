@@ -7,7 +7,7 @@
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, infinite loop, center align, zero-CLS server
-rendering, and lazy slide mounting in a ~4.9 kB fully-typed core with zero runtime
+rendering, and lazy slide mounting in a ~5 kB fully-typed core with zero runtime
 dependencies beyond React. Navigation, pagination, autoplay, a continuous flow (ticker)
 mode, wheel gestures, momentum scrolling, responsive breakpoints, one typed analytics event
 stream, and the deep accessibility layer all ship as tree-shakeable entries — you only pay
@@ -28,7 +28,7 @@ for what you import.
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [isLoop](#isloop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
-- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
+- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -52,6 +52,9 @@ for what you import.
 - **Center align** (`align="center"`) — the active slide rests centred with its neighbours
   peeking symmetrically (the hero / stories pattern); edges stay flush without loop, every
   position is centred with it.
+- **Right-to-left** (`dir="rtl"`) — full mirroring for RTL locales: slides advance
+  right-to-left, drag/wheel/keyboard follow the visual direction, the arrows swap sides, and
+  loop, center align, free momentum, and the zero-CLS server paint all follow.
 - **Responsive breakpoints** (`lightslide/breakpoints`) — a `useBreakpoints` hook resolving
   any props per media query; the carousel re-lays itself out on a flip, no resize code in
   your app.
@@ -80,7 +83,7 @@ for what you import.
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, autoplay, flow, wheel gestures, free scrolling,
   breakpoints, analytics, and the a11y layer ship as tree-shakeable entries; the core stays
-  ~4.9 kB and an unused module never reaches your bundle.
+  ~5 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -102,7 +105,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.1 kB** core, +0.4–1.9 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
+| **lightslide** | **5.2 kB** core, +0.4–1.9 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -121,9 +124,9 @@ To keep the comparison fair:
 - **react-slick** additionally requires the separate `slick-carousel` CSS package.
 
 lightslide's lane is the intersection: a small, maintained, fully-typed carousel that is
-accessible and complete out of the box — arrows, dots, autoplay, loop, breakpoints, and
-analytics as first-party modules without extra wiring, and tree-shakeable so the unused
-parts cost nothing.
+accessible and complete out of the box — arrows, dots, autoplay, loop, RTL, breakpoints,
+and analytics as first-party features without extra wiring, and tree-shakeable so the
+unused parts cost nothing.
 
 ## Installation
 
@@ -162,7 +165,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~4.9 kB). Arrows, dots, autoplay, the flow
+The core ships only what every carousel needs (~5 kB). Arrows, dots, autoplay, the flow
 ticker, wheel gestures, free scrolling, breakpoints, analytics, and the accessibility layer
 are separate tree-shakeable entries — import a module and pass its node to the matching slot
 prop (or call its hook); skip the import and none of its code or styles reaches your bundle.
@@ -247,6 +250,7 @@ itself is not generic.)
 | `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
 | `gap` | `number` | `0` | Horizontal space between slides, px (see [slidesPerView & gap](#slidesperview--gap)) |
+| `dir` | `'ltr' \| 'rtl'` | `'ltr'` | Reading direction — `'rtl'` mirrors layout, gestures, controls, and loop (see [Right-to-left](#right-to-left-dirrtl)) |
 | `align` | `'start' \| 'center'` | `'start'` | Where the active slide rests (see [Center align](#center-align)) |
 | `initialIndex` | `number` | `0` | Starting position, uncontrolled (see [External control](#external-control)) |
 | `index` | `number` | — | Controlled position — the carousel navigates whenever it changes |
@@ -535,6 +539,29 @@ then). Snapping, dragging, free-mode settling, the server-rendered first paint, 
   every position in between is centred. Add `isLoop` to keep the active slide centred
   everywhere.
 - Ignored while `flow` runs — continuous motion has no resting position.
+
+## Right-to-left (`dir="rtl"`)
+
+```tsx
+<LightSlide dir="rtl" isLoop navigation={<Navigation />}>
+```
+
+`dir="rtl"` mirrors the whole carousel for right-to-left locales: the container gets the
+`dir` attribute (so the browser mirrors the flex layout for you), slides advance
+right-to-left, and every input follows the visual direction — drag and flick, wheel/trackpad
+paging, and the a11y layer's arrow keys (ArrowLeft steps forward, per the APG pattern). The
+navigation buttons swap sides through logical `inset-inline-*` placement and mirror their
+glyphs; loop wrap-around, center align, free momentum, and `lazyMount` follow automatically.
+
+- Set the **prop**, not just a `dir` attribute up the tree. The server can't read computed
+  styles — the prop is what lets the SSR critical CSS emit the correctly-signed resting
+  transform, so the zero-CLS first paint survives in RTL (see
+  [Server-side rendering](#server-side-rendering-nextjs-app-router)).
+- The analytics `direction` stays the **visual** truth: forward motion reports `'left'`
+  under RTL (see [Analytics](#analytics)).
+- Custom `renderPrev`/`renderNext` buttons keep their logical `direction` hint (`'left'` =
+  prev); the positioning slot swaps sides for you, and glyphs you render yourself are yours
+  to mirror.
 
 ## Responsive breakpoints (`lightslide/breakpoints`)
 
@@ -884,6 +911,7 @@ src/
 │       ├── lazyMount/              #   index-window mount predicate for lazyMount
 │       ├── ssrStyles/              #   critical layout CSS served with the markup
 │       ├── trackOffset/            #   pure px offset for a visual index
+│       ├── trackTransform/         #   offset → translateX string (direction sign applied once)
 │       ├── useIsomorphicLayoutEffect/ # layout effect that is SSR-silent
 │       ├── useLatestRef/           #   latest-ref for stable callbacks
 │       ├── useNavigation/          #   navigateToIndex — the single navigation path
@@ -937,7 +965,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 321 unit/integration tests (Jest + jsdom) across 36 suites
+npm test             # 337 unit/integration tests (Jest + jsdom) across 37 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

@@ -4,6 +4,41 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.18.0] — 2026-07-18
+
+RTL release (LIG-22): first-class right-to-left support behind one prop. In the coordinate
+model the direction is a sign, not a mirror — the browser mirrors the flex layout under
+`dir="rtl"`, all 1-D math stays direction-agnostic, and the sign is applied exactly twice:
+once to incoming pointer/wheel deltas, once in the track transform.
+
+### Added
+
+- **`dir` prop** (`'ltr' | 'rtl'`, default `'ltr'`). `dir="rtl"` sets the `dir` attribute on
+  the container (the browser mirrors the flex layout) and mirrors every behaviour: drag and
+  flick, wheel/trackpad paging, loop wrap-around, center align, free momentum, `lazyMount`,
+  and the SSR critical CSS (the resting transform flips sign; the centred non-loop clamp
+  becomes `max(0px, …)`), so the zero-CLS first paint survives in RTL. Auto-detecting an
+  inherited `dir` attribute was rejected deliberately — the server can't read computed
+  styles, and the critical CSS must know the sign at render time.
+- Navigation places its buttons through logical `inset-inline-start/end` (prev/next swap
+  sides under RTL) and mirrors the built-in `‹ ›` glyphs via `[dir='rtl']`; custom
+  render-prop buttons keep their logical `direction` hint.
+- The a11y `Keyboard` plugin follows the visual direction under RTL (ArrowLeft steps
+  forward, per the APG carousel pattern).
+- Analytics `direction` stays the visual truth — forward motion reports `'left'` under RTL —
+  and the loop-wrap detection resolves the contradiction through the reading direction.
+- Playground: RTL demo section (#rtl, dir/free toggles); e2e: `rtl.spec.ts` (mirrored
+  arrows, mirrored drag, both wrap directions, free coast + wrap in an rtl loop).
+
+### Changed
+
+- All six track-transform writes route through one `trackTransform(offset, dirSign)` helper
+  (its own shared chunk — the flow entry doesn't carry the offset math); pointer deltas and
+  velocities are normalised to logical space once, at the `usePointerGesture` boundary.
+- Sizes: core 4.87 → 4.98 kB (budget 5 kB), flow 1.71 → 1.74 kB, a11y 1.03 → 1.05 kB,
+  navigation +~0.05 kB (now 1.13); README size mentions swept (~5 kB core, 5.2 kB min+gzip
+  in the comparison).
+
 ## [0.17.1] — 2026-07-18
 
 Security hardening pass (LIG-24). No changes to the published package — the audit found the

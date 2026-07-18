@@ -189,6 +189,40 @@ describe('LightSlide', () => {
 	});
 });
 
+describe('LightSlide — dir', () => {
+	afterEach(() => jest.clearAllMocks());
+
+	it('mirrors the dir prop onto the container so the browser mirrors the flex layout', () => {
+		render(
+			<LightSlide dir="rtl" label="Cards">
+				<Slide>
+					<div>Slide 1</div>
+				</Slide>
+				<Slide>
+					<div>Slide 2</div>
+				</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByRole('region', {name: 'Cards'})).toHaveAttribute(
+			'dir',
+			'rtl',
+		);
+	});
+
+	it('sets no dir attribute by default — the page direction stays untouched', () => {
+		render(
+			<LightSlide label="Cards">
+				<Slide>
+					<div>Slide 1</div>
+				</Slide>
+			</LightSlide>,
+		);
+		expect(screen.getByRole('region', {name: 'Cards'})).not.toHaveAttribute(
+			'dir',
+		);
+	});
+});
+
 describe('LightSlide — isLoop', () => {
 	beforeEach(() => jest.useFakeTimers());
 	afterEach(() => {

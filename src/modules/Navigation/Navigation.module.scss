@@ -14,12 +14,15 @@
 	transform: translateY(-50%);
 }
 
-%left {
-	left: 8px;
+// Logical placement: prev sits at the reading start, next at the reading end, so the
+// buttons swap sides automatically under dir="rtl" (set on the carousel container by the
+// `dir` prop).
+%start {
+	inset-inline-start: 8px;
 }
 
-%right {
-	right: 8px;
+%end {
+	inset-inline-end: 8px;
 }
 
 // Prev/next buttons — vertically centred over the track.
@@ -40,16 +43,23 @@
 }
 
 .prev {
-	@extend %left;
+	@extend %start;
 }
 
 .next {
-	@extend %right;
+	@extend %end;
 }
 
 .button:disabled {
 	cursor: default;
 	opacity: 0.5;
+}
+
+// The built-in ‹ › glyphs must point outward from the slides in both directions; under rtl
+// the buttons have swapped sides, so mirror the glyph (the circular button is symmetric —
+// only the character flips visually).
+[dir='rtl'] .button {
+	transform: translateY(-50%) scaleX(-1);
 }
 
 // Positioning slot for custom renderPrev/renderNext output. Gives consumer JSX the
@@ -61,11 +71,11 @@
 }
 
 .slotPrev {
-	@extend %left;
+	@extend %start;
 }
 
 .slotNext {
-	@extend %right;
+	@extend %end;
 }
 
 // Default boundary state for custom buttons: dim like the built-in :disabled button so

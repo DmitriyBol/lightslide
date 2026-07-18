@@ -15,8 +15,8 @@ import type {NavigationProps} from './Navigation.types';
 const ssrCss =
 	`.${styles.button},.${styles.slot}` +
 	`{position:absolute;top:50%;transform:translateY(-50%)}` +
-	`.${styles.prev},.${styles.slotPrev}{left:8px}` +
-	`.${styles.next},.${styles.slotNext}{right:8px}` +
+	`.${styles.prev},.${styles.slotPrev}{inset-inline-start:8px}` +
+	`.${styles.next},.${styles.slotNext}{inset-inline-end:8px}` +
 	`.${styles.hidden}{opacity:0}`;
 
 /**

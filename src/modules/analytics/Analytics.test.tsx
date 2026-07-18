@@ -33,7 +33,7 @@ beforeAll(() => {
 
 function renderCarousel(
 	onEvent: (payload: AnalyticsEvent<string>) => void,
-	options: {isLoop?: boolean; initialIndex?: number} = {},
+	options: {isLoop?: boolean; initialIndex?: number; dir?: 'ltr' | 'rtl'} = {},
 ) {
 	const handle = createRef<LightSlideHandle>();
 	const view = render(
@@ -42,6 +42,7 @@ function renderCarousel(
 			label="Cards"
 			isLoop={options.isLoop}
 			initialIndex={options.initialIndex}
+			dir={options.dir}
 			analytics={<Analytics<string> onEvent={onEvent} />}>
 			<Slide<string> data="one">
 				<div>One</div>
@@ -97,6 +98,42 @@ describe('Analytics', () => {
 		expect(onEvent).toHaveBeenCalledWith({
 			event: 'carousel_slide',
 			direction: 'right',
+			fromIndex: 2,
+			toIndex: 0,
+		});
+		const kinds = onEvent.mock.calls.map(([event]) => event.event);
+		expect(kinds).not.toContain('carousel_reached_end');
+	});
+
+	it('reports rtl forward motion as "left" yet still recognises reaching the end', () => {
+		const onEvent = jest.fn<void, [AnalyticsEvent<string>]>();
+		const {handle} = renderCarousel(onEvent, {dir: 'rtl'});
+
+		act(() => handle.current?.goTo(2));
+
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_slide',
+			direction: 'left',
+			fromIndex: 0,
+			toIndex: 2,
+		});
+		const kinds = onEvent.mock.calls.map(([event]) => event.event);
+		expect(kinds).toContain('carousel_reached_end');
+	});
+
+	it('reports an rtl forward loop wrap as leftward motion and never as reaching the end', () => {
+		const onEvent = jest.fn<void, [AnalyticsEvent<string>]>();
+		const {handle} = renderCarousel(onEvent, {
+			isLoop: true,
+			initialIndex: 2,
+			dir: 'rtl',
+		});
+
+		act(() => handle.current?.next());
+
+		expect(onEvent).toHaveBeenCalledWith({
+			event: 'carousel_slide',
+			direction: 'left',
 			fromIndex: 2,
 			toIndex: 0,
 		});

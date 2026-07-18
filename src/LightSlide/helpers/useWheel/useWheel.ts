@@ -70,8 +70,9 @@ export function useWheel({
 
 			const unit =
 				e.deltaMode === 1 ? WHEEL_LINE_PX : e.deltaMode === 2 ? WHEEL_PAGE_PX : 1;
-			const dx = dominantX * unit;
 			const store = storeRef.current;
+			/** Same logical-space normalization as pointer deltas: under rtl the sign flips once here. */
+			const dx = dominantX * unit * store.dirSign;
 
 			if (store.effectiveFlow) {
 				store.wheelDeltaX += dx;

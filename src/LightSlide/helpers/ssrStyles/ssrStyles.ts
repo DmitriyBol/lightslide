@@ -7,6 +7,7 @@ type SsrCssInput = {
 	startVisual: number;
 	centered: boolean;
 	isLoop: boolean;
+	rtl: boolean;
 };
 
 /**
@@ -29,6 +30,10 @@ type SsrCssInput = {
  * fractional right-edge flush clamp is not mirrored (unchanged from start mode) — a last
  * position with fractional slidesPerView overshoots by the remainder until hydration.
  *
+ * `rtl` flips the transform's sign (offsets are translateX-positive when the flex layout is
+ * mirrored — the CSS twin of trackTransform's dirSign) and turns the center clamp into
+ * max(0px, …), since the clamped offset is now the translate itself, not its negation.
+ *
  * The string lands in the DOM via dangerouslySetInnerHTML, so nothing non-numeric may reach
  * it: `slidesId` and the class names are library-generated (useId / build-time CSS-module
  * hashes), and the three prop-fed values are coerced to finite numbers below — an untyped JS
@@ -42,6 +47,7 @@ export function buildSsrCss({
 	startVisual,
 	centered,
 	isLoop,
+	rtl,
 }: SsrCssInput): string {
 	const spv =
 		Number.isFinite(slidesPerView) && slidesPerView > 0 ? slidesPerView : 1;
@@ -51,12 +57,13 @@ export function buildSsrCss({
 	const visibleGaps = (Math.ceil(spv) - 1) * gapPx;
 	const slideWidth = `(100% - ${visibleGaps}px)/${spv}`;
 	const track = `[id="${slidesId}"]`;
-	const shift = `(${slideWidth} + ${gapPx}px)*${-start}`;
+	const shift = `(${slideWidth} + ${gapPx}px)*${rtl ? start : -start}`;
 
 	let restTransform = '';
 	if (centered) {
-		const c = `calc(${shift} + (100% - (${slideWidth}))/2)`;
-		restTransform = `;transform:translateX(${isLoop ? c : `min(0px,${c})`})`;
+		const c = `calc(${shift} ${rtl ? '-' : '+'} (100% - (${slideWidth}))/2)`;
+		const clamped = rtl ? `max(0px,${c})` : `min(0px,${c})`;
+		restTransform = `;transform:translateX(${isLoop ? c : clamped})`;
 	} else if (start > 0) {
 		restTransform = `;transform:translateX(calc(${shift}))`;
 	}

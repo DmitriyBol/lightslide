@@ -175,6 +175,34 @@ describe('useNavigation — emitNav mailbox', () => {
 	});
 });
 
+describe('useNavigation — rtl visual direction', () => {
+	afterEach(() => jest.clearAllMocks());
+
+	it('reports a forward step as "left" — the visual truth under rtl', () => {
+		const {navigate, emitNav} = setupNavigation({dirSign: -1});
+		navigate(2, 'button');
+		expect(emitNav).toHaveBeenCalledWith(1, 2, 'left', 'button');
+	});
+
+	it('reports a forward wrap as "left" and a backward wrap as "right" under rtl', () => {
+		const loop = {
+			isLoop: true,
+			loopOffset: 1,
+			slidesPerView: 1,
+			maxIndex: 4,
+			slideCount: 5,
+			dirSign: -1 as const,
+		};
+		const forward = setupNavigation({...loop, currentIndex: 4});
+		forward.navigate(5, 'button');
+		expect(forward.emitNav).toHaveBeenCalledWith(4, 0, 'left', 'button');
+
+		const backward = setupNavigation({...loop, currentIndex: 0});
+		backward.navigate(-1, 'button');
+		expect(backward.emitNav).toHaveBeenCalledWith(0, 4, 'right', 'button');
+	});
+});
+
 describe('useNavigation — off-boundary re-align', () => {
 	afterEach(() => jest.clearAllMocks());
 

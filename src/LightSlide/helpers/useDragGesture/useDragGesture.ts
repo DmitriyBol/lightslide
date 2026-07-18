@@ -7,6 +7,7 @@ import {RUBBER_BAND_DIVISOR} from '../constants';
 import type {NavigateFn} from '../navigation';
 import type {LightSlideStore} from '../store';
 import {trackOffset} from '../trackOffset/trackOffset';
+import {trackTransform} from '../trackTransform/trackTransform';
 import type {PointerHandlers} from '../usePointerGesture/usePointerGesture';
 import {usePointerGesture} from '../usePointerGesture/usePointerGesture';
 
@@ -61,7 +62,10 @@ export function useDragGesture({
 				 * never jumps half a slide when the gesture starts.
 				 */
 				const base = trackOffset(visualIndexOf(currentIndex), storeRef.current);
-				trackRef.current.style.transform = `translateX(${-base + delta}px)`;
+				trackRef.current.style.transform = trackTransform(
+					base - delta,
+					storeRef.current.dirSign,
+				);
 			}
 		},
 		[storeRef, trackRef, visualIndexOf],
@@ -93,5 +97,5 @@ export function useDragGesture({
 		snapToVisual(visualIndexOf(storeRef.current.currentIndex), true);
 	}, [storeRef, snapToVisual, visualIndexOf]);
 
-	return usePointerGesture({trackRef, onStart, onMove, onEnd, onCancel});
+	return usePointerGesture({trackRef, storeRef, onStart, onMove, onEnd, onCancel});
 }

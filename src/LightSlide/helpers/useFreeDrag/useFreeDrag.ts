@@ -7,6 +7,7 @@ import {RUBBER_BAND_DIVISOR} from '../constants';
 import type {NavigateFn} from '../navigation';
 import type {LightSlideStore} from '../store';
 import {maxTrackOffset} from '../trackOffset/trackOffset';
+import {trackTransform} from '../trackTransform/trackTransform';
 import type {PointerHandlers} from '../usePointerGesture/usePointerGesture';
 import {usePointerGesture} from '../usePointerGesture/usePointerGesture';
 
@@ -107,7 +108,10 @@ export function useFreeDrag({
 
 	const applyPos = (pos: number) => {
 		if (trackRef.current)
-			trackRef.current.style.transform = `translateX(${-pos}px)`;
+			trackRef.current.style.transform = trackTransform(
+				pos,
+				storeRef.current.dirSign,
+			);
 	};
 
 	const stopCoast = () => {
@@ -233,5 +237,5 @@ export function useFreeDrag({
 		goToIndex(storeRef.current.currentIndex, 'drag');
 	};
 
-	return usePointerGesture({trackRef, onStart, onMove, onEnd, onCancel});
+	return usePointerGesture({trackRef, storeRef, onStart, onMove, onEnd, onCancel});
 }
