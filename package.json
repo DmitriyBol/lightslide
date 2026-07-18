@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~4.9 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
