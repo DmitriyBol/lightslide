@@ -4,6 +4,51 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
 
+## [0.19.0] — 2026-07-18
+
+Vertical-axis release (LIG-23): the whole carousel turns top-to-bottom behind one prop. All
+1-D math was already axis-agnostic — the axis is consulted only where logical pixels meet
+physical ones: the container measure, the pointer boundary, the track transform, and the
+critical CSS.
+
+### Added
+
+- **`axis` prop** (`'x' | 'y'`, default `'x'`). `axis="y"` stacks the slides vertically:
+  drag and flick run along Y with the direction lock inverted (a vertical gesture drives the
+  carousel, a horizontal one is released to the page — the viewport switches to
+  `touch-action: pan-x`), and loop, flow, free momentum, autoplay, `lazyMount`,
+  `align="center"`, and external control all work unchanged. The container must be given an
+  explicit height — slide heights are fractions of it. Orthogonal to `dir` (vertical order
+  never mirrors; the axis forces `dirSign` to 1) and deliberately not responsive.
+- SSR critical CSS emits the vertical layout (height chain down to the track, column flex,
+  `translateY` rest transform, slide-height calc), so the zero-CLS first paint survives
+  vertically. Vertical-only rules are scoped through the `.vertical` class — a horizontal
+  instance on the same page is untouched.
+- Navigation places its buttons at the top/bottom edges with ˄ / ˅ glyphs; custom
+  render-prop buttons receive `direction: 'up' | 'down'`.
+- The a11y `Keyboard` plugin steps with ArrowUp/ArrowDown on a vertical carousel and leaves
+  ArrowLeft/ArrowRight to the page.
+- Playground: vertical demo section (#vertical, free-momentum toggle); e2e: `vertical.spec.ts`
+  (stacked slides, edge-placed arrows, vertical drag both ways through the loop, the
+  inverted direction lock, free coast along Y) plus a `dragY` gesture helper.
+
+### Changed
+
+- **Breaking (pre-1.0 minor):** the analytics `direction` union widened to
+  `'left' | 'right' | 'up' | 'down'` (`carousel_slide` / `carousel_nav_button`) — an
+  exhaustive `switch` on it needs the two new arms. Same for `NavButtonRenderProps.direction`.
+- The `wheel` slot is inert while `axis="y"` — a vertical wheel gesture is indistinguishable
+  from page scrolling (documented; revisit on demand).
+- Slide metrics now measure the **viewport** rather than the container (identical width
+  horizontally; vertically the container also holds the pagination row, and slide heights
+  must be fractions of the clipping viewport). The track's inline gap is the `gap` shorthand
+  instead of `column-gap` (covers both axes).
+- `trackTransform(offset, store)` picks `translateX`/`translateY` — the axis, like the
+  direction, is applied exactly once.
+- Sizes: core 4.98 → 5.27 kB (budget 5 → 5.35 kB), navigation 1.13 → 1.27 kB, flow
+  1.74 → 1.78 kB (budget 1.75 → 1.8), free budget 1.75 → 1.8 (size unchanged at 1.74);
+  README size mentions swept (~5.5 kB core, 5.6 kB min+gzip in the comparison).
+
 ## [0.18.0] — 2026-07-18
 
 RTL release (LIG-22): first-class right-to-left support behind one prop. In the coordinate

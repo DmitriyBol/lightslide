@@ -166,12 +166,12 @@ describe('useBreakpoints — composed with the carousel', () => {
 		const mm = installMatchMedia();
 		render(<ResponsiveCarousel />);
 		const track = screen.getByRole('group', {name: '1 of 2'}).parentElement;
-		expect(track).toHaveStyle({columnGap: '8px'});
+		expect(track).toHaveStyle({gap: '8px'});
 
 		act(() => mm.change('(min-width: 768px)', true));
-		expect(track).toHaveStyle({columnGap: '24px'});
+		expect(track).toHaveStyle({gap: '24px'});
 
 		act(() => mm.change('(min-width: 768px)', false));
-		expect(track).toHaveStyle({columnGap: '8px'});
+		expect(track).toHaveStyle({gap: '8px'});
 	});
 });

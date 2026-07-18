@@ -4,10 +4,11 @@ import type {CSSProperties, ReactNode} from 'react';
  * Props handed to a custom render function for a navigation button. Wire `onClick` to your
  * element to drive navigation — it is the same handler the default button uses, so the
  * carousel_slide + carousel_nav_button analytics events fire exactly as they would for the
- * built-in button.
+ * built-in button. `direction` is where the button points: 'left'/'right' on a horizontal
+ * carousel, 'up'/'down' on a vertical one (`axis: 'y'`).
  */
 export type NavButtonRenderProps = {
-	direction: 'left' | 'right';
+	direction: 'left' | 'right' | 'up' | 'down';
 	onClick: () => void;
 	disabled: boolean;
 };

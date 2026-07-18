@@ -64,7 +64,7 @@ export function useDragGesture({
 				const base = trackOffset(visualIndexOf(currentIndex), storeRef.current);
 				trackRef.current.style.transform = trackTransform(
 					base - delta,
-					storeRef.current.dirSign,
+					storeRef.current,
 				);
 			}
 		},

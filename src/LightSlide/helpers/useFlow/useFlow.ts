@@ -94,10 +94,7 @@ export function useFlow({
 			const store = storeRef.current;
 			const base = store.loopOffset * stride;
 			track.style.transition = '';
-			track.style.transform = trackTransform(
-				base + flow.current.offset,
-				store.dirSign,
-			);
+			track.style.transform = trackTransform(base + flow.current.offset, store);
 		},
 		[trackRef, storeRef],
 	);
@@ -188,12 +185,13 @@ export function useFlow({
 		(dx: number) => {
 			const track = trackRef.current;
 			if (!track) return;
-			const {slideWidth, gap, loopOffset, dirSign} = storeRef.current;
+			const store = storeRef.current;
+			const {slideWidth, gap, loopOffset} = store;
 			const base = loopOffset * (slideWidth + gap);
 			track.style.transition = '';
 			track.style.transform = trackTransform(
 				base + flow.current.offsetAtStart - dx,
-				dirSign,
+				store,
 			);
 		},
 		[trackRef, storeRef],

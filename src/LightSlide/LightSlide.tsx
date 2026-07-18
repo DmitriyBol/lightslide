@@ -55,6 +55,7 @@ function LightSlideInner(
 		slideLabel = DEFAULT_SLIDE_LABEL,
 		slidesPerView = 1,
 		gap = 0,
+		axis = 'x',
 		dir,
 		align = 'start',
 		initialIndex = 0,
@@ -78,6 +79,7 @@ function LightSlideInner(
 	/** ————————————————— Identity & imperative core ————————————————— */
 
 	const containerRef = useRef<HTMLDivElement>(null);
+	const viewportRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
 
 	/** SSR-safe id for the slides container — nav buttons and dots point aria-controls at it. */
@@ -138,7 +140,9 @@ function LightSlideInner(
 	 * far into the prepend strip (capped — clones can't outnumber the slides they copy).
 	 */
 	const isCentered = align === 'center' && slidesPerView > 1;
-	const isRtl = dir === 'rtl';
+	const isVertical = axis === 'y';
+	/** Vertical order has no reading direction — the axis wins over `dir` for the sign. */
+	const isRtl = dir === 'rtl' && !isVertical;
 	const loopOffset = effectiveLoop
 		? Math.min(
 				slideCount,
@@ -164,6 +168,7 @@ function LightSlideInner(
 	store.slidesPerView = slidesPerView;
 	store.gap = gap;
 	store.dirSign = isRtl ? -1 : 1;
+	store.vertical = isVertical;
 	store.effectiveFlow = effectiveFlow;
 	store.isLoop = effectiveLoop;
 	store.loopOffset = loopOffset;
@@ -171,7 +176,7 @@ function LightSlideInner(
 	/** ————————————————— Motion & control ————————————————— */
 
 	const {slideWidth, measureSlideWidth} = useSlideMetrics(
-		containerRef,
+		viewportRef,
 		storeRef,
 		isCentered,
 	);
@@ -186,6 +191,7 @@ function LightSlideInner(
 		setCurrentIndex,
 		slidesPerView,
 		gap,
+		vertical: isVertical,
 		centered: isCentered,
 		isLoop,
 		flowEnabled: effectiveFlow,
@@ -216,6 +222,8 @@ function LightSlideInner(
 	const pluginActive = maxIndex > 0 && !loading;
 	/** Flow supersedes autoplay; neither runs while loading or with the motion gate closed. */
 	const autoplayActive = pluginActive && motionAllowed && !effectiveFlow;
+	/** The wheel slot is inert on a vertical carousel — a vertical wheel is page scrolling. */
+	const wheelActive = pluginActive && !isVertical;
 
 	const {
 		flowSeamValue,
@@ -229,6 +237,7 @@ function LightSlideInner(
 		storeRef,
 		effectiveFlow,
 		pluginActive,
+		wheelActive,
 		autoplayActive,
 		goToIndex: navigateToIndex,
 		setFlowHandlers,
@@ -268,6 +277,7 @@ function LightSlideInner(
 			centered: isCentered,
 			isLoop: effectiveLoop,
 			rtl: isRtl,
+			vertical: isVertical,
 		}),
 	);
 
@@ -277,17 +287,29 @@ function LightSlideInner(
 	 * Split contexts: slides consume only geometry, controls consume nav state — navigating
 	 * never re-renders the slides. navigateToIndex doubles as the contexts' goToIndex.
 	 */
-	const metricsValue = useMemo(() => ({slideWidth}), [slideWidth]);
+	const metricsValue = useMemo(
+		() => ({slideWidth, vertical: isVertical}),
+		[slideWidth, isVertical],
+	);
 	const navValue = useMemo(
 		() => ({
 			currentIndex,
 			maxIndex,
 			isLoop: effectiveLoop,
 			isReady,
+			vertical: isVertical,
 			slidesId,
 			goToIndex: navigateToIndex,
 		}),
-		[currentIndex, maxIndex, effectiveLoop, isReady, slidesId, navigateToIndex],
+		[
+			currentIndex,
+			maxIndex,
+			effectiveLoop,
+			isReady,
+			isVertical,
+			slidesId,
+			navigateToIndex,
+		],
 	);
 
 	return (
@@ -299,11 +321,16 @@ function LightSlideInner(
 					aria-roledescription="carousel"
 					aria-label={label}
 					dir={dir}
-					className={cx(styles.container, className)}
+					className={cx(
+						styles.container,
+						isVertical ? styles.vertical : undefined,
+						className,
+					)}
 					style={style}>
 					<style dangerouslySetInnerHTML={{__html: ssrCss}} />
 					<div className={styles.stage}>
 						<div
+							ref={viewportRef}
 							className={styles.viewport}
 							onDragStart={preventNativeDrag}
 							{...pointerHandlers}>
@@ -314,7 +341,7 @@ function LightSlideInner(
 									ref={trackRef}
 									id={slidesId}
 									className={cx(styles.track, trackClassName)}
-									style={gap > 0 ? {columnGap: gap, ...trackStyle} : trackStyle}>
+									style={gap > 0 ? {gap, ...trackStyle} : trackStyle}>
 									{displayChildren}
 								</div>
 							)}

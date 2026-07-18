@@ -43,11 +43,13 @@ export type InViewportPayload = {
 
 /**
  * Fired on every navigation — drag, button, pagination, autoplay, or the external API
- * (the controlled `index` prop / ref handle).
+ * (the controlled `index` prop / ref handle). `direction` is the visual motion of the
+ * track: 'left'/'right' on a horizontal carousel (under rtl a forward step is 'left'),
+ * 'up'/'down' on a vertical one (forward is 'down').
  */
 export type SlidePayload = {
 	event: 'carousel_slide';
-	direction: 'left' | 'right';
+	direction: 'left' | 'right' | 'up' | 'down';
 	fromIndex: number;
 	toIndex: number;
 };
@@ -74,7 +76,7 @@ export type ViewedSlidesPayload<T = unknown> = {
 /** Fired when a prev/next button is clicked, in addition to carousel_slide. */
 export type NavigationButtonPayload = {
 	event: 'carousel_nav_button';
-	direction: 'left' | 'right';
+	direction: 'left' | 'right' | 'up' | 'down';
 	fromIndex: number;
 	toIndex: number;
 };

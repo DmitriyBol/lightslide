@@ -100,6 +100,21 @@ describe('useSlideMetrics', () => {
 		expect(storeRef.current.centerInset).toBe(0);
 	});
 
+	it('measures offsetHeight instead of offsetWidth on the vertical axis', () => {
+		const el = document.createElement('div');
+		setOffsetWidth(el, 600);
+		Object.defineProperty(el, 'offsetHeight', {
+			configurable: true,
+			value: 420,
+		});
+		const storeRef = {
+			current: createStore({slidesPerView: 2, vertical: true}),
+		};
+		renderHook(() => useSlideMetrics({current: el}, storeRef, false));
+		/** 420 / 2 = 210 — the height, not the 600px width. */
+		expect(storeRef.current.slideWidth).toBe(210);
+	});
+
 	it('re-measures into the store and state when the ResizeObserver fires', () => {
 		const el = container(600);
 		const storeRef = {current: createStore({slidesPerView: 2})};

@@ -23,6 +23,7 @@ type SeamValuesParams = {
 	storeRef: MutableRefObject<LightSlideStore>;
 	effectiveFlow: boolean;
 	pluginActive: boolean;
+	wheelActive: boolean;
 	autoplayActive: boolean;
 	goToIndex: NavigateFn;
 	setFlowHandlers: Dispatch<SetStateAction<PointerHandlers | null>>;
@@ -50,6 +51,7 @@ export function useSeamValues({
 	storeRef,
 	effectiveFlow,
 	pluginActive,
+	wheelActive,
 	autoplayActive,
 	goToIndex,
 	setFlowHandlers,
@@ -79,8 +81,8 @@ export function useSeamValues({
 	);
 
 	const wheelSeamValue = useMemo(
-		() => ({containerRef, storeRef, active: pluginActive, goToIndex}),
-		[containerRef, storeRef, pluginActive, goToIndex],
+		() => ({containerRef, storeRef, active: wheelActive, goToIndex}),
+		[containerRef, storeRef, wheelActive, goToIndex],
 	);
 
 	const autoplaySeamValue = useMemo(

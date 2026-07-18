@@ -16,9 +16,19 @@ export type LazyMountConfig = {
  *   `region` landmark (else a plain `group`); either way it is announced as a carousel.
  * - `slideLabel` — formats each slide's automatic accessible name (default
  *   `${index + 1} of ${count}`); a per-slide `aria-label` on `<Slide>` overrides it.
- * - `gap` — horizontal space between adjacent slides, px (default 0). Applied as CSS
- *   `column-gap` on the track and folded into all geometry: slide width, snap positions,
+ * - `gap` — space between adjacent slides along the scroll axis, px (default 0). Applied as
+ *   CSS `gap` on the track and folded into all geometry: slide size, snap positions,
  *   the fractional flush of the last slide, loop clones, and flow.
+ * - `axis` — the scroll axis (default `'x'`). `'y'` stacks the slides vertically: drag,
+ *   snap, loop, flow, free, autoplay, keyboard, and the navigation buttons all turn
+ *   vertical. The container must be given an explicit height (e.g. `style={{height: 420}}`)
+ *   — slide heights are fractions of it, exactly as slide widths are of a horizontal
+ *   carousel's width. Touch gestures then claim vertical movement over the carousel
+ *   (`touch-action: pan-x`), so it overlays vertical page scrolling — inherent to every
+ *   vertical carousel. Orthogonal to `dir` (vertical order never mirrors) and deliberately
+ *   not responsive (switching the axis is a layout change — keep it out of
+ *   breakpoints-driven props). The `wheel` slot is inert while vertical: a vertical wheel
+ *   gesture is indistinguishable from page scrolling.
  * - `dir` — the carousel's reading direction (default `'ltr'`). `'rtl'` mirrors everything:
  *   the container gets `dir="rtl"` (the browser mirrors the flex layout), slides advance
  *   right-to-left, gestures/wheel/keyboard follow the visual direction, and the navigation
@@ -75,6 +85,7 @@ export type LightSlideProps = {
 	slideLabel?: (index: number, count: number) => string;
 	slidesPerView?: number;
 	gap?: number;
+	axis?: 'x' | 'y';
 	dir?: 'ltr' | 'rtl';
 	align?: 'start' | 'center';
 	initialIndex?: number;

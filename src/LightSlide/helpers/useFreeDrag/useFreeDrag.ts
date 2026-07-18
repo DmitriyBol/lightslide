@@ -108,10 +108,7 @@ export function useFreeDrag({
 
 	const applyPos = (pos: number) => {
 		if (trackRef.current)
-			trackRef.current.style.transform = trackTransform(
-				pos,
-				storeRef.current.dirSign,
-			);
+			trackRef.current.style.transform = trackTransform(pos, storeRef.current);
 	};
 
 	const stopCoast = () => {

@@ -30,6 +30,7 @@ import {ProductCardsExample} from './examples/ProductCardsExample';
 import {RtlExample} from './examples/RtlExample';
 import {SlidesPerViewExample} from './examples/SlidesPerViewExample';
 import {ThumbnailsExample} from './examples/ThumbnailsExample';
+import {VerticalExample} from './examples/VerticalExample';
 import {WheelExample} from './examples/WheelExample';
 import {GITHUB_URL, INSTALL_COMMAND, NPM_URL} from './meta';
 
@@ -69,6 +70,7 @@ export function App() {
 				<WheelExample />
 				<DragModeExample />
 				<RtlExample />
+				<VerticalExample />
 
 				<PhaseLabel label="Cards & state" />
 				<ProductCardsExample />
@@ -93,7 +95,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~5&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~5.5&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub

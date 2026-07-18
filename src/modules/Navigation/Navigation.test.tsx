@@ -15,6 +15,7 @@ function makeContext(overrides?: Partial<NavContextType>): NavContextType {
 		maxIndex: 3,
 		isLoop: false,
 		isReady: true,
+		vertical: false,
 		slidesId: 'slides-test',
 		goToIndex: jest.fn(),
 		...overrides,
@@ -79,6 +80,30 @@ describe('Navigation', () => {
 		renderNavigation(makeContext({currentIndex: 3, maxIndex: 3, isLoop: true}));
 		expect(screen.getAllByLabelText('Previous slide')[1]).not.toBeDisabled();
 		expect(screen.getAllByLabelText('Next slide')[1]).not.toBeDisabled();
+	});
+});
+
+describe('Navigation — vertical axis', () => {
+	it('shows the ˄ and ˅ glyphs and the top/bottom placement classes', () => {
+		renderNavigation(makeContext({vertical: true}));
+		const prev = screen.getByLabelText('Previous slide');
+		const next = screen.getByLabelText('Next slide');
+		expect(prev).toHaveTextContent('˄');
+		expect(next).toHaveTextContent('˅');
+		expect(prev.className).toContain('prevVertical');
+		expect(next.className).toContain('nextVertical');
+	});
+
+	it('passes up/down directions to the render functions', () => {
+		const renderPrev = jest.fn(() => <span />);
+		const renderNext = jest.fn(() => <span />);
+		renderNavigation(makeContext({vertical: true}), {renderPrev, renderNext});
+		expect(renderPrev).toHaveBeenCalledWith(
+			expect.objectContaining({direction: 'up'}),
+		);
+		expect(renderNext).toHaveBeenCalledWith(
+			expect.objectContaining({direction: 'down'}),
+		);
 	});
 });
 

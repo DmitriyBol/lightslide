@@ -39,3 +39,30 @@ export async function dragX(
 	}
 	await page.mouse.up();
 }
+
+/**
+ * The vertical twin of dragX: press at the centre of `surface` and drag vertically by
+ * `fraction` of its height (negative = up = advance on an `axis="y"` carousel).
+ */
+export async function dragY(
+	page: Page,
+	surface: Locator,
+	fraction: number,
+	{steps = 12, delayMs = 0}: DragOptions = {},
+): Promise<void> {
+	await surface.scrollIntoViewIfNeeded();
+	const box = await surface.boundingBox();
+	if (!box) throw new Error('dragY: surface has no bounding box');
+
+	const x = box.x + box.width / 2;
+	const startY = box.y + box.height / 2;
+	const dy = box.height * fraction;
+
+	await page.mouse.move(x, startY);
+	await page.mouse.down();
+	for (let i = 1; i <= steps; i++) {
+		await page.mouse.move(x, startY + (dy * i) / steps);
+		if (delayMs) await page.waitForTimeout(delayMs);
+	}
+	await page.mouse.up();
+}

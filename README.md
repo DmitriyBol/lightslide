@@ -7,7 +7,7 @@
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, infinite loop, center align, zero-CLS server
-rendering, and lazy slide mounting in a ~5 kB fully-typed core with zero runtime
+rendering, and lazy slide mounting in a ~5.5 kB fully-typed core with zero runtime
 dependencies beyond React. Navigation, pagination, autoplay, a continuous flow (ticker)
 mode, wheel gestures, momentum scrolling, responsive breakpoints, one typed analytics event
 stream, and the deep accessibility layer all ship as tree-shakeable entries — you only pay
@@ -28,7 +28,7 @@ for what you import.
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [isLoop](#isloop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
-- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
+- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -55,6 +55,9 @@ for what you import.
 - **Right-to-left** (`dir="rtl"`) — full mirroring for RTL locales: slides advance
   right-to-left, drag/wheel/keyboard follow the visual direction, the arrows swap sides, and
   loop, center align, free momentum, and the zero-CLS server paint all follow.
+- **Vertical axis** (`axis="y"`) — the same carousel top-to-bottom: vertical drag and
+  flick, arrows at the top/bottom edges, ↑/↓ keyboard, and every mode (loop, flow, free
+  momentum, lazy mounting, center align) unchanged — give it a height and go.
 - **Responsive breakpoints** (`lightslide/breakpoints`) — a `useBreakpoints` hook resolving
   any props per media query; the carousel re-lays itself out on a flip, no resize code in
   your app.
@@ -83,7 +86,7 @@ for what you import.
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, autoplay, flow, wheel gestures, free scrolling,
   breakpoints, analytics, and the a11y layer ship as tree-shakeable entries; the core stays
-  ~5 kB and an unused module never reaches your bundle.
+  ~5.5 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -105,7 +108,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.2 kB** core, +0.4–1.9 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
+| **lightslide** | **5.6 kB** core, +0.4–1.9 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -165,7 +168,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5 kB). Arrows, dots, autoplay, the flow
+The core ships only what every carousel needs (~5.5 kB). Arrows, dots, autoplay, the flow
 ticker, wheel gestures, free scrolling, breakpoints, analytics, and the accessibility layer
 are separate tree-shakeable entries — import a module and pass its node to the matching slot
 prop (or call its hook); skip the import and none of its code or styles reaches your bundle.
@@ -249,7 +252,8 @@ itself is not generic.)
 | `label` | `string` | — | Accessible name — makes the carousel a labelled `region` landmark (see [Accessibility](#accessibility)) |
 | `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
-| `gap` | `number` | `0` | Horizontal space between slides, px (see [slidesPerView & gap](#slidesperview--gap)) |
+| `gap` | `number` | `0` | Space between slides along the scroll axis, px (see [slidesPerView & gap](#slidesperview--gap)) |
+| `axis` | `'x' \| 'y'` | `'x'` | Scroll axis — `'y'` is a vertical carousel; give it an explicit height (see [Vertical axis](#vertical-axis-axisy)) |
 | `dir` | `'ltr' \| 'rtl'` | `'ltr'` | Reading direction — `'rtl'` mirrors layout, gestures, controls, and loop (see [Right-to-left](#right-to-left-dirrtl)) |
 | `align` | `'start' \| 'center'` | `'start'` | Where the active slide rests (see [Center align](#center-align)) |
 | `initialIndex` | `number` | `0` | Starting position, uncontrolled (see [External control](#external-control)) |
@@ -335,7 +339,7 @@ un-clipped, and the slot dims to 50% at the boundary by default.
 |---|---|---|
 | `onClick` | `() => void` | Triggers navigation (+ `carousel_slide` / `carousel_nav_button`) |
 | `disabled` | `boolean` | Boundary state. Always `false` when `isLoop` is active |
-| `direction` | `"left" \| "right"` | Which button this is |
+| `direction` | `"left" \| "right" \| "up" \| "down"` | Where this button points (`up`/`down` on a [vertical carousel](#vertical-axis-axisy)) |
 
 ### Pagination (`lightslide/pagination`)
 
@@ -425,7 +429,9 @@ accumulate until `threshold`, then the gesture commits and the inertia tail a tr
 emitting is swallowed — 150 ms of silence or a sharply rising delta starts the next gesture.
 Vertical-dominant wheel events are never touched, so page scrolling over the carousel stays
 native; horizontal ones are consumed, which also suppresses the browser's history swipe.
-While `flow` runs the same gesture drifts the strip instead of paging.
+While `flow` runs the same gesture drifts the strip instead of paging. On a vertical
+carousel (`axis="y"`) the slot is ignored entirely — a vertical wheel gesture is
+indistinguishable from page scrolling (see [Vertical axis](#vertical-axis-axisy)).
 
 **`WheelProps`**: `threshold?: number` (default 30) — accumulated horizontal px before a
 page turn commits.
@@ -562,6 +568,35 @@ glyphs; loop wrap-around, center align, free momentum, and `lazyMount` follow au
 - Custom `renderPrev`/`renderNext` buttons keep their logical `direction` hint (`'left'` =
   prev); the positioning slot swaps sides for you, and glyphs you render yourself are yours
   to mirror.
+
+## Vertical axis (`axis="y"`)
+
+```tsx
+<LightSlide axis="y" isLoop style={{height: 420}} navigation={<Navigation />}>
+```
+
+`axis="y"` stacks the slides top-to-bottom and turns the whole input surface with them:
+drag and flick run along Y, the navigation buttons move to the top/bottom edges (with ˄ / ˅
+glyphs), the a11y layer's keyboard steps with ArrowUp/ArrowDown, and every mode — loop,
+flow, free momentum, autoplay, `lazyMount`, `align="center"`, external control — works
+unchanged. The SSR critical CSS emits the vertical layout too, so the zero-CLS first paint
+survives (see [Server-side rendering](#server-side-rendering-nextjs-app-router)).
+
+- **Give the carousel an explicit height** (`style={{height: 420}}`, a class, or a sized
+  parent) — slide heights are fractions of it, exactly as slide widths are fractions of a
+  horizontal carousel's width. Without a height there is nothing to measure.
+- **Touch trade-off**: the viewport switches to `touch-action: pan-x`, so vertical touch
+  gestures over the carousel drive the carousel instead of scrolling the page. That is
+  inherent to every vertical carousel (Embla and Swiper behave the same) — size it so users
+  can comfortably scroll past it.
+- The **`wheel` slot is ignored** while vertical: a vertical wheel gesture is
+  indistinguishable from page scrolling, so the carousel never intercepts it.
+- Orthogonal to `dir` — vertical order has no reading direction and never mirrors.
+- Switching the axis is a layout change, not a responsive tweak — keep it out of
+  breakpoints-driven props.
+- The analytics `direction` becomes `'down'` / `'up'` (forward is `'down'`); custom
+  `renderPrev`/`renderNext` receive `direction: 'up'` / `'down'` (see
+  [Navigation](#navigation-lightslidenavigation)).
 
 ## Responsive breakpoints (`lightslide/breakpoints`)
 
@@ -757,6 +792,9 @@ Notes:
   stays the armed terminal instead.
 - `fromIndex`/`toIndex` on `carousel_slide` may differ by more than one (a drag can cross
   several slides); `toIndex` is the slide actually landed on.
+- `direction` is the **visual** motion of the track: `'left'`/`'right'` on a horizontal
+  carousel (forward is `'left'` under `dir="rtl"`), `'up'`/`'down'` on a vertical one
+  (forward is `'down'`).
 
 ```tsx
 import { Analytics } from "lightslide/analytics";
@@ -911,7 +949,7 @@ src/
 │       ├── lazyMount/              #   index-window mount predicate for lazyMount
 │       ├── ssrStyles/              #   critical layout CSS served with the markup
 │       ├── trackOffset/            #   pure px offset for a visual index
-│       ├── trackTransform/         #   offset → translateX string (direction sign applied once)
+│       ├── trackTransform/         #   offset → translateX/translateY string (axis + direction applied once)
 │       ├── useIsomorphicLayoutEffect/ # layout effect that is SSR-silent
 │       ├── useLatestRef/           #   latest-ref for stable callbacks
 │       ├── useNavigation/          #   navigateToIndex — the single navigation path

@@ -12,6 +12,7 @@ type LayoutResyncParams = {
 	setCurrentIndex: Dispatch<SetStateAction<number>>;
 	slidesPerView: number;
 	gap: number;
+	vertical: boolean;
 	centered: boolean;
 	isLoop: boolean;
 	flowEnabled: boolean;
@@ -20,7 +21,7 @@ type LayoutResyncParams = {
 
 /**
  * Re-measures, re-clamps, and re-snaps (no animation) whenever the layout shape changes —
- * slidesPerView, gap, alignment, loop mode, flow, or loading clearing. A layout effect so loop mode positions
+ * slidesPerView, gap, axis, alignment, loop mode, flow, or loading clearing. A layout effect so loop mode positions
  * the track at its home offset before the first paint; otherwise the prepend clones would
  * flash for one frame and then jump to slide 0. A clamped-away position is reported to
  * onIndexChange (a real position change for synced consumer state), and the snap is skipped
@@ -34,6 +35,7 @@ export function useLayoutResync({
 	setCurrentIndex,
 	slidesPerView,
 	gap,
+	vertical,
 	centered,
 	isLoop,
 	flowEnabled,
@@ -52,6 +54,7 @@ export function useLayoutResync({
 	}, [
 		slidesPerView,
 		gap,
+		vertical,
 		centered,
 		isLoop,
 		flowEnabled,

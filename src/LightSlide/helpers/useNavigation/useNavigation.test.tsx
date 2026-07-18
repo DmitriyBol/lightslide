@@ -203,6 +203,34 @@ describe('useNavigation — rtl visual direction', () => {
 	});
 });
 
+describe('useNavigation — vertical visual direction', () => {
+	afterEach(() => jest.clearAllMocks());
+
+	it('reports "down" forward and "up" backward on a vertical carousel', () => {
+		const forward = setupNavigation({vertical: true});
+		forward.navigate(2, 'button');
+		expect(forward.emitNav).toHaveBeenCalledWith(1, 2, 'down', 'button');
+
+		const backward = setupNavigation({vertical: true, currentIndex: 2});
+		backward.navigate(1, 'button');
+		expect(backward.emitNav).toHaveBeenCalledWith(2, 1, 'up', 'button');
+	});
+
+	it('reports a forward wrap as "down" — the motion, not the index delta', () => {
+		const {navigate, emitNav} = setupNavigation({
+			vertical: true,
+			isLoop: true,
+			loopOffset: 1,
+			slidesPerView: 1,
+			maxIndex: 4,
+			slideCount: 5,
+			currentIndex: 4,
+		});
+		navigate(5, 'button');
+		expect(emitNav).toHaveBeenCalledWith(4, 0, 'down', 'button');
+	});
+});
+
 describe('useNavigation — off-boundary re-align', () => {
 	afterEach(() => jest.clearAllMocks());
 

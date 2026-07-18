@@ -13,14 +13,17 @@ import styles from './Slide.module.scss';
  * `...rest` forwards anything else onto the slide node: the per-slide ARIA the carousel
  * injects via cloneElement (role / aria-roledescription / aria-label, or the hidden+inert
  * markers on loop clones), and any native attribute a consumer sets on <Slide>.
- * No inline width until the client has measured — the carousel's SSR critical CSS owns
- * the pre-measure calc() width, so server and first client paint agree.
+ * The measured main-axis size applies as inline width — or height on a vertical carousel
+ * (the axis comes with the metrics context; the cross axis is left to the flex stretch).
+ * No inline size until the client has measured — the carousel's SSR critical CSS owns
+ * the pre-measure calc() size, so server and first client paint agree.
  */
 function SlideInner<T>(
 	{children, style, className, data, ...rest}: SlideProps<T>,
 	ref: ForwardedRef<HTMLDivElement>,
 ) {
-	const {slideWidth} = useSlideMetricsContext();
+	const {slideWidth, vertical} = useSlideMetricsContext();
+	const size = slideWidth > 0 ? `${slideWidth}px` : undefined;
 
 	return (
 		<div
@@ -28,7 +31,7 @@ function SlideInner<T>(
 			{...rest}
 			className={cx(styles.slide, className)}
 			style={{
-				width: slideWidth > 0 ? `${slideWidth}px` : undefined,
+				...(vertical ? {height: size} : {width: size}),
 				...style,
 			}}>
 			{children}
