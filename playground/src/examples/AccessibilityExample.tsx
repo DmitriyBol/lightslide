@@ -130,7 +130,7 @@ export function AccessibilityExample() {
 					label="Trending — loop"
 					analytics={<Analytics onEvent={analyticsFor('loop')} />}
 					navigation={<Navigation />}
-					isLoop
+					loop
 					a11y={<A11y />}>
 					{MORE.map((label, i) => (
 						<Slide key={label}>

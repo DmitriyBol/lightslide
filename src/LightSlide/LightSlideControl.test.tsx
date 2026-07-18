@@ -60,7 +60,7 @@ type RenderOptions = {
 	index?: number;
 	onIndexChange?: (index: number) => void;
 	onEvent?: ReturnType<typeof makeOnEvent>;
-	isLoop?: boolean;
+	loop?: boolean;
 	slidesPerView?: number;
 	flow?: React.ReactNode;
 	autoplay?: React.ReactNode;
@@ -156,7 +156,7 @@ describe('LightSlide external control', () => {
 		});
 
 		it('goTo clamps out-of-range targets instead of wrapping', () => {
-			const {ref} = renderCarousel({isLoop: true});
+			const {ref} = renderCarousel({loop: true});
 
 			act(() => ref.current?.goTo(99));
 			expect(ref.current?.getIndex()).toBe(2);
@@ -192,8 +192,8 @@ describe('LightSlide external control', () => {
 			expect(eventsOfType(onEvent, 'carousel_slide')).toHaveLength(2);
 		});
 
-		it('next/prev wrap around when isLoop is on', () => {
-			const {ref} = renderCarousel({isLoop: true});
+		it('next/prev wrap around when loop is on', () => {
+			const {ref} = renderCarousel({loop: true});
 
 			act(() => ref.current?.prev());
 			expect(ref.current?.getIndex()).toBe(2);

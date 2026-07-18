@@ -10,9 +10,10 @@ import styles from './Slide.module.scss';
 /**
  * `data` is read by the `lightslide/analytics` plugin (event payloads), never rendered —
  * kept out of the DOM props.
- * `...rest` forwards anything else onto the slide node: the per-slide ARIA the carousel
- * injects via cloneElement (role / aria-roledescription / aria-label, or the hidden+inert
- * markers on loop clones), and any native attribute a consumer sets on <Slide>.
+ * `...rest` forwards the remaining SlideProps onto the slide node: the per-slide ARIA the
+ * carousel injects via cloneElement (role / aria-roledescription / aria-label, or the
+ * hidden+inert markers on loop clones), plus the `aria-*`, `role`, and `id` a consumer sets
+ * on <Slide> (SlideProps is deliberately narrow — put interactive elements in the content).
  * The measured main-axis size applies as inline width — or height on a vertical carousel
  * (the axis comes with the metrics context; the cross axis is left to the flex stretch).
  * No inline size until the client has measured — the carousel's SSR critical CSS owns

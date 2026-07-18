@@ -4,7 +4,7 @@ import {carousel} from './support/carousel';
 import {dragX} from './support/gestures';
 
 /**
- * #loop is a single isLoop carousel (5 slides, slidesPerView 1) with default arrows, pagination,
+ * #loop is a single loop carousel (5 slides, slidesPerView 1) with default arrows, pagination,
  * and a <Console>. In loop mode the arrows never disable and the edges wrap around via cloned
  * slides — behaviour that only reads correctly with real layout.
  */

@@ -4,7 +4,7 @@ import {carousel} from './support/carousel';
 import {dragX} from './support/gestures';
 
 /**
- * #rtl is a single dir="rtl" isLoop carousel (5 slides, slidesPerView 1) with default arrows,
+ * #rtl is a single dir="rtl" loop carousel (5 slides, slidesPerView 1) with default arrows,
  * pagination, and a <Console> logging carousel_slide as "from → to (direction)". RTL is a sign,
  * not a mirror, in the library's math — but only real layout shows the sign meeting the
  * browser-mirrored flex track, so everything here is e2e territory: mirrored button placement,

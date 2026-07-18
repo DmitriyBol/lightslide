@@ -1,3 +1,5 @@
+import type {SlideDirection} from '../../types';
+
 /**
  * Slide index + the data attached to a slide, included in analytics payloads. Generic over
  * the data shape: specify it (e.g. `SlideData<Product>`) for a fully-typed `data`, or let it
@@ -49,7 +51,7 @@ export type InViewportPayload = {
  */
 export type SlidePayload = {
 	event: 'carousel_slide';
-	direction: 'left' | 'right' | 'up' | 'down';
+	direction: SlideDirection;
 	fromIndex: number;
 	toIndex: number;
 };
@@ -76,7 +78,7 @@ export type ViewedSlidesPayload<T = unknown> = {
 /** Fired when a prev/next button is clicked, in addition to carousel_slide. */
 export type NavigationButtonPayload = {
 	event: 'carousel_nav_button';
-	direction: 'left' | 'right' | 'up' | 'down';
+	direction: SlideDirection;
 	fromIndex: number;
 	toIndex: number;
 };

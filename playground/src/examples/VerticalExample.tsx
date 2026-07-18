@@ -58,7 +58,7 @@ export function VerticalExample() {
 			<Well>
 				<LightSlide
 					axis="y"
-					isLoop
+					loop
 					gap={12}
 					style={{height: 420}}
 					free={isFree ? <FreeScroll /> : undefined}

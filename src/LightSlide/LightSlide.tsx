@@ -69,7 +69,7 @@ function LightSlideInner(
 		autoplay,
 		analytics,
 		a11y,
-		isLoop = false,
+		loop = false,
 		lazyMount,
 		loading = false,
 		fallback,
@@ -130,7 +130,7 @@ function LightSlideInner(
 	 */
 	const effectiveFlow =
 		flow != null && flow !== false && maxIndex > 0 && !loading && motionAllowed;
-	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
+	const effectiveLoop = (loop || effectiveFlow) && maxIndex > 0;
 	const hasAutoplay = autoplay != null && autoplay !== false;
 
 	/**
@@ -193,7 +193,7 @@ function LightSlideInner(
 		gap,
 		vertical: isVertical,
 		centered: isCentered,
-		isLoop,
+		isLoop: loop,
 		flowEnabled: effectiveFlow,
 		loading,
 	});

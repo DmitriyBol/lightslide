@@ -19,7 +19,7 @@ const ALIGN_OPTIONS = [
 
 export function AlignExample() {
 	const [align, setAlign] = useState<'start' | 'center'>('center');
-	const [isLoop, setIsLoop] = useState(true);
+	const [loop, setLoop] = useState(true);
 
 	return (
 		<Demo
@@ -32,7 +32,7 @@ export function AlignExample() {
 					<code>align=&quot;center&quot;</code> rests the active slide in the
 					middle of the viewport with its neighbours peeking symmetrically — the
 					hero / stories pattern. Pair it with a fractional{' '}
-					<code>slidesPerView</code>. Without <code>isLoop</code> the track
+					<code>slidesPerView</code>. Without <code>loop</code> the track
 					never scrolls past its edges: the first and last positions rest flush,
 					so only looping keeps every slide perfectly centred.
 				</>
@@ -45,17 +45,17 @@ export function AlignExample() {
 					onChange={setAlign}
 				/>
 				<Toggle
-					checked={isLoop}
-					onChange={setIsLoop}
-					label={`isLoop ${isLoop ? 'on' : 'off'}`}
+					checked={loop}
+					onChange={setLoop}
+					label={`loop ${loop ? 'on' : 'off'}`}
 				/>
 			</Controls>
 
 			<Well>
 				<LightSlide
-					key={`${align}-${isLoop}`}
+					key={`${align}-${loop}`}
 					align={align}
-					isLoop={isLoop}
+					loop={loop}
 					slidesPerView={1.6}
 					gap={12}
 					navigation={<Navigation />}

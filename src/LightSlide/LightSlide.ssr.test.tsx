@@ -16,7 +16,7 @@ import {Pagination} from '../modules/Pagination';
 import {Slide} from '../Slide/Slide';
 import {LightSlide} from './LightSlide';
 
-function carousel(extra?: {isLoop?: boolean; initialIndex?: number}) {
+function carousel(extra?: {loop?: boolean; initialIndex?: number}) {
 	return (
 		<LightSlide
 			label="Products"
@@ -54,7 +54,7 @@ describe('LightSlide SSR', () => {
 	});
 
 	it('pre-positions the loop track on its clone offset instead of the tail clones', () => {
-		const html = renderToString(carousel({isLoop: true}));
+		const html = renderToString(carousel({loop: true}));
 
 		expect(html).toContain('*-2))');
 	});

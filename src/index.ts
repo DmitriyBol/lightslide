@@ -4,5 +4,6 @@ export type {
 	LazyMountConfig,
 	LightSlideHandle,
 	LightSlideProps,
+	SlideDirection,
 	SlideProps,
 } from './types';
