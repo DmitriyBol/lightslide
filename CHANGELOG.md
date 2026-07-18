@@ -2,7 +2,47 @@
 
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
-[SemVer](https://semver.org) (pre-1.0: minor releases may include breaking changes).
+[SemVer](https://semver.org). From 1.0.0 the public API is stable — see
+[Versioning & stability](README.md#versioning--stability) for the contract. Pre-1.0 (`0.x`)
+minors sometimes carried breaking changes, noted per entry below.
+
+## [1.0.0] — 2026-07-18
+
+First stable release. The public API is now frozen under
+[SemVer](README.md#versioning--stability) — breaking changes bump the major from here on, with
+a documented deprecation policy.
+
+### Changed
+
+- **Breaking:** the infinite-loop prop `isLoop` is renamed to **`loop`** (`<LightSlide loop>`),
+  aligning with the ecosystem (Embla/Swiper/Keen/Splide) and the library's otherwise
+  noun-style props. Behaviour is unchanged — rename the prop when upgrading.
+- **Breaking (packaging):** ESM bundles ship as `.mjs` (was `.esm.js`), so a native Node ESM
+  `import 'lightslide'` loads correctly instead of throwing `SyntaxError: Unexpected token
+  'export'`. Bundler consumers (Vite/webpack/esbuild) are unaffected; the `exports` map keeps
+  its shape.
+- Core size budget lifted to 5.5 kB (actual ~5.33 kB), matching the documented "~5.5 kB core".
+- Docs accuracy: `gap` is described along the scroll axis (not "horizontal"); the package.json
+  description, the playground per-module size range, and the README test counts were reconciled.
+
+### Added
+
+- Exported `SlideDirection` type (`'left' | 'right' | 'up' | 'down'`) from the root entry,
+  shared by the analytics `direction` payloads and `NavButtonRenderProps`.
+- A [Versioning & stability](README.md#versioning--stability) policy, `CONTRIBUTING.md`,
+  `CODE_OF_CONDUCT.md`, a feature-request template, and security-advisory issue routing.
+
+### Fixed
+
+- Interrupted animated snaps no longer leak their `transitionend` listener: an interrupted
+  loop wrap-dance could later fire its silent re-snap on an unrelated transition and desync the
+  track from the current index. A snap now resolves on `transitionend` **or**
+  `transitioncancel`, and a new snap supersedes any pending one.
+- Free-momentum coasts that cross a loop boundary now report the correct analytics `direction`
+  and no longer fire a spurious `carousel_reached_end` — the direction is taken from the
+  coast's motion, not the wrapped index delta.
+- Unmounting `<FreeScroll>` mid-coast no longer strands the internal drag-pause flag, which
+  could freeze a coexisting `<Autoplay>` or flow.
 
 ## [0.19.0] — 2026-07-18
 
@@ -408,6 +448,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
+[1.0.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.0
+[0.14.1]: https://github.com/DmitriyBol/lightslide/releases/tag/0.14.1
 [0.11.0]: https://github.com/DmitriyBol/lightslide/releases/tag/0.11.0
 [0.6.1]: https://github.com/DmitriyBol/lightslide/releases/tag/0.6.1
 [0.5.9]: https://github.com/DmitriyBol/lightslide/releases/tag/0.5.9
