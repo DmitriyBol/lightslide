@@ -48,13 +48,41 @@ describe('useNavigation — settle source', () => {
 			setCurrentIndex,
 			onIndexChange,
 			snapToVisual,
-		} = setupNavigation({restOffset: 700});
+		} = setupNavigation({restOffset: 700, settleForward: true});
 		navigate(2, 'settle');
 		expect(store.currentIndex).toBe(2);
 		expect(setCurrentIndex).toHaveBeenCalledWith(2);
 		expect(onIndexChange).toHaveBeenCalledWith(2);
 		expect(emitNav).toHaveBeenCalledWith(1, 2, 'right', 'settle');
 		expect(snapToVisual).not.toHaveBeenCalled();
+	});
+
+	it('reports a forward loop coast (last → 0) as "right" from the recorded sign, not the index delta', () => {
+		const {navigate, emitNav} = setupNavigation({
+			isLoop: true,
+			loopOffset: 1,
+			slidesPerView: 1,
+			maxIndex: 4,
+			slideCount: 5,
+			currentIndex: 4,
+			settleForward: true,
+		});
+		navigate(0, 'settle');
+		expect(emitNav).toHaveBeenCalledWith(4, 0, 'right', 'settle');
+	});
+
+	it('reports a backward loop coast (0 → last) as "left" — the index delta would invert it', () => {
+		const {navigate, emitNav} = setupNavigation({
+			isLoop: true,
+			loopOffset: 1,
+			slidesPerView: 1,
+			maxIndex: 4,
+			slideCount: 5,
+			currentIndex: 0,
+			settleForward: false,
+		});
+		navigate(4, 'settle');
+		expect(emitNav).toHaveBeenCalledWith(0, 4, 'left', 'settle');
 	});
 
 	it('is silent when the coast rests on the index it started from', () => {

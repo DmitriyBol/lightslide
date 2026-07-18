@@ -1,4 +1,4 @@
-import {useCallback} from 'react';
+import {useCallback, useRef} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
@@ -29,10 +29,27 @@ export function useTrackSnap(
 	trackRef: RefObject<HTMLDivElement>,
 	storeRef: MutableRefObject<LightSlideStore>,
 ): TrackSnap {
+	/**
+	 * Detaches the transition listeners of the snap currently animating (null when none is).
+	 * A snap can be interrupted before its transitionend — a drag or a non-animated re-snap
+	 * clears `transition`, which fires transitioncancel, not transitionend — so the completion
+	 * must be able to fire on either event and a superseding snap must drop the stale one.
+	 */
+	const pendingDetach = useRef<(() => void) | null>(null);
+
 	const snapToVisual = useCallback(
 		(visualIndex: number, animate: boolean, onComplete?: () => void) => {
 			const track = trackRef.current;
 			if (!track) return;
+
+			/**
+			 * A new snap supersedes any still-pending completion: without this an interrupted
+			 * loop wrap-dance would keep its {once} listener and later fire its silent re-snap
+			 * on an unrelated transitionend, jumping the track off the committed index.
+			 */
+			pendingDetach.current?.();
+			pendingDetach.current = null;
+
 			const offset = trackOffset(visualIndex, storeRef.current);
 			/** Every snap defines a new rest position — free-mode drags start from it. */
 			storeRef.current.restOffset = offset;
@@ -48,12 +65,24 @@ export function useTrackSnap(
 			if (doAnimate) {
 				track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
 				track.style.transform = trackTransform(offset, storeRef.current);
-				const onEnd = () => {
+				/**
+				 * Settle on whichever fires first: a real transitionend runs onComplete, a
+				 * transitioncancel (the snap was interrupted) just detaches, so the completion is
+				 * discarded rather than deferred onto a future transition.
+				 */
+				const finish = (event: TransitionEvent) => {
+					track.removeEventListener('transitionend', finish);
+					track.removeEventListener('transitioncancel', finish);
+					pendingDetach.current = null;
 					track.style.transition = '';
-					track.removeEventListener('transitionend', onEnd);
-					onComplete?.();
+					if (event.type === 'transitionend') onComplete?.();
 				};
-				track.addEventListener('transitionend', onEnd, {once: true});
+				pendingDetach.current = () => {
+					track.removeEventListener('transitionend', finish);
+					track.removeEventListener('transitioncancel', finish);
+				};
+				track.addEventListener('transitionend', finish, {once: true});
+				track.addEventListener('transitioncancel', finish, {once: true});
 			} else {
 				track.style.transition = '';
 				track.style.transform = trackTransform(offset, storeRef.current);
