@@ -90,6 +90,28 @@ describe('buildSsrCss', () => {
 		);
 	});
 
+	it('coerces malformed numeric inputs — nothing non-numeric can reach the <style> text', () => {
+		/**
+		 * Simulates an untyped JS consumer passing garbage through the numeric props (the
+		 * casts model exactly that). The string lands in the DOM via dangerouslySetInnerHTML,
+		 * so a `</style>` smuggled through `gap` would otherwise break out of the style
+		 * context — the coercion must fall back to the defaults instead.
+		 */
+		const css = buildSsrCss({
+			slidesId: ':r1:',
+			slidesPerView: Number.NaN,
+			gap: '</style><script>alert(1)</script>' as unknown as number,
+			startVisual: Number.POSITIVE_INFINITY,
+			centered: false,
+			isLoop: false,
+		});
+
+		expect(css).not.toContain('script');
+		expect(css).not.toContain('</style>');
+		expect(css).toContain('width:calc((100% - 0px)/1)');
+		expect(css).not.toContain('transform');
+	});
+
 	it('scopes every per-instance rule through the slides id', () => {
 		const css = buildSsrCss({
 			slidesId: '«r7»',
