@@ -1,5 +1,6 @@
-import type {AnalyticsConfig} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 import {Pagination} from 'lightslide/pagination';
 
 import {Console} from '../components/Console';
@@ -13,13 +14,11 @@ const ITEMS = ['Mountains', 'Ocean', 'Sunset', 'Forest', 'Desert'];
 export function PaginationExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig = {
-		onEvent: e => {
-			if (e.event === 'carousel_pagination_click')
-				log('pagination', `${e.fromIndex} → ${e.toIndex}`);
-			else if (e.event === 'carousel_slide')
-				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-		},
+	const onEvent = (e: AnalyticsEvent) => {
+		if (e.event === 'carousel_pagination_click')
+			log('pagination', `${e.fromIndex} → ${e.toIndex}`);
+		else if (e.event === 'carousel_slide')
+			log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
 	};
 
 	return (
@@ -38,7 +37,7 @@ export function PaginationExample() {
 			}>
 			<Well>
 				<LightSlide
-					analytics={analytics}
+					analytics={<Analytics onEvent={onEvent} />}
 					pagination={
 						<Pagination
 							dotStyle={{background: 'var(--border-strong)'}}

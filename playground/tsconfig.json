@@ -16,7 +16,10 @@
       "lightslide/pagination": ["../src/modules/Pagination/index.ts"],
       "lightslide/flow": ["../src/modules/flow/index.ts"],
       "lightslide/wheel": ["../src/modules/wheel/index.ts"],
-      "lightslide/free": ["../src/modules/free/index.ts"]
+      "lightslide/free": ["../src/modules/free/index.ts"],
+      "lightslide/autoplay": ["../src/modules/autoplay/index.ts"],
+      "lightslide/analytics": ["../src/modules/analytics/index.ts"],
+      "lightslide/breakpoints": ["../src/modules/breakpoints/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

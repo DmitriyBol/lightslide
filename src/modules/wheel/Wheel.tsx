@@ -1,6 +1,6 @@
 import {DEFAULT_WHEEL_THRESHOLD} from '../../LightSlide/helpers/constants';
-import {useWheel} from '../../LightSlide/helpers/useWheel';
-import {useWheelSeam} from '../../wheelSeam';
+import {useWheel} from '../../LightSlide/helpers/useWheel/useWheel';
+import {useWheelSeam} from '../../seams/wheelSeam';
 
 /**
  * `threshold` — accumulated horizontal wheel px before a page turn commits (default 30).

@@ -1,7 +1,8 @@
 import {useState} from 'react';
 
-import type {AnalyticsConfig} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 
 import {Console} from '../components/Console';
 import {Controls, Demo, Well} from '../components/Demo';
@@ -38,13 +39,11 @@ export function SlidesPerViewExample() {
 	const [gap, setGap] = useState(0);
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig<{index: number}> = {
-		onEvent: e => {
-			if (e.event === 'carousel_slide')
-				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-			else if (e.event === 'carousel_reached_end')
-				log('end', `${e.slides.length} slides seen`);
-		},
+	const onEvent = (e: AnalyticsEvent<{index: number}>) => {
+		if (e.event === 'carousel_slide')
+			log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+		else if (e.event === 'carousel_reached_end')
+			log('end', `${e.slides.length} slides seen`);
 	};
 
 	const maxIndex = Math.max(0, Math.ceil(ITEMS.length - spv));
@@ -81,8 +80,8 @@ export function SlidesPerViewExample() {
 			</Controls>
 
 			<Well>
-				<LightSlide<{index: number}>
-					analytics={analytics}
+				<LightSlide
+					analytics={<Analytics<{index: number}> onEvent={onEvent} />}
 					slidesPerView={spv}
 					gap={gap}>
 					{ITEMS.map((label, i) => (

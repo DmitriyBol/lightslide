@@ -3,8 +3,8 @@ import React from 'react';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type {NavContextType} from '../../lightSlideContext';
-import {NavContext} from '../../lightSlideContext';
+import type {NavContextType} from '../../seams/lightSlideContext';
+import {NavContext} from '../../seams/lightSlideContext';
 import {Pagination} from './Pagination';
 
 import '@testing-library/jest-dom';

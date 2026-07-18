@@ -1,16 +1,13 @@
-import {DEFAULT_VIEWED_TIMEOUT} from './constants';
+import type {EmitNav} from './navigation';
 
 /**
  * The carousel's core data model — one mutable object held in a single ref.
  *
- * Split from the "functional" pieces (the analytics handlers and the navigate fn, which stay in
- * their own refs): everything here is plain state read and written imperatively during gestures
- * and animations — dozens of times per second on pointermove — so it must never live in React
+ * Split from the "functional" pieces (the navigate fn, which stays in its own ref):
+ * everything here is plain state read and written imperatively during gestures and
+ * animations — dozens of times per second on pointermove — so it must never live in React
  * state or trigger a re-render. Keeping it in one object means hooks take a single `storeRef`
  * instead of a fan-out of individual refs.
- *
- * Generic over the slide `data` shape `T` (defaults to unknown). T only types `slideData`; the
- * motion hooks that don't read it accept `LightSlideStore` (i.e. `<unknown>`).
  *
  * Most fields are self-describing; the non-obvious ones: `currentIndex` is the active logical
  * index, mutated by navigation and mirrored to React state for rendering. `maxIndex` is the last
@@ -27,9 +24,9 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  * written by useSlideMetrics alongside slideWidth (0 unless align is center with more than
  * one slide per view) and subtracted by trackOffset, so every snap/drag/settle path centres
  * through the same cached value; a positive value doubles as "center mode is on".
- * `autoScrollPaused` is set while a drag is in progress so auto motion (auto-scroll/flow) pauses.
+ * `autoScrollPaused` is set while a drag is in progress so auto motion (autoplay/flow) pauses.
  * `hovered` / `focusWithin` mirror user engagement with the carousel (pointer over, keyboard
- * focus inside), written by useHoverFocus; auto-scroll and flow read them on their own cadence
+ * focus inside), written by useHoverFocus; autoplay and flow read them on their own cadence
  * and pause per their pauseOnHover/pauseOnFocus config. `apiPaused` is the consumer's explicit
  * hold, flipped by the ref handle's pause()/resume() — it stops all auto motion unconditionally.
  * `wheelDeltaX` is the wheel plugin's mailbox while flow runs: horizontal wheel deltas
@@ -40,32 +37,34 @@ import {DEFAULT_VIEWED_TIMEOUT} from './constants';
  * it (the rest position is not derivable from currentIndex when the track rests between
  * boundaries), and navigation compares it against the boundary offset to re-align an
  * off-boundary track.
+ * `emitNav` is the analytics plugin's mailbox: navigateToIndex calls it on every committed
+ * position change, and the `lightslide/analytics` plugin assigns/clears it through the seam
+ * (null while the plugin isn't mounted — the core never builds an event object itself).
  */
-export type LightSlideStore<T = unknown> = {
+export type LightSlideStore = {
 	currentIndex: number;
 	slideCount: number;
 	maxIndex: number;
 	slidesPerView: number;
 	gap: number;
 	centerInset: number;
-	viewedTimeout: number;
 	effectiveFlow: boolean;
 	isLoop: boolean;
 	loopOffset: number;
 	slideWidth: number;
-	slideData: (T | undefined)[];
 	autoScrollPaused: boolean;
 	hovered: boolean;
 	focusWithin: boolean;
 	apiPaused: boolean;
 	wheelDeltaX: number;
 	restOffset: number;
+	emitNav: EmitNav | null;
 };
 
 /** Creates a store seeded with safe defaults; `overrides` is a convenience for tests. */
-export function createStore<T = unknown>(
-	overrides: Partial<LightSlideStore<T>> = {},
-): LightSlideStore<T> {
+export function createStore(
+	overrides: Partial<LightSlideStore> = {},
+): LightSlideStore {
 	return {
 		currentIndex: 0,
 		slideCount: 0,
@@ -73,18 +72,17 @@ export function createStore<T = unknown>(
 		slidesPerView: 1,
 		gap: 0,
 		centerInset: 0,
-		viewedTimeout: DEFAULT_VIEWED_TIMEOUT,
 		effectiveFlow: false,
 		isLoop: false,
 		loopOffset: 0,
 		slideWidth: 0,
-		slideData: [],
 		autoScrollPaused: false,
 		hovered: false,
 		focusWithin: false,
 		apiPaused: false,
 		wheelDeltaX: 0,
 		restOffset: 0,
+		emitNav: null,
 		...overrides,
 	};
 }

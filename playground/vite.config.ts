@@ -34,6 +34,24 @@ export default defineConfig({
 				replacement: path.resolve(__dirname, '../src/modules/free/index.ts'),
 			},
 			{
+				find: 'lightslide/autoplay',
+				replacement: path.resolve(__dirname, '../src/modules/autoplay/index.ts'),
+			},
+			{
+				find: 'lightslide/analytics',
+				replacement: path.resolve(
+					__dirname,
+					'../src/modules/analytics/index.ts',
+				),
+			},
+			{
+				find: 'lightslide/breakpoints',
+				replacement: path.resolve(
+					__dirname,
+					'../src/modules/breakpoints/index.ts',
+				),
+			},
+			{
 				find: 'lightslide',
 				replacement: path.resolve(__dirname, '../src/index.ts'),
 			},

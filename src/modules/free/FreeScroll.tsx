@@ -1,6 +1,6 @@
-import {useFreeSeam} from '../../freeSeam';
-import {useFreeDrag} from '../../LightSlide/helpers/useFreeDrag';
-import {useIsomorphicLayoutEffect} from '../../LightSlide/helpers/useIsomorphicLayoutEffect';
+import {useFreeDrag} from '../../LightSlide/helpers/useFreeDrag/useFreeDrag';
+import {useIsomorphicLayoutEffect} from '../../LightSlide/helpers/useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
+import {useFreeSeam} from '../../seams/freeSeam';
 
 /**
  * `snap` picks the free-snap variant: the coast travels the same distance but lands on the

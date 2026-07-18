@@ -91,7 +91,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~5.8&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~4.9&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub

@@ -1,5 +1,6 @@
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsConfig} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -12,24 +13,18 @@ const LABELS = ['Slide A', 'Slide B', 'Slide C'];
 export function MinimalExample() {
 	const {entries, log, clear} = useConsole();
 
-	// One onEvent handler receives every event; switch on `event` and ignore what you don't need.
-	const analytics: AnalyticsConfig = {
-		onEvent: e => {
-			switch (e.event) {
-				case 'carousel_in_viewport':
-					return log('viewport');
-				case 'carousel_slide':
-					return log(
-						'slide',
-						`${e.fromIndex} → ${e.toIndex} (${e.direction})`,
-					);
-				case 'carousel_reached_end':
-					return log('end', `${e.slides.length} slides seen`);
-				case 'carousel_viewed_slides':
-					return log('viewed', `after ${e.viewedSeconds}s`);
-			}
-		},
-		viewedTimeout: 30,
+	/** One onEvent handler receives every event; switch on `event` and ignore what you don't need. */
+	const onEvent = (e: AnalyticsEvent) => {
+		switch (e.event) {
+			case 'carousel_in_viewport':
+				return log('viewport');
+			case 'carousel_slide':
+				return log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+			case 'carousel_reached_end':
+				return log('end', `${e.slides.length} slides seen`);
+			case 'carousel_viewed_slides':
+				return log('viewed', `after ${e.viewedSeconds}s`);
+		}
 	};
 
 	return (
@@ -46,7 +41,8 @@ export function MinimalExample() {
 				</>
 			}>
 			<Well>
-				<LightSlide analytics={analytics}>
+				<LightSlide
+					analytics={<Analytics onEvent={onEvent} viewedTimeout={30} />}>
 					{LABELS.map((label, i) => (
 						<Slide key={label}>
 							<div

@@ -4,10 +4,10 @@ import postcss from "rollup-plugin-postcss";
 
 const external = ["react", "react-dom", "react/jsx-runtime"];
 
-// Seven entry points — the base carousel plus the opt-in layers (a11y, navigation, pagination,
-// flow, wheel, free) — built with code splitting so the modules they share (the seam contexts,
-// NavContext, the gesture primitive) land in shared chunks imported by every entry that needs
-// them. Bundling the entries separately would duplicate those contexts and break
+// Nine entry points — the base carousel plus the opt-in layers (a11y, navigation, pagination,
+// flow, wheel, free, autoplay, analytics) — built with code splitting so the modules they share
+// (the seam contexts, NavContext, the gesture primitive) land in shared chunks imported by every
+// entry that needs them. Bundling the entries separately would duplicate those contexts and break
 // Provider ↔ consumer matching at runtime. Base consumers import only `dist/index.*`, which
 // never pulls an opt-in entry, so each layer stays out of bundles that don't import it.
 const input = {
@@ -18,6 +18,9 @@ const input = {
   flow: "src/modules/flow/index.ts",
   wheel: "src/modules/wheel/index.ts",
   free: "src/modules/free/index.ts",
+  autoplay: "src/modules/autoplay/index.ts",
+  analytics: "src/modules/analytics/index.ts",
+  breakpoints: "src/modules/breakpoints/index.ts",
 };
 
 export default [

@@ -1,5 +1,6 @@
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsConfig} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -19,26 +20,20 @@ const PRODUCTS: Product[] = [
 export function BasicExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig<Product> = {
-		onEvent: e => {
-			switch (e.event) {
-				case 'carousel_in_viewport':
-					return log('viewport');
-				case 'carousel_slide':
-					return log(
-						'slide',
-						`${e.fromIndex} → ${e.toIndex} (${e.direction})`,
-					);
-				case 'carousel_reached_end':
-					return log('end', `${e.slides.length} slides seen`);
-				case 'carousel_viewed_slides':
-					return log(
-						'viewed',
-						`after ${e.viewedSeconds}s · ${e.slides.length} seen`,
-					);
-			}
-		},
-		viewedTimeout: 30,
+	const onEvent = (e: AnalyticsEvent<Product>) => {
+		switch (e.event) {
+			case 'carousel_in_viewport':
+				return log('viewport');
+			case 'carousel_slide':
+				return log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+			case 'carousel_reached_end':
+				return log('end', `${e.slides.length} slides seen`);
+			case 'carousel_viewed_slides':
+				return log(
+					'viewed',
+					`after ${e.viewedSeconds}s · ${e.slides.length} seen`,
+				);
+		}
 	};
 
 	return (
@@ -57,7 +52,10 @@ export function BasicExample() {
 				</>
 			}>
 			<Well>
-				<LightSlide<Product> analytics={analytics}>
+				<LightSlide
+					analytics={
+						<Analytics<Product> onEvent={onEvent} viewedTimeout={30} />
+					}>
 					{PRODUCTS.map((p, i) => (
 						<Slide key={p.id} data={p}>
 							<div

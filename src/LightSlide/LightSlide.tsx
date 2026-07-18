@@ -1,50 +1,36 @@
-import {
-	Children,
-	forwardRef,
-	useCallback,
-	useId,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import {Children, forwardRef, useId, useMemo, useRef, useState} from 'react';
 
-import type {DragEvent, ForwardedRef, ReactElement, Ref} from 'react';
+import type {ForwardedRef} from 'react';
 
-import {A11yContext} from '../a11ySeam';
-import {FlowContext} from '../flowSeam';
-import {FreeContext} from '../freeSeam';
-import {useViewedSlides} from '../hooks/useViewedSlides';
-import {NavContext, SlideMetricsContext} from '../lightSlideContext';
+import {A11yContext} from '../seams/a11ySeam';
+import {AnalyticsContext} from '../seams/analyticsSeam';
+import {AutoplayContext} from '../seams/autoplaySeam';
+import {FlowContext} from '../seams/flowSeam';
+import {FreeContext} from '../seams/freeSeam';
+import {NavContext, SlideMetricsContext} from '../seams/lightSlideContext';
+import {WheelContext} from '../seams/wheelSeam';
 import type {LightSlideHandle, LightSlideProps} from '../types';
-import {cx} from '../utils/cx';
-import {WheelContext} from '../wheelSeam';
-import {DEFAULT_SLIDE_LABEL, DEFAULT_VIEWED_TIMEOUT} from './helpers/constants';
-import {buildMountPredicate, DEFAULT_LAZY_MARGIN} from './helpers/lazyMount';
-import {buildDisplayChildren} from './helpers/loopClones';
-import {collectSlideData} from './helpers/slideData';
-import {buildSsrCss} from './helpers/ssrStyles';
+import {cx} from '../utils/cx/cx';
+import {DEFAULT_SLIDE_LABEL} from './helpers/constants';
+import {buildSsrCss} from './helpers/ssrStyles/ssrStyles';
 import {createStore} from './helpers/store';
-import {centerLead} from './helpers/trackOffset';
-import {useAutoScroll} from './helpers/useAutoScroll';
-import {useBreakpoints} from './helpers/useBreakpoints';
-import {useDragGesture} from './helpers/useDragGesture';
-import {useExternalControl} from './helpers/useExternalControl';
-import {useHoverFocus} from './helpers/useHoverFocus';
-import {useIsomorphicLayoutEffect} from './helpers/useIsomorphicLayoutEffect';
-import {useLatestRef} from './helpers/useLatestRef';
-import {useLayoutResync} from './helpers/useLayoutResync';
-import {useNavigation} from './helpers/useNavigation';
-import type {PointerHandlers} from './helpers/usePointerGesture';
-import {useSlideMetrics} from './helpers/useSlideMetrics';
-import {useTrackSnap} from './helpers/useTrackSnap';
-import {useViewportEngagement} from './helpers/useViewportEngagement';
+import {centerLead} from './helpers/trackOffset/trackOffset';
+import {useDisplayChildren} from './helpers/useDisplayChildren/useDisplayChildren';
+import {useExternalControl} from './helpers/useExternalControl/useExternalControl';
+import {useGestureHandlers} from './helpers/useGestureHandlers/useGestureHandlers';
+import {useIsomorphicLayoutEffect} from './helpers/useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
+import {useLatestRef} from './helpers/useLatestRef/useLatestRef';
+import {useLayoutResync} from './helpers/useLayoutResync/useLayoutResync';
+import {useNavigation} from './helpers/useNavigation/useNavigation';
+import {useSeamValues} from './helpers/useSeamValues/useSeamValues';
+import {useSlideMetrics} from './helpers/useSlideMetrics/useSlideMetrics';
+import {useTrackSnap} from './helpers/useTrackSnap/useTrackSnap';
 import styles from './LightSlide.module.scss';
 
 /**
- * The carousel orchestrator — a thin composition root over the helper hooks. It reads
- * top-to-bottom in phases: identity and imperative core, render state, geometry derived from
- * children, store sync, engagement analytics, motion (measure → snap → resync → navigate →
- * external control → auto motion → gestures), and finally the context values and markup.
+ * The carousel orchestrator — a thin composition root over the helper hooks, organised in
+ * labelled phases: identity & imperative core → render state → geometry → store sync →
+ * motion & control → plugin seams → children & critical CSS → contexts & markup.
  *
  * The container is a WAI-ARIA APG carousel landmark — a labelled `region` when `label` is
  * given, else a plain `group`. The stage's height tracks the viewport only, so the controls
@@ -52,14 +38,13 @@ import styles from './LightSlide.module.scss';
  * the track, is the gesture surface: the track's flex box does not cover its overflowing
  * slides, so a pointerdown falling through a pointer-events-none loop clone would miss
  * handlers attached to the track — events from real slides bubble to the viewport all the
- * same. navigation /
- * pagination / flow / wheel / free / a11y are consumer-passed plugin nodes from their
- * tree-shakeable entries, rendered into their slots; their providers only materialise when a
- * node is passed, so base consumers pay nothing for any of them. Flow and free are
- * presence-based: the node being there turns the mode on, and the plugin hands its pointer
- * handlers back through its seam.
+ * same. navigation / pagination / flow / wheel / free / autoplay / analytics / a11y are
+ * consumer-passed plugin nodes from their tree-shakeable entries, rendered into their slots;
+ * their providers only materialise when a node is passed, so base consumers pay nothing for
+ * any of them. Flow and free are presence-based: the node being there turns the mode on, and
+ * the plugin hands its pointer handlers back through its seam.
  */
-function LightSlideInner<T = unknown>(
+function LightSlideInner(
 	{
 		children,
 		style,
@@ -68,28 +53,29 @@ function LightSlideInner<T = unknown>(
 		trackClassName,
 		label,
 		slideLabel = DEFAULT_SLIDE_LABEL,
-		analytics,
-		slidesPerView: slidesPerViewProp = 1,
-		gap: gapProp = 0,
+		slidesPerView = 1,
+		gap = 0,
 		align = 'start',
-		breakpoints,
 		initialIndex = 0,
 		index,
 		onIndexChange,
-		autoScroll,
 		flow,
 		navigation,
 		pagination,
 		wheel,
 		free,
+		autoplay,
+		analytics,
 		a11y,
 		isLoop = false,
 		lazyMount,
 		loading = false,
 		fallback,
-	}: LightSlideProps<T>,
+	}: LightSlideProps,
 	ref: ForwardedRef<LightSlideHandle>,
 ) {
+	/** ————————————————— Identity & imperative core ————————————————— */
+
 	const containerRef = useRef<HTMLDivElement>(null);
 	const trackRef = useRef<HTMLDivElement>(null);
 
@@ -103,7 +89,9 @@ function LightSlideInner<T = unknown>(
 	 * Single mutable store for all core data, read/written imperatively by the gesture and
 	 * animation hooks so hot paths never re-render. See helpers/store.ts.
 	 */
-	const storeRef = useRef(createStore<T>({currentIndex: startIndex}));
+	const storeRef = useRef(createStore({currentIndex: startIndex}));
+
+	/** ————————————————— Render state ————————————————— */
 
 	const [currentIndex, setCurrentIndex] = useState(startIndex);
 
@@ -119,18 +107,10 @@ function LightSlideInner<T = unknown>(
 	 */
 	const [motionAllowed, setMotionAllowed] = useState(true);
 
-	/** Latest-refs of the callback props, so the navigation path stays stable across renders. */
-	const analyticsRef = useLatestRef(analytics);
+	/** Latest-ref of the callback prop, so the navigation path stays stable across renders. */
 	const onIndexChangeRef = useLatestRef(onIndexChange);
 
-	/**
-	 * Media-query overrides resolve into the effective geometry props before any derivation,
-	 * so a breakpoint flip flows down the exact same path as a prop change (useLayoutResync
-	 * re-measures, re-clamps, and re-snaps).
-	 */
-	const breakpointOverrides = useBreakpoints(breakpoints);
-	const slidesPerView = breakpointOverrides?.slidesPerView ?? slidesPerViewProp;
-	const gap = breakpointOverrides?.gap ?? gapProp;
+	/** ————————————————— Geometry (props → effective layout) ————————————————— */
 
 	const childArray = useMemo(() => Children.toArray(children), [children]);
 	const slideCount = childArray.length;
@@ -142,12 +122,13 @@ function LightSlideInner<T = unknown>(
 	const maxIndex = Math.max(0, Math.ceil(slideCount - slidesPerView));
 
 	/**
-	 * Flow is presence-based: passing the node turns the mode on. It needs the loop-clone
-	 * structure to wrap seamlessly, so it forces effectiveLoop on.
+	 * Flow and autoplay are presence-based: passing the node turns the mode on. Flow needs
+	 * the loop-clone structure to wrap seamlessly, so it forces effectiveLoop on.
 	 */
 	const effectiveFlow =
 		flow != null && flow !== false && maxIndex > 0 && !loading && motionAllowed;
 	const effectiveLoop = (isLoop || effectiveFlow) && maxIndex > 0;
+	const hasAutoplay = autoplay != null && autoplay !== false;
 
 	/**
 	 * With exactly one slide per view there is nothing to centre against, so center mode
@@ -164,48 +145,27 @@ function LightSlideInner<T = unknown>(
 		: 0;
 
 	/**
-	 * True while any auto motion runs — it turns on the hover/focus pause listeners, and the
-	 * live-region plugin stays quiet then.
+	 * True while any auto motion runs — the live-region plugin stays quiet then. The plugins
+	 * own their pause listeners; the core only needs the fact of motion for the a11y seam.
 	 */
-	const autoMotion =
-		effectiveFlow || (motionAllowed && autoScroll?.enabled === true);
+	const autoMotion = effectiveFlow || (motionAllowed && hasAutoplay);
 
-	const slideData = useMemo(() => collectSlideData<T>(childArray), [childArray]);
-
-	/** Viewed-slides tracking is opt-in via the presence of viewedTimeout (its value = seconds). */
-	const viewedTrackingEnabled = analytics?.viewedTimeout !== undefined;
-	const viewedTimeout = analytics?.viewedTimeout ?? DEFAULT_VIEWED_TIMEOUT;
+	/** ————————————————— Store sync ————————————————— */
 
 	/**
-	 * Render-derived data syncs into the store every render; currentIndex and autoScrollPaused
-	 * are owned by the imperative path and never overwritten here.
+	 * Render-derived data syncs into the store every render; currentIndex, autoScrollPaused,
+	 * and restOffset are owned by the imperative path and never overwritten here.
 	 */
 	const store = storeRef.current;
 	store.slideCount = slideCount;
 	store.maxIndex = maxIndex;
 	store.slidesPerView = slidesPerView;
 	store.gap = gap;
-	store.viewedTimeout = viewedTimeout;
 	store.effectiveFlow = effectiveFlow;
 	store.isLoop = effectiveLoop;
 	store.loopOffset = loopOffset;
-	store.slideData = slideData;
 
-	const getSlideData = useCallback(
-		(slideIndex: number) => storeRef.current.slideData[slideIndex],
-		[],
-	);
-	const {markViewed, getViewedSlides} = useViewedSlides(getSlideData);
-
-	const {fireTerminalIfNeeded} = useViewportEngagement({
-		containerRef,
-		storeRef,
-		analyticsRef,
-		viewedTrackingEnabled,
-		markViewed,
-		getViewedSlides,
-		getSlideData,
-	});
+	/** ————————————————— Motion & control ————————————————— */
 
 	const {slideWidth, measureSlideWidth} = useSlideMetrics(
 		containerRef,
@@ -229,138 +189,65 @@ function LightSlideInner<T = unknown>(
 		loading,
 	});
 
-	const navigateToIndex = useNavigation<T>({
+	const navigateToIndex = useNavigation({
 		storeRef,
-		analyticsRef,
 		onIndexChangeRef,
 		setCurrentIndex,
-		markViewed,
-		fireTerminalIfNeeded,
 		snapToVisual,
 	});
 	const navigateToIndexRef = useLatestRef(navigateToIndex);
 
 	useExternalControl({ref, index, storeRef, navigateToIndexRef});
 
-	useHoverFocus({enabled: autoMotion, containerRef, storeRef});
-
-	/** Flow supersedes step auto-scroll; neither runs while loading or with the motion gate closed. */
-	useAutoScroll(
-		effectiveFlow || loading || !motionAllowed ? undefined : autoScroll,
-		{
+	const {pointerHandlers, preventNativeDrag, setFlowHandlers, setFreeHandlers} =
+		useGestureHandlers({
+			trackRef,
 			storeRef,
-			navigateToIndexRef,
-		},
-	);
+			snapToVisual,
+			goToIndex: navigateToIndex,
+			effectiveFlow,
+		});
 
-	const dragHandlers = useDragGesture({
-		trackRef,
-		storeRef,
-		snapToVisual,
-		goToIndex: navigateToIndex,
-	});
-
-	/**
-	 * Plugin-owned gestures replace the built-in drag-to-snap through the seams: while the
-	 * flow is active its plugin owns the track outright; otherwise a mounted free plugin's
-	 * momentum handlers take over. Drag-to-snap falls back in until a plugin registers.
-	 */
-	const [flowHandlers, setFlowHandlers] = useState<PointerHandlers | null>(
-		null,
-	);
-	const [freeHandlers, setFreeHandlers] = useState<PointerHandlers | null>(
-		null,
-	);
-	const pointerHandlers =
-		effectiveFlow && flowHandlers
-			? flowHandlers
-			: (freeHandlers ?? dragHandlers);
+	/** ————————————————— Plugin seams ————————————————— */
 
 	const pluginActive = maxIndex > 0 && !loading;
+	/** Flow supersedes autoplay; neither runs while loading or with the motion gate closed. */
+	const autoplayActive = pluginActive && motionAllowed && !effectiveFlow;
 
-	const flowSeamValue = useMemo(
-		() => ({
-			trackRef,
-			storeRef,
-			active: effectiveFlow,
-			setPointerHandlers: setFlowHandlers,
-		}),
-		[effectiveFlow],
-	);
+	const {
+		flowSeamValue,
+		freeSeamValue,
+		wheelSeamValue,
+		autoplaySeamValue,
+		analyticsSeamValue,
+	} = useSeamValues({
+		containerRef,
+		trackRef,
+		storeRef,
+		effectiveFlow,
+		pluginActive,
+		autoplayActive,
+		goToIndex: navigateToIndex,
+		setFlowHandlers,
+		setFreeHandlers,
+		childArray,
+	});
 
-	const freeSeamValue = useMemo(
-		() => ({
-			trackRef,
-			storeRef,
-			active: pluginActive,
-			goToIndex: navigateToIndex,
-			setPointerHandlers: setFreeHandlers,
-		}),
-		[pluginActive, navigateToIndex],
-	);
+	/** ————————————————— Children & critical CSS ————————————————— */
 
-	const wheelSeamValue = useMemo(
-		() => ({
-			containerRef,
-			storeRef,
-			active: pluginActive,
-			goToIndex: navigateToIndex,
-		}),
-		[pluginActive, navigateToIndex],
-	);
-
-	/** Native image/anchor drag-and-drop would otherwise hijack the pointer gesture. */
-	const preventNativeDrag = useCallback((e: DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-	}, []);
-
-	/**
-	 * Lazy mounting keys off the settled currentIndex (cheap, synchronous with the
-	 * geometry), so it only applies where the track has a resting window — flow's
-	 * continuous motion turns it off. While active, the children derivation below
-	 * recomputes per navigation; memoized slides whose window state didn't change skip.
-	 */
-	const lazyActive = lazyMount ? !effectiveFlow : false;
-	const lazyMargin =
-		typeof lazyMount === 'object'
-			? (lazyMount.margin ?? DEFAULT_LAZY_MARGIN)
-			: DEFAULT_LAZY_MARGIN;
-	const isSlideMounted = useMemo(
-		() =>
-			lazyActive
-				? buildMountPredicate(
-						currentIndex,
-						slideCount,
-						slidesPerView,
-						maxIndex,
-						effectiveLoop,
-						lazyMargin,
-						isCentered,
-					)
-				: null,
-		[
-			lazyActive,
-			currentIndex,
-			slideCount,
-			slidesPerView,
-			maxIndex,
-			effectiveLoop,
-			lazyMargin,
-			isCentered,
-		],
-	);
-
-	const displayChildren = useMemo(
-		() =>
-			buildDisplayChildren(
-				childArray,
-				slideCount,
-				loopOffset,
-				slideLabel,
-				isSlideMounted,
-			),
-		[childArray, slideCount, loopOffset, slideLabel, isSlideMounted],
-	);
+	const displayChildren = useDisplayChildren({
+		childArray,
+		slideCount,
+		slidesPerView,
+		maxIndex,
+		currentIndex,
+		loopOffset,
+		effectiveLoop,
+		effectiveFlow,
+		isCentered,
+		lazyMount,
+		slideLabel,
+	});
 
 	/**
 	 * Critical layout CSS served inside the markup so the server paint already matches the
@@ -379,6 +266,8 @@ function LightSlideInner<T = unknown>(
 			isLoop: effectiveLoop,
 		}),
 	);
+
+	/** ————————————————— Contexts & markup ————————————————— */
 
 	/**
 	 * Split contexts: slides consume only geometry, controls consume nav state — navigating
@@ -449,6 +338,18 @@ function LightSlideInner<T = unknown>(
 						</FreeContext.Provider>
 					)}
 
+					{autoplay && (
+						<AutoplayContext.Provider value={autoplaySeamValue}>
+							{autoplay}
+						</AutoplayContext.Provider>
+					)}
+
+					{analytics && (
+						<AnalyticsContext.Provider value={analyticsSeamValue}>
+							{analytics}
+						</AnalyticsContext.Provider>
+					)}
+
 					{a11y && (
 						<A11yContext.Provider
 							value={{
@@ -474,13 +375,8 @@ function LightSlideInner<T = unknown>(
 	);
 }
 
-/**
- * forwardRef erases the type parameter, so the export is re-asserted with a generic call
- * signature (same pattern as <Slide>): the slide data type keeps flowing into the analytics
- * payloads, while `ref` receives the imperative LightSlideHandle.
- */
-export const LightSlide = forwardRef(LightSlideInner) as (<T = unknown>(
-	props: LightSlideProps<T> & {ref?: Ref<LightSlideHandle>},
-) => ReactElement) & {displayName?: string};
+export const LightSlide = forwardRef<LightSlideHandle, LightSlideProps>(
+	LightSlideInner,
+);
 
 LightSlide.displayName = 'LightSlide';

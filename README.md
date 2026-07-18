@@ -6,11 +6,12 @@
 [![license](https://img.shields.io/npm/l/lightslide)](https://github.com/DmitriyBol/lightslide/blob/main/LICENSE)
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
-WAI-ARIA carousel semantics out of the box, built-in navigation, pagination, autoplay,
-infinite loop, a continuous flow (ticker) mode, center align, zero-CLS server rendering, and
-one typed analytics event stream — in a ~5.8 kB fully-typed core with zero runtime
-dependencies beyond React. Everything optional ships as a tree-shakeable entry, so you only
-pay for what you import.
+WAI-ARIA carousel semantics out of the box, infinite loop, center align, zero-CLS server
+rendering, and lazy slide mounting in a ~4.9 kB fully-typed core with zero runtime
+dependencies beyond React. Navigation, pagination, autoplay, a continuous flow (ticker)
+mode, wheel gestures, momentum scrolling, responsive breakpoints, one typed analytics event
+stream, and the deep accessibility layer all ship as tree-shakeable entries — you only pay
+for what you import.
 
 **[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
 
@@ -21,13 +22,13 @@ pay for what you import.
 
 - [What it can do](#what-it-can-do)
 - [How it compares](#how-it-compares)
-- [Installation](#installation) · [Quick start](#quick-start)
-- [Components & props](#components--props) — [`<LightSlide>`](#lightslidet), [`<Slide>`](#slidet),
+- [Installation](#installation) · [Quick start](#quick-start) · [The full kit, via spread](#the-full-kit-via-spread)
+- [Components & props](#components--props) — [`<LightSlide>`](#lightslide), [`<Slide>`](#slidet),
   [Navigation](#navigation-lightslidenavigation), [Pagination](#pagination-lightslidepagination),
-  [Auto-scroll](#auto-scroll), [Flow](#flow-continuous-ticker-lightslideflow),
+  [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [isLoop](#isloop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
-- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Responsive breakpoints](#responsive-breakpoints)
+- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -51,8 +52,9 @@ pay for what you import.
 - **Center align** (`align="center"`) — the active slide rests centred with its neighbours
   peeking symmetrically (the hero / stories pattern); edges stay flush without loop, every
   position is centred with it.
-- **breakpoints** — media-query overrides of `slidesPerView`/`gap`; the carousel listens and
-  re-lays itself out, no resize code in your app.
+- **Responsive breakpoints** (`lightslide/breakpoints`) — a `useBreakpoints` hook resolving
+  any props per media query; the carousel re-lays itself out on a flip, no resize code in
+  your app.
 - **isLoop** — seamless infinite loop via cloned edge slides (no first-paint flash).
 - **Lazy slide mounting** (`lazyMount`) — slides outside the visible window render as empty
   shells: the box (and all geometry) stays, the React subtree inside waits for navigation to
@@ -64,9 +66,9 @@ pay for what you import.
 - **External control** — a controlled `index` prop, `onIndexChange`, and a `ref` handle
   (`goTo` / `next` / `prev` / `getIndex`): the building blocks for thumbnails, synced
   carousels, and custom UIs.
-- **Auto-scroll** — optional step cycling at a configurable interval; pauses during drag, on
-  hover, and while keyboard focus is inside (WAI-ARIA APG behaviour, opt-out per config), plus
-  `pause()`/`resume()` on the ref handle for a visible pause control.
+- **Autoplay** (`lightslide/autoplay`) — step cycling at a configurable interval; pauses
+  during drag, on hover, and while keyboard focus is inside (WAI-ARIA APG behaviour, opt-out
+  per prop), plus `pause()`/`resume()` on the ref handle for a visible pause control.
 - **Flow** (`lightslide/flow`) — continuous ticker scroll at a configurable speed; seamless
   with looping; pauses on interaction, hover, and keyboard focus, and resumes after a delay.
 - **Wheel & trackpad** (`lightslide/wheel`) — a horizontal two-finger swipe (or shift+wheel)
@@ -76,17 +78,18 @@ pay for what you import.
   controls) plus its own critical layout CSS, so the pre-hydration paint already matches the
   final layout: zero CLS, no unstyled flash, no hydration mismatches. See
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
-- **Pay for what you use** — arrows, dots, flow, wheel gestures, free scrolling, and the a11y
-  layer ship as tree-shakeable entries; the core stays ~5.8 kB and an unused module never
-  reaches your bundle.
+- **Pay for what you use** — arrows, dots, autoplay, flow, wheel gestures, free scrolling,
+  breakpoints, analytics, and the a11y layer ship as tree-shakeable entries; the core stays
+  ~4.9 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
   `prefers-reduced-motion`. (Keyboard, focus-guarding and live announcements ship opt-in — see
   [Accessibility](#accessibility).)
 - **Loading fallback** — render your own placeholder node while data is fetched.
-- **Analytics** — one typed `onEvent` handler emitting six events (viewport, slide, navigation,
-  pagination, engagement).
+- **Analytics** (`lightslide/analytics`) — one typed `onEvent` handler emitting six events
+  (viewport, slide, navigation, pagination, engagement); bundles without it carry zero
+  analytics code.
 - **Fully typed** — generic over your slide `data` shape; no unnecessary re-renders (core data
   lives in one imperative store, context is split so navigating doesn't re-render the slides).
 
@@ -99,7 +102,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **6.1 kB** core, +0.7–1.8 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream | ✓ | active |
+| **lightslide** | **5.1 kB** core, +0.4–1.9 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -119,7 +122,8 @@ To keep the comparison fair:
 
 lightslide's lane is the intersection: a small, maintained, fully-typed carousel that is
 accessible and complete out of the box — arrows, dots, autoplay, loop, breakpoints, and
-analytics without extra wiring, and tree-shakeable so the unused parts cost nothing.
+analytics as first-party modules without extra wiring, and tree-shakeable so the unused
+parts cost nothing.
 
 ## Installation
 
@@ -138,30 +142,99 @@ import { LightSlide, Slide } from "lightslide";
 import { Navigation } from "lightslide/navigation";
 import { Pagination } from "lightslide/pagination";
 
+const PRODUCTS = [
+  { id: 1, name: "Air Runner" },
+  { id: 2, name: "Urban Step" },
+  { id: 3, name: "Trail Boot" },
+  { id: 4, name: "Flip Pro" },
+];
+
 function ProductCarousel() {
   return (
     <LightSlide slidesPerView={2} navigation={<Navigation />} pagination={<Pagination />}>
-      <Slide data={{ id: 1 }}><ProductCard id={1} /></Slide>
-      <Slide data={{ id: 2 }}><ProductCard id={2} /></Slide>
-      <Slide data={{ id: 3 }}><ProductCard id={3} /></Slide>
-      <Slide data={{ id: 4 }}><ProductCard id={4} /></Slide>
+      {PRODUCTS.map((product) => (
+        <Slide key={product.id} data={product}>
+          <ProductCard product={product} />
+        </Slide>
+      ))}
     </LightSlide>
   );
 }
 ```
 
-The core ships only what every carousel needs (~5.8 kB). Arrows, dots, the flow ticker, wheel
-gestures, free scrolling, and the accessibility layer are separate tree-shakeable entries —
-import a module and pass its node to the matching slot prop; skip the import and none of its
-code or styles reaches your bundle.
+The core ships only what every carousel needs (~4.9 kB). Arrows, dots, autoplay, the flow
+ticker, wheel gestures, free scrolling, breakpoints, analytics, and the accessibility layer
+are separate tree-shakeable entries — import a module and pass its node to the matching slot
+prop (or call its hook); skip the import and none of its code or styles reaches your bundle.
+
+### The full kit, via spread
+
+Slots are ordinary props, so the "everything on" setup composes once into a preset object
+and spreads into every carousel in your app — each instance stays three lines and overrides
+stay point-wise:
+
+```tsx
+import { useState } from "react";
+import type { LightSlideProps } from "lightslide";
+import { LightSlide, Slide } from "lightslide";
+import { A11y } from "lightslide/a11y";
+import { Analytics } from "lightslide/analytics";
+import { Autoplay } from "lightslide/autoplay";
+import { useBreakpoints } from "lightslide/breakpoints";
+import { FreeScroll } from "lightslide/free";
+import { Navigation } from "lightslide/navigation";
+import { Pagination } from "lightslide/pagination";
+import { Wheel } from "lightslide/wheel";
+
+/** Your app's house kit — define once, spread everywhere. */
+const carouselKit = {
+  navigation: <Navigation />,
+  pagination: <Pagination />,
+  wheel: <Wheel />,
+  free: <FreeScroll snap />,
+  a11y: <A11y />,
+  analytics: <Analytics onEvent={(e) => track(e.event, e)} />,
+} satisfies Partial<LightSlideProps>;
+
+function FullCarousel({ products }: { products: Product[] }) {
+  const layout = useBreakpoints(
+    { slidesPerView: 1.2, gap: 8 },
+    { "(min-width: 768px)": { slidesPerView: 2.5, gap: 16 } },
+  );
+  const [playing, setPlaying] = useState(true);
+
+  return (
+    <LightSlide
+      label="Products"
+      isLoop
+      lazyMount
+      {...layout}
+      {...carouselKit}
+      autoplay={playing && <Autoplay interval={4000} />}
+    >
+      {products.map((product) => (
+        <Slide key={product.id} data={product}>
+          <ProductCard product={product} />
+        </Slide>
+      ))}
+    </LightSlide>
+  );
+}
+
+/** Elsewhere: the same kit, minus the dots. */
+<LightSlide label="Reviews" {...carouselKit} pagination={null}>…</LightSlide>;
+```
+
+Only `flow` is left out of the kit on purpose — the continuous ticker is an alternative
+motion mode that supersedes `autoplay` while it runs, so pass one or the other per carousel.
 
 ## Components & props
 
-### `<LightSlide<T>>`
+### `<LightSlide>`
 
-The container — handles layout, all navigation, and analytics. Generic over the slide `data`
-shape `T` (defaults to `unknown`); pass it as `<LightSlide<Product> …>` to type the analytics
-payloads.
+The container — handles layout and all navigation; everything optional plugs into a slot
+prop. (The slide `data` generic lives on `<Slide<T>>` and `<Analytics<T>>` — the container
+itself is not generic.)
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
@@ -172,20 +245,19 @@ payloads.
 | `trackClassName` | `string` | — | Class for the inner track |
 | `label` | `string` | — | Accessible name — makes the carousel a labelled `region` landmark (see [Accessibility](#accessibility)) |
 | `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
-| `analytics` | `AnalyticsConfig<T>` | — | `onEvent` handler + `viewedTimeout` (see [Analytics](#analytics)) |
 | `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
 | `gap` | `number` | `0` | Horizontal space between slides, px (see [slidesPerView & gap](#slidesperview--gap)) |
 | `align` | `'start' \| 'center'` | `'start'` | Where the active slide rests (see [Center align](#center-align)) |
-| `breakpoints` | `Record<string, BreakpointOverrides>` | — | Media-query overrides of `slidesPerView`/`gap` (see [Responsive breakpoints](#responsive-breakpoints)) |
 | `initialIndex` | `number` | `0` | Starting position, uncontrolled (see [External control](#external-control)) |
 | `index` | `number` | — | Controlled position — the carousel navigates whenever it changes |
 | `onIndexChange` | `(index: number) => void` | — | Fires after every settled position change, from any source |
-| `autoScroll` | `AutoScrollConfig` | — | Automatic slide cycling |
-| `flow` | `ReactNode` | — | Continuous ticker from `lightslide/flow` — pass `<Flow />` (supersedes `autoScroll`) |
 | `navigation` | `ReactNode` | — | Prev/next buttons from `lightslide/navigation` — pass `<Navigation />` |
 | `pagination` | `ReactNode` | — | Pagination dots from `lightslide/pagination` — pass `<Pagination />` |
+| `autoplay` | `ReactNode` | — | Automatic slide cycling from `lightslide/autoplay` — pass `<Autoplay interval={…} />` (see [Autoplay](#autoplay-lightslideautoplay)) |
+| `flow` | `ReactNode` | — | Continuous ticker from `lightslide/flow` — pass `<Flow />` (supersedes `autoplay`) |
 | `wheel` | `ReactNode` | — | Wheel/trackpad gestures from `lightslide/wheel` — pass `<Wheel />` (see [Wheel & trackpad](#wheel--trackpad-lightslidewheel)) |
 | `free` | `ReactNode` | — | Momentum drag physics from `lightslide/free` — pass `<FreeScroll />` (see [Free scrolling](#free-scrolling-lightslidefree)) |
+| `analytics` | `ReactNode` | — | Typed event stream from `lightslide/analytics` — pass `<Analytics onEvent={…} />` (see [Analytics](#analytics)) |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
 | `isLoop` | `boolean` | `false` | Seamless infinite loop |
 | `lazyMount` | `boolean \| LazyMountConfig` | `false` | Mount only slides near the current position (see [Lazy slide mounting](#lazy-slide-mounting)) |
@@ -207,15 +279,19 @@ A single slide. Width is computed from the container, `slidesPerView`, and `gap`
 | `aria-*` / `role` / `id` | — | — | ARIA attributes forwarded to the slide's node; `aria-label`/`aria-labelledby` name the card (overriding the automatic "N of M") |
 
 ```tsx
+import { Analytics } from "lightslide/analytics";
+
 type Product = { id: number; name: string };
 
-<LightSlide<Product>
-  analytics={{
-    onEvent: (e) => {
-      if (e.event === "carousel_reached_end")
-        e.slides.forEach((s) => s.data?.name);
-    },
-  }}
+<LightSlide
+  analytics={
+    <Analytics<Product>
+      onEvent={(e) => {
+        if (e.event === "carousel_reached_end")
+          e.slides.forEach((s) => s.data?.name);
+      }}
+    />
+  }
 >
   <Slide<Product> data={{ id: 1, name: "Widget" }}><Card /></Slide>
 </LightSlide>
@@ -271,19 +347,24 @@ navigation type. Not tracked during a flow (continuous motion has no discrete in
 **`PaginationProps`**: `style`, `className`, `dotStyle`, `dotClassName`, `activeDotStyle`,
 `activeDotClassName`.
 
-### Auto-scroll
+### Autoplay (`lightslide/autoplay`)
 
 ```tsx
-<LightSlide autoScroll={{ enabled: true, interval: 3000 }} />
+import { Autoplay } from "lightslide/autoplay";
+
+<LightSlide autoplay={<Autoplay interval={3000} />} />
 ```
 
 Loops back to 0 after the last slide; pauses during drag; does **not** fire `carousel_reached_end`.
+Presence turns the mode on — pass the node conditionally
+(`autoplay={playing && <Autoplay interval={3000} />}`) to toggle it — `null`, `undefined`,
+and `false` all mean "no module", so the usual JSX conditional idioms work as is.
 
 By default the cycling also pauses while the pointer hovers the carousel or keyboard focus is
 inside it, and resumes when it leaves — the [WAI-ARIA APG carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/)
-behaviour. Set `pauseOnHover: false` / `pauseOnFocus: false` to opt out.
+behaviour. Set `pauseOnHover={false}` / `pauseOnFocus={false}` to opt out.
 
-**`AutoScrollConfig`**: `enabled: boolean`, `interval: number` (ms),
+**`AutoplayProps`**: `interval: number` (ms, required),
 `pauseOnHover?: boolean` (default `true`), `pauseOnFocus?: boolean` (default `true`).
 
 The APG pattern also asks for a **visible pause control**. Build it with the ref handle's
@@ -304,7 +385,7 @@ const [isPaused, setIsPaused] = useState(false);
 >
   {isPaused ? "Resume" : "Pause"}
 </button>
-<LightSlide ref={ref} autoScroll={{ enabled: true, interval: 3000 }}>…</LightSlide>
+<LightSlide ref={ref} autoplay={<Autoplay interval={3000} />}>…</LightSlide>
 ```
 
 ### Flow (continuous ticker, `lightslide/flow`)
@@ -317,11 +398,11 @@ import { Flow } from "lightslide/flow";
 
 Scrolls the track continuously at `speed` px/s (driven by `requestAnimationFrame`, no CSS
 transition). Presence turns the mode on — pass the node conditionally
-(`flow={active ? <Flow /> : undefined}`) to toggle it. Loops seamlessly (clones added
+(`flow={active && <Flow />}`) to toggle it. Loops seamlessly (clones added
 automatically), pauses on interaction, and resumes from where it stopped after `resumeDelay`.
-Like auto-scroll, the drift also holds while the pointer hovers the carousel or keyboard focus
+Like autoplay, the drift also holds while the pointer hovers the carousel or keyboard focus
 is inside it (opt out via `pauseOnHover` / `pauseOnFocus`), and the ref handle's
-`pause()`/`resume()` hold it explicitly. Supersedes `autoScroll` when both are set.
+`pause()`/`resume()` hold it explicitly. Supersedes `autoplay` when both are set.
 
 **`FlowProps`**: `speed?: number` (default 40), `resumeDelay?: number` (default 2000 ms),
 `pauseOnHover?: boolean` (default `true`), `pauseOnFocus?: boolean` (default `true`).
@@ -455,32 +536,36 @@ then). Snapping, dragging, free-mode settling, the server-rendered first paint, 
   everywhere.
 - Ignored while `flow` runs — continuous motion has no resting position.
 
-## Responsive breakpoints
+## Responsive breakpoints (`lightslide/breakpoints`)
 
-No resize listeners in your code — hand the carousel a map of media queries and it applies
-the matching overrides itself:
+No resize listeners in your code — resolve any props per media query with the
+`useBreakpoints` hook and spread the result:
 
 ```tsx
-<LightSlide
-  slidesPerView={1.2}
-  gap={8}
-  breakpoints={{
+import { useBreakpoints } from "lightslide/breakpoints";
+
+const layout = useBreakpoints(
+  { slidesPerView: 1.2, gap: 8 },
+  {
     "(min-width: 768px)": { slidesPerView: 2, gap: 16 },
     "(min-width: 1200px)": { slidesPerView: 3, gap: 24 },
-  }}
->
+  },
+);
+
+<LightSlide {...layout}>
 ```
 
-Keys are media queries (any valid query works — width, orientation, `prefers-*`); values
-override `slidesPerView` and `gap` while their query matches. When several queries match,
-later entries win per property — so mobile-first ordering behaves like CSS. A breakpoint flip
-re-measures, re-clamps the position, and re-snaps exactly like a container resize; the
-carousel keeps its place with no jump. On the server (or any client without `matchMedia`) the
-base props render, and matches apply on hydration.
+The first argument is the base (what applies while nothing matches); keys are media queries
+(any valid query works — width, orientation, `prefers-*`) whose partial overrides merge over
+the base while they match. When several queries match, later entries win per property — so
+mobile-first ordering behaves like CSS. A breakpoint flip re-measures, re-clamps the
+position, and re-snaps exactly like a container resize; the carousel keeps its place with no
+jump. On the server (or any client without `matchMedia`) the base resolves, and matches
+apply on hydration.
 
-Only the geometry props participate by design: everything else (plugin slots, `autoScroll`,
-`isLoop`) is plain React you can switch on your own media-query state without the carousel's
-help.
+The hook is generic over the base shape, so it is not limited to geometry — anything you can
+put in props can respond to a breakpoint (`align`, `isLoop`, even plugin slots), and because
+it runs in *your* component, the resolved values are already in the very first render.
 
 ## Server-side rendering (Next.js App Router)
 
@@ -533,10 +618,10 @@ export default async function Page() {
 }
 ```
 
-One caveat: `breakpoints` resolve through `matchMedia`, which doesn't exist on the server,
-so the server HTML always uses the base `slidesPerView`/`gap`. On viewports where an
-override applies, the carousel re-lays out once at hydration — pick base props that match
-your most common viewport if that single shift matters to you.
+One caveat: `useBreakpoints` resolves through `matchMedia`, which doesn't exist on the
+server, so the server HTML always uses the base values. On viewports where an override
+applies, the carousel re-lays out once at hydration — pick a base that matches your most
+common viewport if that single shift matters to you.
 
 ## External control
 
@@ -553,7 +638,7 @@ ref.current?.goTo(4); // animate to a position (clamped into range, never wraps)
 ref.current?.next(); // one step right (wraps under isLoop)
 ref.current?.prev(); // one step left (wraps under isLoop)
 ref.current?.getIndex(); // current settled position
-ref.current?.pause(); // hold auto-scroll / flow (the APG pause control)
+ref.current?.pause(); // hold autoplay / flow (the APG pause control)
 ref.current?.resume(); // release the hold
 ```
 
@@ -571,7 +656,7 @@ Semantics worth knowing:
 - `index` does not lock the carousel: drag and the built-in buttons still navigate. Keep your
   state in sync with `onIndexChange` (the pattern above).
 - `onIndexChange` fires after every settled position change from any source — drag, buttons,
-  pagination, auto-scroll, the API — and also when a layout change (e.g. a new
+  pagination, autoplay, the API — and also when a layout change (e.g. a new
   `slidesPerView`) clamps the current position away.
 - Programmatic navigation fires `carousel_slide` like any other navigation, but never
   `carousel_nav_button` / `carousel_pagination_click`.
@@ -619,15 +704,17 @@ See it live in the playground's [Thumbnails demo](https://lightslide.vercel.app/
 
 ## Analytics
 
-All analytics flow through **one** handler — `analytics.onEvent`. It receives every event as a
-discriminated union (`AnalyticsEvent<T>`); `switch` on `event` and handle only what you need.
-With no `analytics` prop nothing fires. Payloads carry only their own fields (no timestamp — add
-your own in the handler if needed).
+Analytics ships as the tree-shakeable `lightslide/analytics` entry — pass
+`analytics={<Analytics onEvent={…} />}`. Everything flows through **one** handler: `onEvent`
+receives every event as a discriminated union (`AnalyticsEvent<T>`); `switch` on `event` and
+handle only what you need. Without the slot nothing fires — and none of the analytics code
+(viewport observation, viewed tracking, event objects) is in your bundle. Payloads carry
+only their own fields (no timestamp — add your own in the handler if needed).
 
 | `event` | When it fires | Payload |
 |---|---|---|
 | `carousel_in_viewport` | First time ≥50% visible (once) | `{ event }` |
-| `carousel_slide` | Every navigation (drag/button/pagination/auto/API), incl. a free-drag coast settling on a new nearest index | `{ event, direction, fromIndex, toIndex }` |
+| `carousel_slide` | Every navigation (drag/button/pagination/autoplay/API), incl. a free-drag coast settling on a new nearest index | `{ event, direction, fromIndex, toIndex }` |
 | `carousel_reached_end` | User reaches the last position (once) | `{ event, slides }` — **all** slides |
 | `carousel_viewed_slides` | After `viewedTimeout` s of visibility (once, opt-in) | `{ event, slides, viewedSeconds }` — **viewed** slides |
 | `carousel_nav_button` | Prev/next clicked (alongside `carousel_slide`) | `{ event, direction, fromIndex, toIndex }` |
@@ -645,21 +732,27 @@ Notes:
   several slides); `toIndex` is the slide actually landed on.
 
 ```tsx
-analytics={{
-  onEvent: (e) => {
-    switch (e.event) {
-      case "carousel_viewed_slides":
-        return track("engagement", e); // e.slides = slides actually seen
-      case "carousel_reached_end":
-        return track("complete", e);    // e.slides = every slide
-    }
-  },
-  viewedTimeout: 20, // opt in to carousel_viewed_slides
-}}
+import { Analytics } from "lightslide/analytics";
+
+<LightSlide
+  analytics={
+    <Analytics
+      onEvent={(e) => {
+        switch (e.event) {
+          case "carousel_viewed_slides":
+            return track("engagement", e); // e.slides = slides actually seen
+          case "carousel_reached_end":
+            return track("complete", e);   // e.slides = every slide
+        }
+      }}
+      viewedTimeout={20} // opt in to carousel_viewed_slides
+    />
+  }
+>
 ```
 
-`SlideData<T>` is `{ index: number; data?: T }`. With `<LightSlide<T>>` the `slides` arrays on the
-terminal events are typed `SlideData<T>[]`.
+`SlideData<T>` is `{ index: number; data?: T }`. With `<Analytics<T>>` the `slides` arrays on
+the terminal events are typed `SlideData<T>[]`.
 
 ## Accessibility
 
@@ -685,12 +778,12 @@ out of the box — no configuration required:
   `inert`, so a screen reader never reads them twice and Tab never lands on an off-screen copy.
 - **Linked controls** — prev/next buttons and pagination dots set `aria-controls` to the slides
   container, and dots expose `aria-current`. Built-in buttons/dots already carry `aria-label`s.
-- **Autoplay pauses on hover and focus** — `autoScroll` and `flow` hold while the pointer is
+- **Autoplay pauses on hover and focus** — `autoplay` and `flow` hold while the pointer is
   over the carousel or keyboard focus is inside it, and resume when it leaves (opt out via
   `pauseOnHover` / `pauseOnFocus`). For the APG's visible pause control, wire a button to the
-  ref handle's `pause()`/`resume()` — see [Auto-scroll](#auto-scroll).
+  ref handle's `pause()`/`resume()` — see [Autoplay](#autoplay-lightslideautoplay).
 - **Reduced motion** — when the user requests `prefers-reduced-motion: reduce`, slide snapping is
-  instant (no animated transform). Continuous **flow**/**auto-scroll** motion is left to the
+  instant (no animated transform). Continuous **flow**/**autoplay** motion is left to the
   opt-in layer below.
 
 > Custom nav elements from `renderPrev`/`renderNext` own their own markup — attach your own
@@ -725,7 +818,7 @@ import { Pagination } from "lightslide/pagination";
 | Keyboard | `keyboard` | `←`/`→` step a slide, `Home`/`End` jump to the first/last, once focus is inside the carousel. Ignores keys typed into form fields. |
 | Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. Suspends while `flow` runs — a drifting strip has no fixed visible window, and every slide must stay grabbable. |
 | Live region | `liveRegion` | A polite live region announcing `"Slide N of M"` on manual navigation; silent during auto-motion. Customise via `announce={(i, n) => …}`. |
-| Reduced motion | `respectReducedMotion` | Stops **flow**/**auto-scroll** while the user prefers reduced motion (slide-snap is already instant — handled by the core). |
+| Reduced motion | `respectReducedMotion` | Stops **flow**/**autoplay** while the user prefers reduced motion (slide-snap is already instant — handled by the core). |
 
 ```tsx
 <LightSlide a11y={<A11y keyboard focusGuard={false} announce={(i, n) => `${i + 1} / ${n}`} />} />
@@ -748,12 +841,16 @@ slides.
 
 ```ts
 import type {
-  AnalyticsConfig, AnalyticsEvent, AutoScrollConfig, BreakpointOverrides,
-  InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
-  NavigationButtonPayload, PaginationClickPayload, LazyMountConfig,
-  LightSlideProps, LightSlideHandle, SlideProps, SlideData,
+  LazyMountConfig, LightSlideProps, LightSlideHandle, SlideProps,
 } from "lightslide";
 
+import type {
+  AnalyticsProps, AnalyticsEvent, SlideData,
+  InViewportPayload, SlidePayload, ReachedEndPayload, ViewedSlidesPayload,
+  NavigationButtonPayload, PaginationClickPayload,
+} from "lightslide/analytics";
+
+import type { AutoplayProps } from "lightslide/autoplay";
 import type { A11yProps, LiveRegionProps } from "lightslide/a11y";
 import type { NavigationProps, NavButtonRenderProps } from "lightslide/navigation";
 import type { PaginationProps } from "lightslide/pagination";
@@ -764,45 +861,45 @@ import type { FreeScrollProps } from "lightslide/free";
 
 ## Project structure
 
-Each component is a self-contained feature folder (component + test + styles + types).
-Every opt-in tree-shakeable module lives under `src/modules/`; the seam contexts they bind
-to stay in the `src/` root (they are core-side glue, shared chunks between the core and
-their entry):
+Each component is a self-contained feature folder (component + test + styles + types), and
+the same one-folder-per-unit rule runs all the way down: every internal helper and util
+lives in its own folder next to its test. Every opt-in tree-shakeable module lives under
+`src/modules/`; the seam contexts they bind to live in `src/seams/` (core-side glue, shared
+chunks between the core and their entry):
 
 ```
 src/
 ├── LightSlide/
-│   ├── LightSlide.tsx              # Main carousel (orchestrator), generic over slide data
+│   ├── LightSlide.tsx              # Main carousel — thin composition root over the helpers
 │   ├── LightSlide.test.tsx
 │   ├── LightSlideControl.test.tsx  # external-control API (index / onIndexChange / ref)
 │   ├── LightSlide.ssr.test.tsx     # server-rendering smoke (node env, renderToString)
 │   ├── LightSlide.hydration.test.tsx # hydrateRoot adopts server markup w/o mismatches
 │   ├── LightSlide.module.scss      # Container / stage / viewport / track styles
-│   └── helpers/                    # Internal hooks & pure helpers
-│       ├── constants.ts            #   tuning constants
-│       ├── navigation.ts           #   navigation source/fn types
-│       ├── store.ts                #   single core-data store (LightSlideStore<T>)
-│       ├── slideData.ts            #   collectSlideData (+ test)
-│       ├── loopClones.ts           #   buildDisplayChildren: per-slide ARIA + loop clones (+ test)
-│       ├── lazyMount.ts            #   index-window mount predicate for lazyMount (+ test)
-│       ├── ssrStyles.ts            #   critical layout CSS served with the markup (+ test)
-│       ├── useIsomorphicLayoutEffect.ts # layout effect that is SSR-silent
-│       ├── useLatestRef.ts         #   latest-ref for stable callbacks
-│       ├── useNavigation.ts        #   navigateToIndex — the single navigation path (+ test)
-│       ├── useExternalControl.ts   #   controlled index prop + LightSlideHandle ref
-│       ├── useLayoutResync.ts      #   re-measure/clamp/re-snap on layout-shape changes
-│       ├── useSlideMetrics.ts      #   measure container → cached slide px width (+ test)
-│       ├── trackOffset.ts          #   pure px offset for a visual index (+ test)
-│       ├── useTrackSnap.ts         #   transform/translateX snapping (+ test)
-│       ├── useBreakpoints.ts       #   media-query overrides of slidesPerView/gap (+ test)
-│       ├── useAutoScroll.ts        #   interval cycling (+ test)
-│       ├── useHoverFocus.ts        #   hover/focus-within → store pause flags (+ test)
-│       ├── usePointerGesture.ts    #   shared drag mechanics: lock/capture/click (+ test)
-│       ├── useDragGesture.ts       #   drag-to-snap, thin over usePointerGesture (+ test)
-│       ├── useFreeDrag.ts          #   momentum drag + coast, thin over it (+ test)
-│       ├── useFlow.ts              #   continuous ticker scroll, thin over it (+ test)
-│       ├── useWheel.ts             #   wheel/trackpad gestures → page turns / flow drift (+ test)
-│       └── useViewportEngagement.ts#   IntersectionObserver + terminal events (+ test)
+│   └── helpers/                    # Internal hooks & pure helpers, one folder each (+ test)
+│       ├── constants.ts            #   ── the flat files are the imperative core ──
+│       ├── navigation.ts           #   navigation source/fn types + the emitNav mailbox type
+│       ├── store.ts                #   single core-data store (LightSlideStore)
+│       ├── loopClones/             #   per-slide ARIA + loop clones
+│       ├── lazyMount/              #   index-window mount predicate for lazyMount
+│       ├── ssrStyles/              #   critical layout CSS served with the markup
+│       ├── trackOffset/            #   pure px offset for a visual index
+│       ├── useIsomorphicLayoutEffect/ # layout effect that is SSR-silent
+│       ├── useLatestRef/           #   latest-ref for stable callbacks
+│       ├── useNavigation/          #   navigateToIndex — the single navigation path
+│       ├── useExternalControl/     #   controlled index prop + LightSlideHandle ref
+│       ├── useLayoutResync/        #   re-measure/clamp/re-snap on layout-shape changes
+│       ├── useSlideMetrics/        #   measure container → cached slide px width
+│       ├── useTrackSnap/           #   transform/translateX snapping
+│       ├── useDisplayChildren/     #   ARIA + loop clones + lazy window → rendered children
+│       ├── useGestureHandlers/     #   which handler bag owns the viewport (drag/flow/free)
+│       ├── useSeamValues/          #   memoized context values for every plugin seam
+│       ├── useHoverFocus/          #   hover/focus-within → store pause flags (autoplay/flow)
+│       ├── usePointerGesture/      #   shared drag mechanics: lock/capture/click
+│       ├── useDragGesture/         #   drag-to-snap, thin over usePointerGesture
+│       ├── useFreeDrag/            #   momentum drag + coast, thin over it
+│       ├── useFlow/                #   continuous ticker scroll, thin over it
+│       └── useWheel/               #   wheel/trackpad gestures → page turns / flow drift
 ├── modules/                        # Every opt-in tree-shakeable entry lives here
 │   ├── a11y/                       #   `lightslide/a11y` (barrel + A11y, Keyboard,
 │   │                               #   FocusGuard, LiveRegion, ReducedMotion + tests)
@@ -811,25 +908,26 @@ src/
 │   ├── Pagination/                 #   `lightslide/pagination` (dots, types, styles + test)
 │   ├── flow/                       #   `lightslide/flow` (continuous ticker plugin)
 │   ├── wheel/                      #   `lightslide/wheel` (wheel/trackpad plugin + test)
-│   └── free/                       #   `lightslide/free` (momentum drag plugin + test)
-├── a11ySeam.ts                     # Context seam between the core and the a11y plugins
-├── flowSeam.ts                     # Context seam between the core and the flow plugin
-├── wheelSeam.ts                    # Context seam between the core and the wheel plugin
-├── freeSeam.ts                     # Context seam between the core and the free plugin
+│   ├── free/                       #   `lightslide/free` (momentum drag plugin + test)
+│   ├── autoplay/                   #   `lightslide/autoplay` (interval cycling + tests)
+│   ├── analytics/                  #   `lightslide/analytics` (event types, engagement,
+│   │                               #   viewed tracking, slide data + tests)
+│   └── breakpoints/                #   `lightslide/breakpoints` (useBreakpoints hook + test)
+├── seams/                          # Context seams — core-side glue, one shared chunk each
+│   ├── a11ySeam.ts                 #   core ↔ a11y plugins
+│   ├── analyticsSeam.ts            #   core ↔ analytics plugin
+│   ├── autoplaySeam.ts             #   core ↔ autoplay plugin
+│   ├── flowSeam.ts                 #   core ↔ flow plugin
+│   ├── freeSeam.ts                 #   core ↔ free plugin
+│   ├── wheelSeam.ts                #   core ↔ wheel plugin
+│   └── lightSlideContext.ts        #   SlideMetricsContext (→ Slide) + NavContext (→ nav/dots)
 ├── Slide/
 │   ├── Slide.tsx                   # Slide (memo + forwardRef, generic over data)
 │   └── Slide.module.scss
-├── hooks/
-│   ├── useViewedSlides.ts          # Tracks unique viewed slide indices
-│   └── useViewedSlides.test.ts
-├── utils/
-│   ├── cx.ts                       # tiny className combiner (clsx-style)
-│   ├── cx.test.ts
-│   ├── swipe.ts                    # getSnapIndex — threshold + velocity + multi-slide
-│   ├── swipe.test.ts
-│   ├── reducedMotion.ts            # prefers-reduced-motion check (SSR-safe)
-│   └── reducedMotion.test.ts
-├── lightSlideContext.ts            # Split contexts: SlideMetricsContext + NavContext
+├── utils/                          # Generic utilities, one folder each (+ test)
+│   ├── cx/                         #   tiny className combiner
+│   ├── swipe/                      #   getSnapIndex — threshold + velocity + multi-slide
+│   └── reducedMotion/              #   prefers-reduced-motion check (SSR-safe)
 ├── types.ts                        # Shared + public types
 ├── styles.d.ts                     # Ambient declaration for *.module.scss imports
 └── index.ts                        # Public API barrel
@@ -839,7 +937,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 302 unit/integration tests (Jest + jsdom) across 34 suites
+npm test             # 321 unit/integration tests (Jest + jsdom) across 36 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

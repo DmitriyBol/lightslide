@@ -1,7 +1,8 @@
 import {useState} from 'react';
 
-import type {AnalyticsConfig} from 'lightslide';
 import {LightSlide, Slide} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 import {Navigation} from 'lightslide/navigation';
 import {Pagination} from 'lightslide/pagination';
 
@@ -24,13 +25,11 @@ export function LoopExample() {
 	const [isLoop, setIsLoop] = useState(true);
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig = {
-		onEvent: e => {
-			if (e.event === 'carousel_slide')
-				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-			else if (e.event === 'carousel_reached_end')
-				log('end', 'fires only without isLoop');
-		},
+	const onEvent = (e: AnalyticsEvent) => {
+		if (e.event === 'carousel_slide')
+			log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
+		else if (e.event === 'carousel_reached_end')
+			log('end', 'fires only without isLoop');
 	};
 
 	return (
@@ -61,7 +60,7 @@ export function LoopExample() {
 				<LightSlide
 					key={String(isLoop)}
 					isLoop={isLoop}
-					analytics={analytics}
+					analytics={<Analytics onEvent={onEvent} />}
 					navigation={<Navigation />}
 					pagination={
 						<Pagination

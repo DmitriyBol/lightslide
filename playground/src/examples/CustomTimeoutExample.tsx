@@ -1,5 +1,7 @@
 import {useState} from 'react';
+
 import {LightSlide, Slide} from 'lightslide';
+import {Analytics} from 'lightslide/analytics';
 
 import {cx} from '../components/cx';
 import {Demo, Well} from '../components/Demo';
@@ -29,15 +31,17 @@ export function CustomTimeoutExample() {
 			<Well>
 				<LightSlide
 					key={result ?? 'active'}
-					analytics={{
-						viewedTimeout: 5,
-						onEvent: e => {
-							if (e.event === 'carousel_reached_end')
-								setResult(`reached_end fired · ${e.slides.length} slides`);
-							else if (e.event === 'carousel_viewed_slides')
-								setResult(`viewed_slides fired · after ${e.viewedSeconds}s`);
-						},
-					}}>
+					analytics={
+						<Analytics
+							viewedTimeout={5}
+							onEvent={e => {
+								if (e.event === 'carousel_reached_end')
+									setResult(`reached_end fired · ${e.slides.length} slides`);
+								else if (e.event === 'carousel_viewed_slides')
+									setResult(`viewed_slides fired · after ${e.viewedSeconds}s`);
+							}}
+						/>
+					}>
 					{LABELS.map((label, i) => {
 						const isLast = i === LABELS.length - 1;
 						return (

@@ -1,5 +1,6 @@
 import {LightSlide, Slide} from 'lightslide';
-import type {AnalyticsConfig} from 'lightslide';
+import type {AnalyticsEvent} from 'lightslide/analytics';
+import {Analytics} from 'lightslide/analytics';
 
 import {Console} from '../components/Console';
 import {Demo, Well} from '../components/Demo';
@@ -13,11 +14,9 @@ const SHOES = ['Trail Boot', 'Court Low', 'Flip Pro'];
 export function CustomStylesExample() {
 	const {entries, log, clear} = useConsole();
 
-	const analytics: AnalyticsConfig = {
-		onEvent: e => {
-			if (e.event === 'carousel_slide')
-				log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
-		},
+	const onEvent = (e: AnalyticsEvent) => {
+		if (e.event === 'carousel_slide')
+			log('slide', `${e.fromIndex} → ${e.toIndex} (${e.direction})`);
 	};
 
 	return (
@@ -36,7 +35,7 @@ export function CustomStylesExample() {
 			}>
 			<Well>
 				<LightSlide
-					analytics={analytics}
+					analytics={<Analytics onEvent={onEvent} />}
 					style={{
 						borderRadius: 'var(--radius-md)',
 						boxShadow: '0 12px 40px -28px rgba(0,0,0,0.7)',

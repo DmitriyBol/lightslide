@@ -1,7 +1,7 @@
 import {useCallback} from 'react';
 
-import {useNavContext} from '../../lightSlideContext';
-import {cx} from '../../utils/cx';
+import {useNavContext} from '../../seams/lightSlideContext';
+import {cx} from '../../utils/cx/cx';
 import styles from './Navigation.module.scss';
 import type {NavigationProps} from './Navigation.types';
 
@@ -51,7 +51,7 @@ export function Navigation({
 	const prevDisabled = !isLoop && currentIndex <= 0;
 	const nextDisabled = !isLoop && currentIndex >= maxIndex;
 
-	const hidden = !isReady && styles.hidden;
+	const hidden = isReady ? undefined : styles.hidden;
 
 	return (
 		<>
@@ -61,7 +61,7 @@ export function Navigation({
 					className={cx(
 						styles.slot,
 						styles.slotPrev,
-						prevDisabled && styles.slotDisabled,
+						prevDisabled ? styles.slotDisabled : undefined,
 						hidden,
 					)}>
 					{renderPrev({
@@ -93,7 +93,7 @@ export function Navigation({
 					className={cx(
 						styles.slot,
 						styles.slotNext,
-						nextDisabled && styles.slotDisabled,
+						nextDisabled ? styles.slotDisabled : undefined,
 						hidden,
 					)}>
 					{renderNext({
