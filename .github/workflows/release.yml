@@ -1,0 +1,42 @@
+name: Release
+
+# Publishes to npm when a version tag (e.g. 1.0.0) is pushed. Uses npm Trusted Publishing
+# (OIDC) — no long-lived NPM_TOKEN lives in the repo. The publish re-runs the full
+# prepublishOnly gate (typecheck, lint, stylelint, tests, build, size).
+#
+# One-time maintainer setup before this can succeed:
+#   1. On npmjs.com, add this repository + this workflow as a Trusted Publisher for the
+#      `lightslide` package (Settings -> Publishing access -> Trusted publisher).
+#   2. Enable 2FA on the npm account that owns the package.
+# Until (1) is done the publish step fails safely — nothing is published.
+
+on:
+  push:
+    tags: ["*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for npm provenance / Trusted Publishing
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+
+      # Trusted Publishing / provenance needs a recent npm (>= 11.5).
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
