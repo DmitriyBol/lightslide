@@ -102,7 +102,7 @@ export function AutoScrollExample() {
 					key={`${enabled}-${intervalMs}`}
 					ref={apiRef}
 					analytics={<Analytics onEvent={onEvent} />}
-					autoplay={enabled ? <Autoplay interval={intervalMs} /> : undefined}
+					autoplay={enabled && <Autoplay interval={intervalMs} />}
 					navigation={<Navigation />}
 					pagination={
 						<Pagination

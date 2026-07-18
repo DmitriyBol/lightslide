@@ -288,7 +288,8 @@ import { Autoplay } from "lightslide/autoplay";
 
 Loops back to 0 after the last slide; pauses during drag; does **not** fire `carousel_reached_end`.
 Presence turns the mode on — pass the node conditionally
-(`autoplay={playing ? <Autoplay interval={3000} /> : undefined}`) to toggle it.
+(`autoplay={playing && <Autoplay interval={3000} />}`) to toggle it — `null`, `undefined`,
+and `false` all mean "no module", so the usual JSX conditional idioms work as is.
 
 By default the cycling also pauses while the pointer hovers the carousel or keyboard focus is
 inside it, and resumes when it leaves — the [WAI-ARIA APG carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/)
@@ -328,7 +329,7 @@ import { Flow } from "lightslide/flow";
 
 Scrolls the track continuously at `speed` px/s (driven by `requestAnimationFrame`, no CSS
 transition). Presence turns the mode on — pass the node conditionally
-(`flow={active ? <Flow /> : undefined}`) to toggle it. Loops seamlessly (clones added
+(`flow={active && <Flow />}`) to toggle it. Loops seamlessly (clones added
 automatically), pauses on interaction, and resumes from where it stopped after `resumeDelay`.
 Like autoplay, the drift also holds while the pointer hovers the carousel or keyboard focus
 is inside it (opt out via `pauseOnHover` / `pauseOnFocus`), and the ref handle's

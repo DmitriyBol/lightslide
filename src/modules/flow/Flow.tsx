@@ -23,7 +23,7 @@ export type FlowProps = {
 
 /**
  * Continuous "flow"/ticker scrolling. Presence turns the mode on — pass
- * `flow={<Flow />}` (or conditionally, `flow={active ? <Flow /> : undefined}`); loop clones
+ * `flow={<Flow />}` (or conditionally, `flow={active && <Flow />}`); loop clones
  * are added automatically and interacting with the carousel pauses the drift. The plugin owns
  * the rAF loop and hands its pointer handlers to the core through the flow seam, so bundles
  * that never import `lightslide/flow` pay nothing for the ticker.

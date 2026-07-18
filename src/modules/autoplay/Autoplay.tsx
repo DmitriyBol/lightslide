@@ -16,7 +16,7 @@ export type AutoplayProps = {
 
 /**
  * Opt-in automatic slide cycling — pass `autoplay={<Autoplay interval={5000} />}` (or
- * conditionally, `autoplay={playing ? <Autoplay interval={5000} /> : undefined}`, to toggle
+ * conditionally, `autoplay={playing && <Autoplay interval={5000} />}`, to toggle
  * it). Renders nothing: it runs the interval and the hover/focus pause listeners through the
  * seam. The flow ticker supersedes it, the a11y ReducedMotion plugin gates it, and the ref
  * handle's pause()/resume() holds it — all through the core's store flags. Bundles that never

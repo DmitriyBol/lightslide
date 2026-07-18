@@ -59,7 +59,7 @@ export function FlowExample() {
 				<LightSlide
 					key={`${enabled}-${speed}`}
 					slidesPerView={3.5}
-					flow={enabled ? <Flow speed={speed} resumeDelay={1500} /> : undefined}>
+					flow={enabled && <Flow speed={speed} resumeDelay={1500} />}>
 					{ITEMS.map(label => (
 						<Slide key={label}>
 							<div className={flow.chip}>

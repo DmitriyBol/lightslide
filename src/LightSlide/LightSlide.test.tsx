@@ -77,9 +77,9 @@ function renderLightSlide(
 	return render(
 		<LightSlide
 			analytics={
-				onEvent ? (
+				onEvent && (
 					<Analytics onEvent={onEvent} viewedTimeout={viewedTimeout} />
-				) : undefined
+				)
 			}
 			slidesPerView={slidesPerView}>
 			<Slide data={{id: 1, name: 'Slide 1'}}>

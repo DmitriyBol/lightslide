@@ -82,6 +82,39 @@ describe('Autoplay', () => {
 		expect(onIndexChange).toHaveBeenCalledWith(1);
 	});
 
+	it('treats a false or null slot as "no module" (the conditional-render idiom)', () => {
+		const onIndexChange = jest.fn();
+		const playing: boolean = false;
+		const {rerender} = render(
+			<LightSlide
+				label="Cards"
+				autoplay={playing && <Autoplay interval={1000} />}
+				onIndexChange={onIndexChange}>
+				<Slide>
+					<div>One</div>
+				</Slide>
+				<Slide>
+					<div>Two</div>
+				</Slide>
+			</LightSlide>,
+		);
+		act(() => jest.advanceTimersByTime(5000));
+
+		rerender(
+			<LightSlide label="Cards" autoplay={null} onIndexChange={onIndexChange}>
+				<Slide>
+					<div>One</div>
+				</Slide>
+				<Slide>
+					<div>Two</div>
+				</Slide>
+			</LightSlide>,
+		);
+		act(() => jest.advanceTimersByTime(5000));
+
+		expect(onIndexChange).not.toHaveBeenCalled();
+	});
+
 	it('fails loudly outside <LightSlide autoplay={…}>', () => {
 		/** React logs the render-phase throw — silence the expected noise. */
 		const consoleError = jest

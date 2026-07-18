@@ -72,7 +72,7 @@ function renderCarousel(options: RenderOptions = {}) {
 	const ui = (overrides: Partial<RenderOptions> = {}) => (
 		<LightSlide
 			ref={ref}
-			analytics={onEvent ? <Analytics onEvent={onEvent} /> : undefined}
+			analytics={onEvent && <Analytics onEvent={onEvent} />}
 			{...props}
 			{...overrides}>
 			<Slide>
