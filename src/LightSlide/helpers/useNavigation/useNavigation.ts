@@ -74,11 +74,14 @@ export function useNavigation({
 			 * A wrap's direction is the user's motion, not the index delta — a backward wrap
 			 * jumps 0 → maxIdx yet the track visibly moves left. The direction is the VISUAL
 			 * truth, so under rtl a forward step reports 'left' (analytics resolves the wrap
-			 * contradiction through the same dirSign).
+			 * contradiction through the same dirSign), and a vertical carousel reports
+			 * 'down' / 'up' (no mirroring — vertical order has no reading direction).
 			 */
 			const isForward = isForwardWrap || (!isBackwardWrap && clamped > from);
-			const direction: NavDirection =
-				isForward === (storeRef.current.dirSign === 1) ? 'right' : 'left';
+			const {dirSign, vertical} = storeRef.current;
+			let direction: NavDirection;
+			if (vertical) direction = isForward ? 'down' : 'up';
+			else direction = isForward === (dirSign === 1) ? 'right' : 'left';
 
 			storeRef.current.currentIndex = clamped;
 			setCurrentIndex(clamped);

@@ -28,12 +28,12 @@ type PointerGestureCallbacks = {
 	/** pointerdown: record starting state (pause auto motion, capture the current offset, …). */
 	onStart: () => void;
 	/**
-	 * Each move once a real horizontal drag is active, with the signed horizontal delta from the
-	 * press point. Only fired after the direction lock resolves to horizontal.
+	 * Each move once a real main-axis drag is active, with the signed main-axis delta from the
+	 * press point. Only fired after the direction lock resolves to the carousel's axis.
 	 */
 	onMove: (dx: number) => void;
 	/**
-	 * The gesture stopped moving: a pointerup, a mid-drag pointerleave, OR a pre-drag vertical
+	 * The gesture stopped moving: a pointerup, a mid-drag pointerleave, OR a pre-drag cross-axis
 	 * abandon (page-scroll intent). The abandon and a plain tap both arrive as `moved === false`
 	 * — "nothing to commit, just clean up". `dx`/`velocityX` are the release delta/speed.
 	 */
@@ -55,45 +55,49 @@ type PointerGestureParams = PointerGestureCallbacks & {
  * (dozens/sec) and must never trigger a re-render — the whole "mutate the DOM transform during the
  * gesture" design depends on that.
  *
- * `startX`/`startY` anchor the press; `dragging` flips true once a move clears the direction lock
- * as horizontal; `pointerId` is captured then (deferred so a tap still reaches child links);
- * `suppressClick` swallows the trailing click after a real drag; `velocityX`/`lastX`/`lastTime`
+ * `startMain`/`startCross` anchor the press in the carousel's main/cross axis (clientX/clientY,
+ * swapped when store.vertical); `dragging` flips true once a move clears the direction lock along
+ * the main axis; `pointerId` is captured then (deferred so a tap still reaches child links);
+ * `suppressClick` swallows the trailing click after a real drag; `velocity`/`lastMain`/`lastTime`
  * track flick speed for the snap decision. Shared by every gesture mode; the mode-specific
  * motion state (snap target, flow offset, coast physics, …) lives in the consumer's own ref.
  */
 type GestureScratch = {
-	startX: number | null;
-	startY: number | null;
+	startMain: number | null;
+	startCross: number | null;
 	dragging: boolean;
 	pointerId: number | null;
 	suppressClick: boolean;
-	velocityX: number;
-	lastX: number;
+	velocity: number;
+	lastMain: number;
 	lastTime: number;
 };
 
 const initialScratch = (): GestureScratch => ({
-	startX: null,
-	startY: null,
+	startMain: null,
+	startCross: null,
 	dragging: false,
 	pointerId: null,
 	suppressClick: false,
-	velocityX: 0,
-	lastX: 0,
+	velocity: 0,
+	lastMain: 0,
 	lastTime: 0,
 });
 
 /**
  * The shared pointer-gesture engine behind useDragGesture, useFlow, and useFreeDrag. It owns the
- * parts that are identical across modes — the first-few-px direction lock (horizontal vs vertical
- * intent),
- * deferred pointer capture, velocity tracking, swallowing the click that follows a real drag, and
- * the "pointer left the carousel mid-drag" safety net — and delegates the mode-specific motion to
- * the four callbacks. Returns the handler bag the consumer spreads onto the viewport unchanged.
+ * parts that are identical across modes — the first-few-px direction lock (main-axis vs cross-axis
+ * intent), deferred pointer capture, velocity tracking, swallowing the click that follows a real
+ * drag, and the "pointer left the carousel mid-drag" safety net — and delegates the mode-specific
+ * motion to the four callbacks. Returns the handler bag the consumer spreads onto the viewport
+ * unchanged.
  *
- * Deltas and velocities cross the callback boundary in LOGICAL space: physical clientX deltas
- * are multiplied by store.dirSign here, once, so under rtl a physically rightward swipe arrives
- * as a negative (forward) delta and none of the mode math ever sees the reading direction.
+ * Deltas and velocities cross the callback boundary in LOGICAL space: physical client coordinates
+ * are resolved against the carousel's axis (clientX, or clientY when store.vertical — which also
+ * inverts the direction lock, so a horizontal gesture over a vertical carousel releases to the
+ * page) and multiplied by store.dirSign here, once, so under rtl a physically rightward swipe
+ * arrives as a negative (forward) delta and none of the mode math ever sees the direction or the
+ * axis.
  */
 export function usePointerGesture({
 	trackRef,
@@ -106,52 +110,59 @@ export function usePointerGesture({
 	const g = useRef<GestureScratch>(initialScratch());
 
 	/**
-	 * Latest-ref the callbacks so the returned handlers stay referentially stable (their only dep
-	 * is trackRef) even though the consumer re-creates the closures each render. Same latest-ref
-	 * pattern the hooks already use for prop knobs.
+	 * Latest-ref the callbacks so the returned handlers stay referentially stable (their only deps
+	 * are trackRef/storeRef) even though the consumer re-creates the closures each render. Same
+	 * latest-ref pattern the hooks already use for prop knobs.
 	 */
 	const cb = useRef({onStart, onMove, onEnd, onCancel});
 	cb.current = {onStart, onMove, onEnd, onCancel};
 
-	const onPointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
-		const s = g.current;
-		s.startX = e.clientX;
-		s.startY = e.clientY;
-		s.dragging = false;
-		s.suppressClick = false;
-		s.pointerId = e.pointerId;
-		s.velocityX = 0;
-		s.lastX = e.clientX;
-		s.lastTime = Date.now();
-		/** Capture is deferred to the first real drag move so a tap reaches child links. */
-		cb.current.onStart();
-	}, []);
+	const onPointerDown = useCallback(
+		(e: PointerEvent<HTMLDivElement>) => {
+			const s = g.current;
+			const vertical = storeRef.current.vertical;
+			s.startMain = vertical ? e.clientY : e.clientX;
+			s.startCross = vertical ? e.clientX : e.clientY;
+			s.dragging = false;
+			s.suppressClick = false;
+			s.pointerId = e.pointerId;
+			s.velocity = 0;
+			s.lastMain = s.startMain;
+			s.lastTime = Date.now();
+			/** Capture is deferred to the first real drag move so a tap reaches child links. */
+			cb.current.onStart();
+		},
+		[storeRef],
+	);
 
 	const onPointerMove = useCallback(
 		(e: PointerEvent<HTMLDivElement>) => {
 			const s = g.current;
-			if (s.startX === null) return;
+			if (s.startMain === null) return;
 
-			const dx = e.clientX - s.startX;
-			const dy = e.clientY - (s.startY ?? e.clientY);
+			const vertical = storeRef.current.vertical;
+			const main = vertical ? e.clientY : e.clientX;
+			const cross = vertical ? e.clientX : e.clientY;
+			const dm = main - s.startMain;
+			const dc = cross - (s.startCross ?? cross);
 
 			if (!s.dragging) {
 				if (
-					Math.abs(dx) < DRAG_DIRECTION_LOCK_PX &&
-					Math.abs(dy) < DRAG_DIRECTION_LOCK_PX
+					Math.abs(dm) < DRAG_DIRECTION_LOCK_PX &&
+					Math.abs(dc) < DRAG_DIRECTION_LOCK_PX
 				)
 					return;
-				if (Math.abs(dy) > Math.abs(dx)) {
+				if (Math.abs(dc) > Math.abs(dm)) {
 					/**
-					 * Vertical intent → release for page scroll. No drag happened, so settle as a
+					 * Cross-axis intent → release for page scroll. No drag happened, so settle as a
 					 * no-commit end (moved=false) and let the consumer resume its auto motion.
 					 */
-					s.startX = null;
+					s.startMain = null;
 					cb.current.onEnd(0, 0, false);
 					return;
 				}
 				s.dragging = true;
-				/** Now a real horizontal drag — capture so moves keep coming if the finger leaves. */
+				/** Now a real main-axis drag — capture so moves keep coming if the finger leaves. */
 				if (trackRef.current && s.pointerId !== null) {
 					trackRef.current.setPointerCapture?.(s.pointerId);
 				}
@@ -159,11 +170,11 @@ export function usePointerGesture({
 
 			const now = Date.now();
 			const dt = now - s.lastTime;
-			if (dt > 0) s.velocityX = (e.clientX - s.lastX) / dt;
+			if (dt > 0) s.velocity = (main - s.lastMain) / dt;
 			s.lastTime = now;
-			s.lastX = e.clientX;
+			s.lastMain = main;
 
-			cb.current.onMove(dx * storeRef.current.dirSign);
+			cb.current.onMove(dm * storeRef.current.dirSign);
 		},
 		[trackRef, storeRef],
 	);
@@ -173,38 +184,32 @@ export function usePointerGesture({
 	 * with no real drag — just clean up (moved=false). A real drag also arms the click suppressor.
 	 */
 	const settle = useCallback(
-		(endX: number) => {
+		(e: PointerEvent<HTMLDivElement>) => {
 			const s = g.current;
-			if (s.startX === null) return;
+			if (s.startMain === null) return;
+			const {dirSign, vertical} = storeRef.current;
 			const moved = s.dragging;
-			const dx = endX - s.startX;
-			s.startX = null;
+			const dx = (vertical ? e.clientY : e.clientX) - s.startMain;
+			s.startMain = null;
 			s.dragging = false;
 			if (moved) s.suppressClick = true;
-			const {dirSign} = storeRef.current;
-			cb.current.onEnd(dx * dirSign, s.velocityX * dirSign, moved);
+			cb.current.onEnd(dx * dirSign, s.velocity * dirSign, moved);
 		},
 		[storeRef],
 	);
 
-	const onPointerUp = useCallback(
-		(e: PointerEvent<HTMLDivElement>) => settle(e.clientX),
-		[settle],
-	);
+	const onPointerUp = settle;
 
 	/**
 	 * Safety net for "release outside the carousel leaves the gesture stuck": while the pointer is
 	 * captured this never fires, but if capture didn't engage a pointer leaving mid-drag would
 	 * otherwise hang the gesture forever. Treat it as a normal release.
 	 */
-	const onPointerLeave = useCallback(
-		(e: PointerEvent<HTMLDivElement>) => settle(e.clientX),
-		[settle],
-	);
+	const onPointerLeave = settle;
 
 	const onPointerCancel = useCallback(() => {
 		const s = g.current;
-		s.startX = null;
+		s.startMain = null;
 		s.dragging = false;
 		cb.current.onCancel();
 	}, []);

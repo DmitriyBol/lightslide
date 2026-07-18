@@ -77,4 +77,19 @@ describe('Keyboard', () => {
 		fireEvent.keyDown(container, {key: 'ArrowRight'});
 		expect(goToIndex).toHaveBeenCalledWith(1, 'button');
 	});
+
+	it('vertical: ArrowDown / ArrowUp step, Left / Right are left to the page', () => {
+		const {container, goToIndex} = setup({
+			currentIndex: 2,
+			storeRef: {current: createStore({vertical: true})},
+		});
+		fireEvent.keyDown(container, {key: 'ArrowDown'});
+		expect(goToIndex).toHaveBeenCalledWith(3, 'button');
+		fireEvent.keyDown(container, {key: 'ArrowUp'});
+		expect(goToIndex).toHaveBeenCalledWith(1, 'button');
+		goToIndex.mockClear();
+		fireEvent.keyDown(container, {key: 'ArrowRight'});
+		fireEvent.keyDown(container, {key: 'ArrowLeft'});
+		expect(goToIndex).not.toHaveBeenCalled();
+	});
 });

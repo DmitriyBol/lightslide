@@ -14,10 +14,11 @@ import {useViewportEngagement} from './useViewportEngagement';
  * container for the in-viewport/terminal lifecycle, and tracks viewed slides. Bundles that
  * never import `lightslide/analytics` pay nothing for any of it.
  *
- * A loop wrap is recognised from the arguments plus the store's dirSign — the visual
- * direction contradicts the index delta (ltr: `right` with `to <= from`, `left` with
- * `to >= from`; mirrored under rtl, where forward is 'left') — and never counts as reaching
- * the end, mirroring the pre-plugin core behaviour.
+ * A loop wrap is recognised from the arguments plus the store — the visual direction
+ * contradicts the index delta (ltr: `right` with `to <= from`, `left` with `to >= from`;
+ * mirrored under rtl, where forward is 'left'; 'down'/'up' likewise on a vertical
+ * carousel) — and never counts as reaching the end, mirroring the pre-plugin core
+ * behaviour.
  */
 export function Analytics<T = unknown>({
 	onEvent,
@@ -63,8 +64,9 @@ export function Analytics<T = unknown>({
 			if (source === 'pagination') {
 				emit({event: 'carousel_pagination_click', fromIndex: from, toIndex: to});
 			}
-			const forward =
-				direction === (store.dirSign === 1 ? 'right' : 'left');
+			const forward = store.vertical
+				? direction === 'down'
+				: direction === (store.dirSign === 1 ? 'right' : 'left');
 			const isWrap = forward ? to <= from : to >= from;
 			if (source !== 'auto' && !isWrap && to === store.maxIndex) {
 				fireTerminalIfNeeded('reachedEnd');

@@ -14,9 +14,10 @@ export type NavigateSource =
 
 /**
  * The visual direction the track moved — a loop wrap reports the motion, not the index delta,
- * and under rtl a forward step reports 'left'.
+ * and under rtl a forward step reports 'left'. A vertical carousel (`axis: 'y'`) reports
+ * 'up' / 'down' instead (forward is 'down' — the next slide rises from below).
  */
-export type NavDirection = 'left' | 'right';
+export type NavDirection = 'left' | 'right' | 'up' | 'down';
 
 /** The single navigation function shared between LightSlide and its gesture/plugin hooks. */
 export type NavigateFn = (nextIndex: number, source: NavigateSource) => void;
@@ -24,9 +25,9 @@ export type NavigateFn = (nextIndex: number, source: NavigateSource) => void;
 /**
  * The per-navigation hook the analytics plugin assigns to `store.emitNav`: flat arguments
  * (the plugin builds the event objects), called by navigateToIndex after every committed
- * position change. A loop wrap is recoverable from the arguments plus store.dirSign — the
+ * position change. A loop wrap is recoverable from the arguments plus the store — the
  * visual direction contradicts the index delta (ltr: `right` with `to <= from` or `left`
- * with `to >= from`; mirrored under rtl).
+ * with `to >= from`; mirrored under rtl, 'down'/'up' likewise on a vertical carousel).
  */
 export type EmitNav = (
 	from: number,

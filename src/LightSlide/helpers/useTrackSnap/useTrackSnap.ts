@@ -47,7 +47,7 @@ export function useTrackSnap(
 
 			if (doAnimate) {
 				track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
-				track.style.transform = trackTransform(offset, storeRef.current.dirSign);
+				track.style.transform = trackTransform(offset, storeRef.current);
 				const onEnd = () => {
 					track.style.transition = '';
 					track.removeEventListener('transitionend', onEnd);
@@ -56,7 +56,7 @@ export function useTrackSnap(
 				track.addEventListener('transitionend', onEnd, {once: true});
 			} else {
 				track.style.transition = '';
-				track.style.transform = trackTransform(offset, storeRef.current.dirSign);
+				track.style.transform = trackTransform(offset, storeRef.current);
 				onComplete?.();
 			}
 		},

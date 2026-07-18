@@ -109,7 +109,22 @@ describe('LightSlide', () => {
 		expect(screen.getByText('Slide 3')).toBeInTheDocument();
 	});
 
-	it('applies gap as column-gap on the track and omits it by default', () => {
+	it('marks the container with the vertical modifier for axis="y"', () => {
+		render(
+			<LightSlide label="Vertical" axis="y">
+				<Slide>
+					<div>Slide 1</div>
+				</Slide>
+				<Slide>
+					<div>Slide 2</div>
+				</Slide>
+			</LightSlide>,
+		);
+		const container = screen.getByRole('region', {name: 'Vertical'});
+		expect(container.className).toContain('vertical');
+	});
+
+	it('applies gap as CSS gap on the track and omits it by default', () => {
 		const {rerender} = render(
 			<LightSlide gap={16}>
 				<Slide>
@@ -121,7 +136,7 @@ describe('LightSlide', () => {
 			</LightSlide>,
 		);
 		const track = screen.getByRole('group', {name: '1 of 2'}).parentElement;
-		expect(track).toHaveStyle({columnGap: '16px'});
+		expect(track).toHaveStyle({gap: '16px'});
 
 		rerender(
 			<LightSlide>
@@ -133,7 +148,7 @@ describe('LightSlide', () => {
 				</Slide>
 			</LightSlide>,
 		);
-		expect(track?.style.columnGap).toBe('');
+		expect(track?.style.gap).toBe('');
 	});
 
 	it('fires carousel_in_viewport once when carousel enters viewport', () => {

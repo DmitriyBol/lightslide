@@ -158,4 +158,24 @@ describe('usePointerGesture', () => {
 		result.current.onPointerUp(move(300));
 		expect(onEnd).toHaveBeenCalledWith(200, 2, true);
 	});
+
+	it('vertical: clientY is the main axis for deltas, velocity, and the release', () => {
+		const {result, onMove, onEnd, track} = setup({vertical: true});
+		result.current.onPointerDown(down(100, 500));
+		jest.setSystemTime(100);
+		result.current.onPointerMove(move(100, 300)); /** dy -200 over 100ms → velocity -2 */
+		expect(track.setPointerCapture).toHaveBeenCalledWith(1);
+		expect(onMove).toHaveBeenCalledWith(-200);
+		result.current.onPointerUp(move(100, 300));
+		expect(onEnd).toHaveBeenCalledWith(-200, -2, true);
+	});
+
+	it('vertical: the direction lock inverts — a horizontal gesture abandons to the page', () => {
+		const {result, onMove, onEnd, track} = setup({vertical: true});
+		result.current.onPointerDown(down(100, 500));
+		result.current.onPointerMove(move(170, 495)); /** dx 70 > dy 5 → cross-axis */
+		expect(onMove).not.toHaveBeenCalled();
+		expect(track.setPointerCapture).not.toHaveBeenCalled();
+		expect(onEnd).toHaveBeenCalledWith(0, 0, false);
+	});
 });

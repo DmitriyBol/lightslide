@@ -18,7 +18,7 @@ import type {EmitNav} from './navigation';
  * are prepended/appended (0 when not looping). `slideWidth` is the cached per-slide px width,
  * floor((containerWidth − visible gaps) / slidesPerView), written by useSlideMetrics on
  * mount/resize and read by every motion/gesture/snap path so the hot loop never touches layout
- * (offsetWidth). `gap` is the px space between adjacent slides (CSS column-gap on the track);
+ * (offsetWidth). `gap` is the px space between adjacent slides (CSS gap on the track);
  * every offset computation steps by the stride `slideWidth + gap`.
  * `centerInset` is the px shift that centres the active slide — (container − slide) / 2,
  * written by useSlideMetrics alongside slideWidth (0 unless align is center with more than
@@ -45,10 +45,17 @@ import type {EmitNav} from './navigation';
  * `dir="rtl"`, so all 1-D math stays direction-agnostic — pointer/wheel deltas are multiplied
  * by it once at the primitive boundary and the track transform negates through it once in
  * trackTransform; everything in between never sees the direction.
+ * `vertical` is the scroll axis, written from the `axis` prop each render. The same
+ * axis-agnostic contract as dirSign: all 1-D math runs on main-axis values, and the axis is
+ * consulted only where logical pixels meet physical ones — the container measure
+ * (useSlideMetrics), the pointer boundary (usePointerGesture picks clientY and inverts the
+ * direction lock), and the transform (trackTransform picks translateY). It forces dirSign
+ * to 1 — vertical order has no reading direction to mirror.
  */
 export type LightSlideStore = {
 	currentIndex: number;
 	dirSign: 1 | -1;
+	vertical: boolean;
 	slideCount: number;
 	maxIndex: number;
 	slidesPerView: number;
@@ -74,6 +81,7 @@ export function createStore(
 	return {
 		currentIndex: 0,
 		dirSign: 1,
+		vertical: false,
 		slideCount: 0,
 		maxIndex: 0,
 		slidesPerView: 1,

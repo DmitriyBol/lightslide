@@ -92,7 +92,7 @@ export function AccessibilityExample() {
 	return (
 		<Demo
 			id="a11y"
-			number="23"
+			number="24"
 			title="Accessibility layer"
 			tag="a11y"
 			description={

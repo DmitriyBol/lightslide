@@ -59,9 +59,13 @@ describe('LightSlide SSR', () => {
 		expect(html).toContain('*-2))');
 	});
 
+	/**
+	 * The Navigation critical CSS legitimately contains static translateX/-Y placements, so
+	 * the assertion targets the track's calc()-based rest transform specifically.
+	 */
 	it('keeps the non-loop track untransformed at index zero', () => {
 		const html = renderToString(carousel());
 
-		expect(html).not.toContain('translateX');
+		expect(html).not.toContain('translateX(calc');
 	});
 });

@@ -22,6 +22,7 @@ const SECTION_IDS = [
 	'wheel',
 	'drag-mode',
 	'rtl',
+	'vertical',
 	'product-cards',
 	'link-cards',
 	'custom-timeout',

@@ -73,7 +73,7 @@ export function LinkCardsExample() {
 	return (
 		<Demo
 			id="link-cards"
-			number="19"
+			number="20"
 			title="Clickable links"
 			tag="tap vs drag"
 			description={

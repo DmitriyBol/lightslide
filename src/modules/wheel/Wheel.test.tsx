@@ -72,6 +72,36 @@ describe('Wheel', () => {
 		expect(onIndexChange).not.toHaveBeenCalled();
 	});
 
+	it('is inert on a vertical carousel — the slot never binds its listener', () => {
+		const onIndexChange = jest.fn();
+		render(
+			<LightSlide
+				label="Cards"
+				axis="y"
+				wheel={<Wheel />}
+				onIndexChange={onIndexChange}>
+				<Slide>
+					<div>One</div>
+				</Slide>
+				<Slide>
+					<div>Two</div>
+				</Slide>
+			</LightSlide>,
+		);
+
+		const container = screen.getByRole('region', {name: 'Cards'});
+		act(() => {
+			container.dispatchEvent(
+				new WheelEvent('wheel', {cancelable: true, deltaX: 40}),
+			);
+			container.dispatchEvent(
+				new WheelEvent('wheel', {cancelable: true, deltaY: 120}),
+			);
+		});
+
+		expect(onIndexChange).not.toHaveBeenCalled();
+	});
+
 	it('fails loudly outside <LightSlide wheel={…}>', () => {
 		/** React logs the render-phase throw — silence the expected noise. */
 		const consoleError = jest

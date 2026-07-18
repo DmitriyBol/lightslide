@@ -27,9 +27,33 @@
 	touch-action: pan-y;
 }
 
-// Inner sliding track. The translateX transform is dynamic and applied
+// Inner sliding track. The translate transform is dynamic and applied
 // inline by the component; only the static layout lives here.
 .track {
 	display: flex;
 	will-change: transform;
+}
+
+// Vertical axis (`axis: 'y'`). The consumer gives the container its height; a flex column
+// hands it down — the stage takes whatever the pagination row leaves, the viewport and
+// track fill the stage (the track's 100% also anchors the SSR percentage math), slides
+// stack as a column, and touches pan the page horizontally instead of vertically.
+.vertical {
+	display: flex;
+	flex-direction: column;
+
+	.stage {
+		flex: 1;
+		min-height: 0;
+	}
+
+	.viewport {
+		height: 100%;
+		touch-action: pan-x;
+	}
+
+	.track {
+		flex-direction: column;
+		height: 100%;
+	}
 }

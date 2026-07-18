@@ -1,31 +1,47 @@
 // Placement declarations here are mirrored by the SSR critical CSS in Navigation.tsx —
 // keep the two in sync.
 
-// Shared placement for the built-in buttons and the custom-render slots: vertically
-// centred over the track, layered above it. @extend groups the selectors in the
-// emitted CSS (one rule, comma-joined) instead of repeating the block per class.
+// Shared box for the built-in buttons and the custom-render slots: layered above the
+// track, content flex-centred. @extend groups the selectors in the emitted CSS (one rule,
+// comma-joined) instead of repeating the block per class.
 %control {
 	position: absolute;
-	top: 50%;
 	z-index: 1;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+// Horizontal placement: vertically centred over the track, prev at the reading start and
+// next at the reading end, so the buttons swap sides automatically under dir="rtl" (set
+// on the carousel container by the `dir` prop).
+%h-start {
+	top: 50%;
+	inset-inline-start: 8px;
 	transform: translateY(-50%);
 }
 
-// Logical placement: prev sits at the reading start, next at the reading end, so the
-// buttons swap sides automatically under dir="rtl" (set on the carousel container by the
-// `dir` prop).
-%start {
-	inset-inline-start: 8px;
-}
-
-%end {
+%h-end {
+	top: 50%;
 	inset-inline-end: 8px;
+	transform: translateY(-50%);
 }
 
-// Prev/next buttons — vertically centred over the track.
+// Vertical placement (`axis: 'y'`): horizontally centred, prev at the top edge, next at
+// the bottom. No reading-direction variants — vertical order ignores dir.
+%v-start {
+	top: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+%v-end {
+	bottom: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+// Prev/next buttons; the axis-specific placement class lands next to it.
 .button {
 	@extend %control;
 
@@ -43,11 +59,19 @@
 }
 
 .prev {
-	@extend %start;
+	@extend %h-start;
 }
 
 .next {
-	@extend %end;
+	@extend %h-end;
+}
+
+.prevVertical {
+	@extend %v-start;
+}
+
+.nextVertical {
+	@extend %v-end;
 }
 
 .button:disabled {
@@ -57,25 +81,34 @@
 
 // The built-in ‹ › glyphs must point outward from the slides in both directions; under rtl
 // the buttons have swapped sides, so mirror the glyph (the circular button is symmetric —
-// only the character flips visually).
-[dir='rtl'] .button {
+// only the character flips visually). Scoped to the horizontal placements: the vertical
+// ˄ ˅ glyphs have nothing to mirror.
+[dir='rtl'] .prev,
+[dir='rtl'] .next {
 	transform: translateY(-50%) scaleX(-1);
 }
 
 // Positioning slot for custom renderPrev/renderNext output. Gives consumer JSX the
-// same default placement as the built-in buttons (vertically centred over the
-// track, prev on the left / next on the right) without them having to position it,
+// same default placement as the built-in buttons without them having to position it,
 // and lives outside the clipping .viewport so it is never cropped.
 .slot {
 	@extend %control;
 }
 
 .slotPrev {
-	@extend %start;
+	@extend %h-start;
 }
 
 .slotNext {
-	@extend %end;
+	@extend %h-end;
+}
+
+.slotPrevVertical {
+	@extend %v-start;
+}
+
+.slotNextVertical {
+	@extend %v-end;
 }
 
 // Default boundary state for custom buttons: dim like the built-in :disabled button so
