@@ -22,7 +22,7 @@ for what you import.
 
 - [What it can do](#what-it-can-do)
 - [How it compares](#how-it-compares)
-- [Installation](#installation) · [Quick start](#quick-start)
+- [Installation](#installation) · [Quick start](#quick-start) · [The full kit, via spread](#the-full-kit-via-spread)
 - [Components & props](#components--props) — [`<LightSlide>`](#lightslide), [`<Slide>`](#slidet),
   [Navigation](#navigation-lightslidenavigation), [Pagination](#pagination-lightslidepagination),
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
@@ -142,13 +142,21 @@ import { LightSlide, Slide } from "lightslide";
 import { Navigation } from "lightslide/navigation";
 import { Pagination } from "lightslide/pagination";
 
+const PRODUCTS = [
+  { id: 1, name: "Air Runner" },
+  { id: 2, name: "Urban Step" },
+  { id: 3, name: "Trail Boot" },
+  { id: 4, name: "Flip Pro" },
+];
+
 function ProductCarousel() {
   return (
     <LightSlide slidesPerView={2} navigation={<Navigation />} pagination={<Pagination />}>
-      <Slide data={{ id: 1 }}><ProductCard id={1} /></Slide>
-      <Slide data={{ id: 2 }}><ProductCard id={2} /></Slide>
-      <Slide data={{ id: 3 }}><ProductCard id={3} /></Slide>
-      <Slide data={{ id: 4 }}><ProductCard id={4} /></Slide>
+      {PRODUCTS.map((product) => (
+        <Slide key={product.id} data={product}>
+          <ProductCard product={product} />
+        </Slide>
+      ))}
     </LightSlide>
   );
 }
@@ -158,6 +166,67 @@ The core ships only what every carousel needs (~4.9 kB). Arrows, dots, autoplay,
 ticker, wheel gestures, free scrolling, breakpoints, analytics, and the accessibility layer
 are separate tree-shakeable entries — import a module and pass its node to the matching slot
 prop (or call its hook); skip the import and none of its code or styles reaches your bundle.
+
+### The full kit, via spread
+
+Slots are ordinary props, so the "everything on" setup composes once into a preset object
+and spreads into every carousel in your app — each instance stays three lines and overrides
+stay point-wise:
+
+```tsx
+import { useState } from "react";
+import type { LightSlideProps } from "lightslide";
+import { LightSlide, Slide } from "lightslide";
+import { A11y } from "lightslide/a11y";
+import { Analytics } from "lightslide/analytics";
+import { Autoplay } from "lightslide/autoplay";
+import { useBreakpoints } from "lightslide/breakpoints";
+import { FreeScroll } from "lightslide/free";
+import { Navigation } from "lightslide/navigation";
+import { Pagination } from "lightslide/pagination";
+import { Wheel } from "lightslide/wheel";
+
+/** Your app's house kit — define once, spread everywhere. */
+const carouselKit = {
+  navigation: <Navigation />,
+  pagination: <Pagination />,
+  wheel: <Wheel />,
+  free: <FreeScroll snap />,
+  a11y: <A11y />,
+  analytics: <Analytics onEvent={(e) => track(e.event, e)} />,
+} satisfies Partial<LightSlideProps>;
+
+function FullCarousel({ products }: { products: Product[] }) {
+  const layout = useBreakpoints(
+    { slidesPerView: 1.2, gap: 8 },
+    { "(min-width: 768px)": { slidesPerView: 2.5, gap: 16 } },
+  );
+  const [playing, setPlaying] = useState(true);
+
+  return (
+    <LightSlide
+      label="Products"
+      isLoop
+      lazyMount
+      {...layout}
+      {...carouselKit}
+      autoplay={playing && <Autoplay interval={4000} />}
+    >
+      {products.map((product) => (
+        <Slide key={product.id} data={product}>
+          <ProductCard product={product} />
+        </Slide>
+      ))}
+    </LightSlide>
+  );
+}
+
+/** Elsewhere: the same kit, minus the dots. */
+<LightSlide label="Reviews" {...carouselKit} pagination={null}>…</LightSlide>;
+```
+
+Only `flow` is left out of the kit on purpose — the continuous ticker is an alternative
+motion mode that supersedes `autoplay` while it runs, so pass one or the other per carousel.
 
 ## Components & props
 
