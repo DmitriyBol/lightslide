@@ -55,6 +55,7 @@ function LightSlideInner(
 		slideLabel = DEFAULT_SLIDE_LABEL,
 		slidesPerView = 1,
 		gap = 0,
+		dir,
 		align = 'start',
 		initialIndex = 0,
 		index,
@@ -137,6 +138,7 @@ function LightSlideInner(
 	 * far into the prepend strip (capped — clones can't outnumber the slides they copy).
 	 */
 	const isCentered = align === 'center' && slidesPerView > 1;
+	const isRtl = dir === 'rtl';
 	const loopOffset = effectiveLoop
 		? Math.min(
 				slideCount,
@@ -161,6 +163,7 @@ function LightSlideInner(
 	store.maxIndex = maxIndex;
 	store.slidesPerView = slidesPerView;
 	store.gap = gap;
+	store.dirSign = isRtl ? -1 : 1;
 	store.effectiveFlow = effectiveFlow;
 	store.isLoop = effectiveLoop;
 	store.loopOffset = loopOffset;
@@ -264,6 +267,7 @@ function LightSlideInner(
 			startVisual: loopOffset + Math.min(startIndex, maxIndex),
 			centered: isCentered,
 			isLoop: effectiveLoop,
+			rtl: isRtl,
 		}),
 	);
 
@@ -294,6 +298,7 @@ function LightSlideInner(
 					role={label ? 'region' : 'group'}
 					aria-roledescription="carousel"
 					aria-label={label}
+					dir={dir}
 					className={cx(styles.container, className)}
 					style={style}>
 					<style dangerouslySetInnerHTML={{__html: ssrCss}} />

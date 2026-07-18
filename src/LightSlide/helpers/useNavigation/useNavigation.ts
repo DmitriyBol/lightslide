@@ -72,12 +72,13 @@ export function useNavigation({
 
 			/**
 			 * A wrap's direction is the user's motion, not the index delta — a backward wrap
-			 * jumps 0 → maxIdx yet the track visibly moves left.
+			 * jumps 0 → maxIdx yet the track visibly moves left. The direction is the VISUAL
+			 * truth, so under rtl a forward step reports 'left' (analytics resolves the wrap
+			 * contradiction through the same dirSign).
 			 */
+			const isForward = isForwardWrap || (!isBackwardWrap && clamped > from);
 			const direction: NavDirection =
-				isForwardWrap || (!isBackwardWrap && clamped > from)
-					? 'right'
-					: 'left';
+				isForward === (storeRef.current.dirSign === 1) ? 'right' : 'left';
 
 			storeRef.current.currentIndex = clamped;
 			setCurrentIndex(clamped);

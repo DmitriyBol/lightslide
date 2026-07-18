@@ -6,6 +6,7 @@ import {prefersReducedMotion} from '../../../utils/reducedMotion/reducedMotion';
 import {SNAP_DURATION_MS, SNAP_EASING} from '../constants';
 import type {LightSlideStore} from '../store';
 import {trackOffset} from '../trackOffset/trackOffset';
+import {trackTransform} from '../trackTransform/trackTransform';
 
 type TrackSnap = {
 	snapToVisual: (
@@ -46,7 +47,7 @@ export function useTrackSnap(
 
 			if (doAnimate) {
 				track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
-				track.style.transform = `translateX(${-offset}px)`;
+				track.style.transform = trackTransform(offset, storeRef.current.dirSign);
 				const onEnd = () => {
 					track.style.transition = '';
 					track.removeEventListener('transitionend', onEnd);
@@ -55,7 +56,7 @@ export function useTrackSnap(
 				track.addEventListener('transitionend', onEnd, {once: true});
 			} else {
 				track.style.transition = '';
-				track.style.transform = `translateX(${-offset}px)`;
+				track.style.transform = trackTransform(offset, storeRef.current.dirSign);
 				onComplete?.();
 			}
 		},

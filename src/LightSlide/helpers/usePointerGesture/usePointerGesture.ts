@@ -1,8 +1,9 @@
 import {useCallback, useMemo, useRef} from 'react';
 
-import type {MouseEvent, PointerEvent, RefObject} from 'react';
+import type {MouseEvent, MutableRefObject, PointerEvent, RefObject} from 'react';
 
 import {DRAG_DIRECTION_LOCK_PX} from '../constants';
+import type {LightSlideStore} from '../store';
 
 /**
  * The pointer-event handler bag every gesture mode (drag-to-snap, flow drift, free momentum)
@@ -46,6 +47,7 @@ type PointerGestureCallbacks = {
 
 type PointerGestureParams = PointerGestureCallbacks & {
 	trackRef: RefObject<HTMLDivElement>;
+	storeRef: MutableRefObject<LightSlideStore>;
 };
 
 /**
@@ -88,9 +90,14 @@ const initialScratch = (): GestureScratch => ({
  * deferred pointer capture, velocity tracking, swallowing the click that follows a real drag, and
  * the "pointer left the carousel mid-drag" safety net — and delegates the mode-specific motion to
  * the four callbacks. Returns the handler bag the consumer spreads onto the viewport unchanged.
+ *
+ * Deltas and velocities cross the callback boundary in LOGICAL space: physical clientX deltas
+ * are multiplied by store.dirSign here, once, so under rtl a physically rightward swipe arrives
+ * as a negative (forward) delta and none of the mode math ever sees the reading direction.
  */
 export function usePointerGesture({
 	trackRef,
+	storeRef,
 	onStart,
 	onMove,
 	onEnd,
@@ -156,25 +163,29 @@ export function usePointerGesture({
 			s.lastTime = now;
 			s.lastX = e.clientX;
 
-			cb.current.onMove(dx);
+			cb.current.onMove(dx * storeRef.current.dirSign);
 		},
-		[trackRef],
+		[trackRef, storeRef],
 	);
 
 	/**
 	 * pointerup and the pointer-leave safety net share this: commit the gesture, or — for a tap
 	 * with no real drag — just clean up (moved=false). A real drag also arms the click suppressor.
 	 */
-	const settle = useCallback((endX: number) => {
-		const s = g.current;
-		if (s.startX === null) return;
-		const moved = s.dragging;
-		const dx = endX - s.startX;
-		s.startX = null;
-		s.dragging = false;
-		if (moved) s.suppressClick = true;
-		cb.current.onEnd(dx, s.velocityX, moved);
-	}, []);
+	const settle = useCallback(
+		(endX: number) => {
+			const s = g.current;
+			if (s.startX === null) return;
+			const moved = s.dragging;
+			const dx = endX - s.startX;
+			s.startX = null;
+			s.dragging = false;
+			if (moved) s.suppressClick = true;
+			const {dirSign} = storeRef.current;
+			cb.current.onEnd(dx * dirSign, s.velocityX * dirSign, moved);
+		},
+		[storeRef],
+	);
 
 	const onPointerUp = useCallback(
 		(e: PointerEvent<HTMLDivElement>) => settle(e.clientX),

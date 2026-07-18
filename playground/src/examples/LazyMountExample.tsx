@@ -79,7 +79,7 @@ export function LazyMountExample() {
 	return (
 		<Demo
 			id="lazy-mount"
-			number="21"
+			number="22"
 			title="Lazy slide mounting"
 			tag={enabled ? `lazyMount={{margin: ${margin}}}` : 'lazyMount off'}
 			description={

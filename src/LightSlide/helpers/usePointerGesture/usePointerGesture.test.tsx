@@ -1,9 +1,11 @@
 import {renderHook} from '@testing-library/react';
 import type {MouseEvent, PointerEvent} from 'react';
 
+import type {LightSlideStore} from '../store';
+import {createStore} from '../store';
 import {usePointerGesture} from './usePointerGesture';
 
-function setup() {
+function setup(storeOverrides: Partial<LightSlideStore> = {}) {
 	const onStart = jest.fn();
 	const onMove = jest.fn();
 	const onEnd = jest.fn();
@@ -11,9 +13,11 @@ function setup() {
 	const track = document.createElement('div');
 	/** jsdom does not implement pointer capture — stub it so we can assert calls. */
 	track.setPointerCapture = jest.fn();
+	const storeRef = {current: createStore(storeOverrides)};
 	const {result} = renderHook(() =>
 		usePointerGesture({
 			trackRef: {current: track},
+			storeRef,
 			onStart,
 			onMove,
 			onEnd,
@@ -143,5 +147,15 @@ describe('usePointerGesture', () => {
 		const {event, preventDefault} = clickEvent();
 		result.current.onClickCapture(event);
 		expect(preventDefault).not.toHaveBeenCalled();
+	});
+
+	it('crosses the callback boundary in logical space: rtl flips deltas and velocity', () => {
+		const {result, onMove, onEnd} = setup({dirSign: -1});
+		result.current.onPointerDown(down(500));
+		jest.setSystemTime(100);
+		result.current.onPointerMove(move(300)); /** physical dx -200 → logical +200 */
+		expect(onMove).toHaveBeenCalledWith(200);
+		result.current.onPointerUp(move(300));
+		expect(onEnd).toHaveBeenCalledWith(200, 2, true);
 	});
 });

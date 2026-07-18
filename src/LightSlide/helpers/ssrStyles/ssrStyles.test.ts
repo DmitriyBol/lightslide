@@ -13,6 +13,7 @@ describe('buildSsrCss', () => {
 			startVisual: 0,
 			centered: false,
 			isLoop: false,
+			rtl: false,
 		});
 
 		expect(css).toContain('.container,.stage{position:relative;width:100%}');
@@ -28,6 +29,7 @@ describe('buildSsrCss', () => {
 			startVisual: 0,
 			centered: false,
 			isLoop: false,
+			rtl: false,
 		});
 
 		expect(css).toContain(
@@ -43,6 +45,7 @@ describe('buildSsrCss', () => {
 			startVisual: 0,
 			centered: false,
 			isLoop: false,
+			rtl: false,
 		});
 		const offset = buildSsrCss({
 			slidesId: ':r1:',
@@ -51,6 +54,7 @@ describe('buildSsrCss', () => {
 			startVisual: 3,
 			centered: false,
 			isLoop: true,
+			rtl: false,
 		});
 
 		expect(atStart).not.toContain('transform');
@@ -67,6 +71,7 @@ describe('buildSsrCss', () => {
 			startVisual: 0,
 			centered: true,
 			isLoop: false,
+			rtl: false,
 		});
 
 		/** min(0px, …): trackOffset rests the first position flush at offset 0. */
@@ -83,6 +88,7 @@ describe('buildSsrCss', () => {
 			startVisual: 3,
 			centered: true,
 			isLoop: true,
+			rtl: false,
 		});
 
 		expect(css).toContain(
@@ -104,6 +110,7 @@ describe('buildSsrCss', () => {
 			startVisual: Number.POSITIVE_INFINITY,
 			centered: false,
 			isLoop: false,
+			rtl: false,
 		});
 
 		expect(css).not.toContain('script');
@@ -120,8 +127,42 @@ describe('buildSsrCss', () => {
 			startVisual: 4,
 			centered: false,
 			isLoop: true,
+			rtl: false,
 		});
 
 		expect(css.match(/\[id="«r7»"\]/g)).toHaveLength(2);
+	});
+
+	it('mirrors the rest-transform sign under rtl (CSS twin of trackTransform)', () => {
+		const css = buildSsrCss({
+			slidesId: ':r1:',
+			slidesPerView: 1,
+			gap: 8,
+			startVisual: 3,
+			centered: false,
+			isLoop: true,
+			rtl: true,
+		});
+
+		expect(css).toContain(
+			'transform:translateX(calc(((100% - 0px)/1 + 8px)*3))',
+		);
+	});
+
+	it('subtracts the centring inset and clamps through max() under rtl', () => {
+		const css = buildSsrCss({
+			slidesId: ':r1:',
+			slidesPerView: 1.5,
+			gap: 0,
+			startVisual: 0,
+			centered: true,
+			isLoop: false,
+			rtl: true,
+		});
+
+		/** max(0px, …): the clamped offset is the translate itself when the layout is mirrored. */
+		expect(css).toContain(
+			'transform:translateX(max(0px,calc(((100% - 0px)/1.5 + 0px)*0 - (100% - ((100% - 0px)/1.5))/2)))',
+		);
 	});
 });

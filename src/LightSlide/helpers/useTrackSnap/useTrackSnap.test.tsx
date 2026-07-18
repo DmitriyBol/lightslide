@@ -80,4 +80,11 @@ describe('useTrackSnap', () => {
 		result.current.snapTrack(1, false);
 		expect(track.style.transform).toBe('translateX(-300px)');
 	});
+
+	it('mirrors the transform sign under rtl, rest offset unchanged', () => {
+		const {result, track, store} = setupTrackSnap({dirSign: -1});
+		result.current.snapToVisual(2, false);
+		expect(track.style.transform).toBe('translateX(600px)');
+		expect(store.restOffset).toBe(600);
+	});
 });

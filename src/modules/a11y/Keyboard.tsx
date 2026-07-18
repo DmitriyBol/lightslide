@@ -5,8 +5,10 @@ import {useA11yContext} from '../../seams/a11ySeam';
 const EDITABLE = /^(INPUT|TEXTAREA|SELECT)$/;
 
 /**
- * Arrow-key navigation. Left/Right step one slide, Home/End jump to the first/last position;
- * wrap-around at the ends follows the carousel's loop mode (via the shared navigate path). The
+ * Arrow-key navigation. Left/Right step one slide following the VISUAL direction (APG: under
+ * rtl the slides advance leftward, so ArrowLeft steps forward), Home/End jump to the first/last
+ * position; wrap-around at the ends follows the carousel's loop mode (via the shared navigate
+ * path). The
  * listener lives on the carousel container, so it only fires when focus is already inside the
  * carousel — reached by tabbing to its nav buttons, dots, or focusable slide content. Keydowns
  * originating in a form field are left alone so typing (and native caret movement) is untouched.
@@ -23,7 +25,8 @@ export function Keyboard() {
 		if (!el) return;
 
 		const onKeyDown = (e: KeyboardEvent) => {
-			const {currentIndex, maxIndex, goToIndex} = latest.current;
+			const {currentIndex, maxIndex, goToIndex, storeRef} = latest.current;
+			const {dirSign} = storeRef.current;
 
 			const target = e.target as HTMLElement | null;
 			if (
@@ -36,10 +39,10 @@ export function Keyboard() {
 			let next: number;
 			switch (e.key) {
 				case 'ArrowLeft':
-					next = currentIndex - 1;
+					next = currentIndex - dirSign;
 					break;
 				case 'ArrowRight':
-					next = currentIndex + 1;
+					next = currentIndex + dirSign;
 					break;
 				case 'Home':
 					next = 0;

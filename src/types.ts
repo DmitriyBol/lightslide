@@ -19,6 +19,12 @@ export type LazyMountConfig = {
  * - `gap` — horizontal space between adjacent slides, px (default 0). Applied as CSS
  *   `column-gap` on the track and folded into all geometry: slide width, snap positions,
  *   the fractional flush of the last slide, loop clones, and flow.
+ * - `dir` — the carousel's reading direction (default `'ltr'`). `'rtl'` mirrors everything:
+ *   the container gets `dir="rtl"` (the browser mirrors the flex layout), slides advance
+ *   right-to-left, gestures/wheel/keyboard follow the visual direction, and the navigation
+ *   buttons swap sides. Set the prop rather than relying on a `dir` attribute up the tree —
+ *   the server can't read computed styles, and the SSR critical CSS must emit the correctly
+ *   signed resting transform (zero CLS).
  * - `align` — where the active slide rests in the viewport (default `'start'`, the left
  *   edge). `'center'` centres it, with the neighbours peeking symmetrically — the hero /
  *   stories pattern; pair it with a fractional `slidesPerView` (e.g. 1.2), since with
@@ -69,6 +75,7 @@ export type LightSlideProps = {
 	slideLabel?: (index: number, count: number) => string;
 	slidesPerView?: number;
 	gap?: number;
+	dir?: 'ltr' | 'rtl';
 	align?: 'start' | 'center';
 	initialIndex?: number;
 	index?: number;

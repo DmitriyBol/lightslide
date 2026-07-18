@@ -27,6 +27,7 @@ import {MinimalExample} from './examples/MinimalExample';
 import {NavigationExample} from './examples/NavigationExample';
 import {PaginationExample} from './examples/PaginationExample';
 import {ProductCardsExample} from './examples/ProductCardsExample';
+import {RtlExample} from './examples/RtlExample';
 import {SlidesPerViewExample} from './examples/SlidesPerViewExample';
 import {ThumbnailsExample} from './examples/ThumbnailsExample';
 import {WheelExample} from './examples/WheelExample';
@@ -67,6 +68,7 @@ export function App() {
 				<FlowPerfExample />
 				<WheelExample />
 				<DragModeExample />
+				<RtlExample />
 
 				<PhaseLabel label="Cards & state" />
 				<ProductCardsExample />
@@ -91,7 +93,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~4.9&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~5&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub
