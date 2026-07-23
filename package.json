@@ -206,7 +206,7 @@
     "stylelint-config-standard-scss": "^13.1.0",
     "ts-jest": "^29.1.4",
     "tslib": "^2.6.3",
-    "typescript": "^5.5.3"
+    "typescript": "^7.0.2"
   },
   "keywords": [
     "react",
