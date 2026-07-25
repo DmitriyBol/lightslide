@@ -13,6 +13,30 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Deferred majors — these require a coordinated migration, not a weekly
+      # PR (React 19 breaks ref types; TypeScript 7, the Jest 30 ecosystem, and
+      # stylelint-config-standard 40 → stylelint 17 are all held back). Ignoring
+      # the major bump stops the recurring red PR; minor/patch still flow.
+      # Re-evaluate deliberately, then drop the relevant entry (LIG-20, LIG-26).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jest-environment-jsdom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "stylelint-config-standard"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

@@ -161,6 +161,10 @@
   "engines": {
     "node": ">=18"
   },
+  "overrides": {
+    "minimatch": "^10.0.1",
+    "brace-expansion": "^5.0.8"
+  },
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
