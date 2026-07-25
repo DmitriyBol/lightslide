@@ -10,6 +10,7 @@ import {useTheme} from './components/useTheme';
 import {AccessibilityExample} from './examples/AccessibilityExample';
 import {AlignExample} from './examples/AlignExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
+import {AutoWidthExample} from './examples/AutoWidthExample';
 import {BasicExample} from './examples/BasicExample';
 import {BreakpointsExample} from './examples/BreakpointsExample';
 import {CompareExample} from './examples/CompareExample';
@@ -55,6 +56,7 @@ export function App() {
 
 				<PhaseLabel label="Navigation" />
 				<SlidesPerViewExample />
+				<AutoWidthExample />
 				<AlignExample />
 				<BreakpointsExample />
 				<NavigationExample />
