@@ -9,6 +9,7 @@ const SECTION_IDS = [
 	'minimal',
 	'custom-styles',
 	'slides-per-view',
+	'auto-width',
 	'align',
 	'breakpoints',
 	'navigation',

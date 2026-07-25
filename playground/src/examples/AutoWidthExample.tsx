@@ -1,9 +1,12 @@
+import {useState} from 'react';
+
 import {LightSlide, Slide} from 'lightslide';
 import {Navigation} from 'lightslide/navigation';
 import {Pagination} from 'lightslide/pagination';
 
-import {Demo, Well} from '../components/Demo';
+import {Controls, Demo, Well} from '../components/Demo';
 import slides from '../components/slides.module.scss';
+import {Toggle} from '../components/Toggle';
 import {cardTone} from '../components/tones';
 
 const ITEMS = [
@@ -17,6 +20,8 @@ const ITEMS = [
 ];
 
 export function AutoWidthExample() {
+	const [loop, setLoop] = useState(false);
+
 	return (
 		<Demo
 			id="auto-width"
@@ -32,10 +37,20 @@ export function AutoWidthExample() {
 					<code>slidesPerView</code>.
 				</>
 			}>
+			<Controls>
+				<Toggle
+					checked={loop}
+					onChange={setLoop}
+					label="loop"
+					ariaLabel="loop"
+				/>
+			</Controls>
+
 			<Well>
 				<LightSlide
 					slidesPerView="auto"
 					gap={12}
+					loop={loop}
 					navigation={<Navigation />}
 					pagination={<Pagination />}>
 					{ITEMS.map((item, i) => (
