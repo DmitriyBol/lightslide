@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
+import {contentSpan, loopHome} from '../slideOffsets/slideOffsets';
 import type {LightSlideStore} from '../store';
 import {trackTransform} from '../trackTransform/trackTransform';
 import {useIsomorphicLayoutEffect} from '../useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
@@ -86,18 +87,17 @@ export function useFlow({
 	const pauseOnFocusRef = useRef(pauseOnFocus);
 	pauseOnFocusRef.current = pauseOnFocus;
 
-	/** `stride` is the px distance between adjacent slide positions — slideWidth + gap. */
-	const applyTransform = useCallback(
-		(stride: number) => {
-			const track = trackRef.current;
-			if (!track) return;
-			const store = storeRef.current;
-			const base = store.loopOffset * stride;
-			track.style.transition = '';
-			track.style.transform = trackTransform(base + flow.current.offset, store);
-		},
-		[trackRef, storeRef],
-	);
+	/** Drifts from the loop's home offset — `loopOffset × stride`, or the measured edge in auto. */
+	const applyTransform = useCallback(() => {
+		const track = trackRef.current;
+		if (!track) return;
+		const store = storeRef.current;
+		track.style.transition = '';
+		track.style.transform = trackTransform(
+			loopHome(store) + flow.current.offset,
+			store,
+		);
+	}, [trackRef, storeRef]);
 
 	const clearResumeTimer = useCallback(() => {
 		if (flow.current.resumeTimer !== null) {
@@ -120,8 +120,7 @@ export function useFlow({
 	 */
 	useIsomorphicLayoutEffect(() => {
 		if (!enabled) return;
-		const {slideWidth, gap} = storeRef.current;
-		if (slideWidth > 0) applyTransform(slideWidth + gap);
+		if (contentSpan(storeRef.current) > 0) applyTransform();
 	}, [enabled, applyTransform, storeRef]);
 
 	useEffect(() => {
@@ -143,8 +142,7 @@ export function useFlow({
 			 * ResizeObserver refreshes store.slideWidth for us.
 			 */
 			const store = storeRef.current;
-			const {slideWidth, gap, slideCount, hovered, focusWithin, apiPaused, wheelDeltaX} =
-				store;
+			const {hovered, focusWithin, apiPaused, wheelDeltaX} = store;
 			store.wheelDeltaX = 0;
 			const engaged =
 				apiPaused ||
@@ -156,10 +154,10 @@ export function useFlow({
 			 */
 			let delta = f.interacting ? 0 : wheelDeltaX;
 			if (!f.interacting && !engaged) delta += (speedRef.current * dt) / 1000;
-			if (delta !== 0 && slideWidth > 0) {
-				const stride = slideWidth + gap;
-				f.offset = wrap(f.offset + delta, slideCount * stride);
-				applyTransform(stride);
+			const span = contentSpan(store);
+			if (delta !== 0 && span > 0) {
+				f.offset = wrap(f.offset + delta, span);
+				applyTransform();
 			}
 
 			f.raf = requestAnimationFrame(step);
@@ -186,11 +184,9 @@ export function useFlow({
 			const track = trackRef.current;
 			if (!track) return;
 			const store = storeRef.current;
-			const {slideWidth, gap, loopOffset} = store;
-			const base = loopOffset * (slideWidth + gap);
 			track.style.transition = '';
 			track.style.transform = trackTransform(
-				base + flow.current.offsetAtStart - dx,
+				loopHome(store) + flow.current.offsetAtStart - dx,
 				store,
 			);
 		},
@@ -200,13 +196,11 @@ export function useFlow({
 	const onEnd = useCallback(
 		(dx: number, _velocityX: number, moved: boolean) => {
 			if (moved) {
-				const {slideWidth, gap, slideCount} = storeRef.current;
-				const stride = slideWidth + gap;
 				flow.current.offset = wrap(
 					flow.current.offsetAtStart - dx,
-					slideCount * stride,
+					contentSpan(storeRef.current),
 				);
-				applyTransform(stride);
+				applyTransform();
 			}
 			/** Resume the drift after the delay whether this was a real drag or a tap. */
 			scheduleResume();

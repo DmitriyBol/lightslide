@@ -2,6 +2,7 @@ import React from 'react';
 
 import {act, render, screen} from '@testing-library/react';
 
+import {Navigation} from '../modules/Navigation';
 import {Pagination} from '../modules/Pagination';
 import {Slide} from '../Slide/Slide';
 import {LightSlide} from './LightSlide';
@@ -115,6 +116,58 @@ describe('LightSlide — variable width', () => {
 		});
 
 		expect(screen.getAllByRole('button', {name: /go to slide/i})).toHaveLength(5);
+	});
+
+	describe('loop', () => {
+		function renderAutoLoop() {
+			return render(
+				<LightSlide
+					slidesPerView="auto"
+					gap={12}
+					loop
+					style={{width: 564}}
+					navigation={<Navigation />}>
+					{SIZES.map((w, i) => (
+						<Slide key={i}>
+							<div style={{width: w}}>slide {i}</div>
+						</Slide>
+					))}
+				</LightSlide>,
+			);
+		}
+
+		it('duplicates the whole strip on each side so any viewport is covered', () => {
+			const {container} = renderAutoLoop();
+			const track = container.querySelector('[aria-roledescription="slide"]')
+				?.parentElement;
+			/** 7 real slides + 7 prepended + 7 appended. */
+			expect(track?.children).toHaveLength(SIZES.length * 3);
+			const hidden = container.querySelectorAll('[aria-hidden="true"]');
+			expect(hidden).toHaveLength(SIZES.length * 2);
+		});
+
+		it('measures offsets across the whole strip, clones included', () => {
+			const {container} = renderAutoLoop();
+			const track = container.querySelector('[aria-roledescription="slide"]')
+				?.parentElement;
+			/** The transform rests on the first real slide — one full strip in. */
+			const contentWidth =
+				SIZES.reduce((a, b) => a + b, 0) + SIZES.length * 12;
+			expect(track).toHaveStyle(`transform: translateX(-${contentWidth}px)`);
+		});
+
+		it('wraps backward from the first slide onto the preceding clone', () => {
+			renderAutoLoop();
+			const prev = screen.getByRole('button', {name: /previous/i});
+			expect(prev).toBeEnabled();
+			act(() => {
+				prev.click();
+			});
+			/** maxIndex is measured (4), so a backward wrap lands there, not on slide 6. */
+			expect(
+				screen.getByRole('group', {name: /5 of 7/i}),
+			).toBeInTheDocument();
+		});
 	});
 
 	it('applies no inline width to the slides — each keeps its content size', () => {

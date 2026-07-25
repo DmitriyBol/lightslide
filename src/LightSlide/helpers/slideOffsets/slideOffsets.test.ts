@@ -1,5 +1,8 @@
+import {createStore} from '../store';
 import {
 	buildSlideOffsets,
+	contentSpan,
+	loopHome,
 	measuredMaxIndex,
 	nearestVisualIndex,
 } from './slideOffsets';
@@ -81,5 +84,38 @@ describe('nearestVisualIndex', () => {
 	it('pins targets past either end to the first/last edge', () => {
 		expect(nearestVisualIndex(offsets, -40)).toBe(0);
 		expect(nearestVisualIndex(offsets, 9999)).toBe(3);
+	});
+});
+
+describe('loopHome / contentSpan', () => {
+	it('fall back to the uniform stride when widths are fixed', () => {
+		/** 5 slides of 300 + gap 20 → stride 320; home = 2 clones in, span = one full strip. */
+		const store = createStore({
+			slideCount: 5,
+			slideWidth: 300,
+			gap: 20,
+			loopOffset: 2,
+			isLoop: true,
+		});
+		expect(loopHome(store)).toBe(640);
+		expect(contentSpan(store)).toBe(1600);
+	});
+
+	it('read the measured edges with variable widths', () => {
+		/**
+		 * 3 slides of 100/300/200 cloned on both sides (auto duplicates the whole strip), no
+		 * gap: home is the first real slide's edge (600) and the span is one strip (600).
+		 */
+		const store = createStore({
+			slideCount: 3,
+			loopOffset: 3,
+			isLoop: true,
+			slideOffsets: buildSlideOffsets(
+				[100, 300, 200, 100, 300, 200, 100, 300, 200],
+				0,
+			),
+		});
+		expect(loopHome(store)).toBe(600);
+		expect(contentSpan(store)).toBe(600);
 	});
 });

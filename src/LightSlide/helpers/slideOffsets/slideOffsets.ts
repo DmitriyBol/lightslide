@@ -1,9 +1,22 @@
+import type {LightSlideStore} from '../store';
+
 /**
  * Pure geometry for the variable-width (`slidesPerView: 'auto'`) mode: turns a list of measured
  * main-axis slide sizes into the cumulative leading-edge array the store carries as
- * `slideOffsets`, and derives the last reachable scroll position from it. Fixed (uniform-width)
- * mode never calls in here — it keeps the linear `visualIndex × stride` math in trackOffset.
+ * `slideOffsets`, derives the last reachable scroll position from it, and resolves the loop's
+ * home/span. The store-reading helpers fall back to the uniform `stride` math, so fixed mode
+ * keeps its exact linear arithmetic.
  */
+
+/**
+ * The px leading edge of `visualIndex` — a clamped lookup, so an out-of-range index pins to the
+ * first/last edge rather than reading past the array.
+ */
+export function offsetAt(offsets: number[], visualIndex: number): number {
+	const last = offsets.length - 1;
+	const i = visualIndex < 0 ? 0 : visualIndex > last ? last : visualIndex;
+	return offsets[i];
+}
 
 /**
  * The cumulative leading-edge px of each slide in a strip, given their measured sizes and the
@@ -40,6 +53,29 @@ export function measuredMaxIndex(
 		if (slideOffsets[i] >= maxOffset) return i;
 	}
 	return count - 1;
+}
+
+/**
+ * The px offset at which the loop rests "home" — the leading edge of the first real slide,
+ * past the prepended clones. `loopOffset × stride` under uniform widths.
+ */
+export function loopHome(store: LightSlideStore): number {
+	const {slideOffsets, loopOffset, slideWidth, gap} = store;
+	if (!slideOffsets) return loopOffset * (slideWidth + gap);
+	return offsetAt(slideOffsets, loopOffset);
+}
+
+/**
+ * The px width of one full strip of real slides — the distance a loop wraps by.
+ * `slideCount × stride` under uniform widths.
+ */
+export function contentSpan(store: LightSlideStore): number {
+	const {slideOffsets, loopOffset, slideCount, slideWidth, gap} = store;
+	if (!slideOffsets) return slideCount * (slideWidth + gap);
+	return (
+		offsetAt(slideOffsets, loopOffset + slideCount) -
+		offsetAt(slideOffsets, loopOffset)
+	);
 }
 
 /**

@@ -5,6 +5,11 @@ import type {MutableRefObject, RefObject} from 'react';
 import {prefersReducedMotion} from '../../../utils/reducedMotion/reducedMotion';
 import {RUBBER_BAND_DIVISOR} from '../constants';
 import type {NavigateFn} from '../navigation';
+import {
+	contentSpan,
+	loopHome,
+	nearestVisualIndex,
+} from '../slideOffsets/slideOffsets';
 import type {LightSlideStore} from '../store';
 import {maxTrackOffset} from '../trackOffset/trackOffset';
 import {trackTransform} from '../trackTransform/trackTransform';
@@ -51,9 +56,8 @@ type CoastState = {
  * wrapped position pixel-identical, so re-basing mid-gesture or mid-coast never shows a jump.
  */
 const wrapPos = (pos: number, store: LightSlideStore): number => {
-	const stride = store.slideWidth + store.gap;
-	const base = store.loopOffset * stride;
-	const span = store.slideCount * stride;
+	const base = loopHome(store);
+	const span = contentSpan(store);
 	return span > 0 ? base + ((((pos - base) % span) + span) % span) : pos;
 };
 
@@ -127,17 +131,31 @@ export function useFreeDrag({
 
 	const settleAt = (pos: number, forward: boolean) => {
 		const store = storeRef.current;
-		const {isLoop, loopOffset, slideCount, slideWidth, gap, centerInset} =
-			store;
+		const {
+			isLoop,
+			loopOffset,
+			slideCount,
+			slideWidth,
+			gap,
+			centerInset,
+			slideOffsets,
+		} = store;
 		store.restOffset = pos;
 		store.settleForward = forward;
 		store.autoScrollPaused = false;
 		const stride = slideWidth + gap;
 		/** Boundaries sit at index × stride − centerInset, so the inset re-joins before rounding. */
-		let idx =
-			stride > 0
-				? Math.round((pos + centerInset) / stride) - (isLoop ? loopOffset : 0)
-				: store.currentIndex;
+		let idx: number;
+		if (slideOffsets) {
+			idx =
+				nearestVisualIndex(slideOffsets, pos + centerInset) -
+				(isLoop ? loopOffset : 0);
+		} else if (stride > 0) {
+			idx =
+				Math.round((pos + centerInset) / stride) - (isLoop ? loopOffset : 0);
+		} else {
+			idx = store.currentIndex;
+		}
 		if (isLoop && slideCount > 0)
 			idx = ((idx % slideCount) + slideCount) % slideCount;
 		goToIndex(idx, 'settle');
@@ -213,17 +231,31 @@ export function useFreeDrag({
 			store.autoScrollPaused = false;
 			return;
 		}
-		const {maxIndex, isLoop, loopOffset, slideWidth, gap, centerInset} = store;
+		const {
+			maxIndex,
+			isLoop,
+			loopOffset,
+			slideWidth,
+			gap,
+			centerInset,
+			slideOffsets,
+		} = store;
 		const stride = slideWidth + gap;
 		const pos = freePos(dx, store);
 
 		if (snap) {
 			store.autoScrollPaused = false;
+			const projected = pos - velocityX * FREE_DECAY_MS + centerInset;
+			if (slideOffsets) {
+				goToIndex(
+					nearestVisualIndex(slideOffsets, projected) -
+						(isLoop ? loopOffset : 0),
+					'drag',
+				);
+				return;
+			}
 			if (stride === 0) return;
-			const projected = pos - velocityX * FREE_DECAY_MS;
-			const idx =
-				Math.round((projected + centerInset) / stride) -
-				(isLoop ? loopOffset : 0);
+			const idx = Math.round(projected / stride) - (isLoop ? loopOffset : 0);
 			goToIndex(idx, 'drag');
 			return;
 		}

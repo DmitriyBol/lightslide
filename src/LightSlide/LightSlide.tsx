@@ -157,11 +157,16 @@ function LightSlideInner(
 	const isVertical = axis === 'y';
 	/** Vertical order has no reading direction — the axis wins over `dir` for the sign. */
 	const isRtl = dir === 'rtl' && !isVertical;
+	/**
+	 * Variable widths can't say how many clones cover a viewport before measuring — and the
+	 * clones are built during render — so auto duplicates the whole strip on each side. The
+	 * count is measurement-independent, which is exactly what makes auto + loop reliable; pair
+	 * it with lazyMount when the strip is long.
+	 */
 	const loopOffset = effectiveLoop
-		? Math.min(
-				slideCount,
-				Math.ceil(spv) + (isCentered ? centerLead(spv) : 0),
-			)
+		? isAuto
+			? slideCount
+			: Math.min(slideCount, Math.ceil(spv) + (isCentered ? centerLead(spv) : 0))
 		: 0;
 
 	/**

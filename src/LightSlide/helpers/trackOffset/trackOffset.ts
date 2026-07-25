@@ -1,15 +1,5 @@
+import {offsetAt} from '../slideOffsets/slideOffsets';
 import type {LightSlideStore} from '../store';
-
-/**
- * The px leading edge of `visualIndex` in the variable-width model — a clamped lookup into the
- * precomputed `slideOffsets` array. Indices are integers (logical + loopOffset); out-of-range
- * values pin to the first/last edge rather than reading past the array.
- */
-function offsetAt(offsets: number[], visualIndex: number): number {
-	const last = offsets.length - 1;
-	const i = visualIndex < 0 ? 0 : visualIndex > last ? last : visualIndex;
-	return offsets[i];
-}
 
 /**
  * The maximum scroll offset in px — content width minus viewport width. In fixed mode that is
