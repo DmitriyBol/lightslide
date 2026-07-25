@@ -2,9 +2,10 @@ import {useCallback} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
-import {getSnapIndex} from '../../../utils/swipe/swipe';
+import {getSnapIndex, VELOCITY_THRESHOLD} from '../../../utils/swipe/swipe';
 import {RUBBER_BAND_DIVISOR} from '../constants';
 import type {NavigateFn} from '../navigation';
+import {nearestVisualIndex} from '../slideOffsets/slideOffsets';
 import type {LightSlideStore} from '../store';
 import {trackOffset} from '../trackOffset/trackOffset';
 import {trackTransform} from '../trackTransform/trackTransform';
@@ -76,8 +77,27 @@ export function useDragGesture({
 			storeRef.current.autoScrollPaused = false;
 			/** moved === false is a tap / vertical abandon — nothing to snap. */
 			if (!moved) return;
-			const {currentIndex, maxIndex, isLoop, slideWidth, gap} =
-				storeRef.current;
+			const store = storeRef.current;
+			const {currentIndex, maxIndex, isLoop, slideWidth, gap, slideOffsets} =
+				store;
+
+			if (slideOffsets) {
+				const {loopOffset, centerInset} = store;
+				const currentVisual = isLoop ? currentIndex + loopOffset : currentIndex;
+				/**
+				 * Position-based snap: the drag left the track resting near
+				 * `trackOffset(currentVisual) − dx`; land on the boundary nearest that offset. A
+				 * fast flick that hasn't crossed the half-way point still advances one slide in
+				 * its direction (rightward flick → earlier), matching the fixed-mode threshold.
+				 */
+				const pos = trackOffset(currentVisual, store) - dx + centerInset;
+				let visual = nearestVisualIndex(slideOffsets, pos);
+				if (visual === currentVisual && Math.abs(velocityX) > VELOCITY_THRESHOLD)
+					visual = currentVisual + (velocityX < 0 ? 1 : -1);
+				goToIndex(visual - (isLoop ? loopOffset : 0), 'drag');
+				return;
+			}
+
 			const nextIndex = getSnapIndex(
 				currentIndex,
 				maxIndex,

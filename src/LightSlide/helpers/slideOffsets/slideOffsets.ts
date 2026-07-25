@@ -41,3 +41,28 @@ export function measuredMaxIndex(
 	}
 	return count - 1;
 }
+
+/**
+ * The visual index whose leading edge sits nearest `target` px — the variable-width snap
+ * decision, replacing fixed mode's `round(offset / stride)`. Binary search for the first edge
+ * at or past the target, then pick whichever of it and its predecessor is closer (ties go to
+ * the earlier slide, matching a start-aligned rest). The caller subtracts loopOffset to get the
+ * logical index and clamps/wraps it.
+ */
+export function nearestVisualIndex(
+	slideOffsets: number[],
+	target: number,
+): number {
+	const last = slideOffsets.length - 1;
+	if (target <= slideOffsets[0]) return 0;
+	if (target >= slideOffsets[last]) return last;
+	let lo = 0;
+	let hi = last;
+	while (lo < hi) {
+		const mid = Math.floor((lo + hi) / 2);
+		if (slideOffsets[mid] < target) lo = mid + 1;
+		else hi = mid;
+	}
+	const prev = lo - 1;
+	return target - slideOffsets[prev] <= slideOffsets[lo] - target ? prev : lo;
+}

@@ -1,4 +1,8 @@
-import {buildSlideOffsets, measuredMaxIndex} from './slideOffsets';
+import {
+	buildSlideOffsets,
+	measuredMaxIndex,
+	nearestVisualIndex,
+} from './slideOffsets';
 
 /**
  * The pure geometry behind variable-width mode. buildSlideOffsets is the array trackOffset
@@ -49,5 +53,33 @@ describe('measuredMaxIndex', () => {
 		/** Sizes 200/200/200 + gap 20 → content 640, viewport 400, max offset 240; edge 220 < 240, 440 ≥ 240. */
 		const offsets = buildSlideOffsets([200, 200, 200], 20);
 		expect(measuredMaxIndex(offsets, 20, 400)).toBe(2);
+	});
+});
+
+describe('nearestVisualIndex', () => {
+	const offsets = [0, 100, 400, 600];
+
+	it('returns the exact index when the target lands on a boundary', () => {
+		expect(nearestVisualIndex(offsets, 0)).toBe(0);
+		expect(nearestVisualIndex(offsets, 100)).toBe(1);
+		expect(nearestVisualIndex(offsets, 400)).toBe(2);
+	});
+
+	it('rounds to the nearer of the two surrounding boundaries', () => {
+		/** 60 is nearer 100 than 0 → index 1; 240 is nearer 100 than 400 → index 1. */
+		expect(nearestVisualIndex(offsets, 60)).toBe(1);
+		expect(nearestVisualIndex(offsets, 240)).toBe(1);
+		expect(nearestVisualIndex(offsets, 260)).toBe(2);
+	});
+
+	it('breaks a tie toward the earlier slide', () => {
+		/** 50 is equidistant from 0 and 100 → earlier boundary 0. */
+		expect(nearestVisualIndex(offsets, 50)).toBe(0);
+		expect(nearestVisualIndex(offsets, 250)).toBe(1);
+	});
+
+	it('pins targets past either end to the first/last edge', () => {
+		expect(nearestVisualIndex(offsets, -40)).toBe(0);
+		expect(nearestVisualIndex(offsets, 9999)).toBe(3);
 	});
 });
