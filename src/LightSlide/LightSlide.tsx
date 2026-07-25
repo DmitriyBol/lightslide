@@ -128,17 +128,23 @@ function LightSlideInner(
 
 	/**
 	 * ceil so a fractional slidesPerView gets one extra reachable position — the last slide
-	 * scrolls flush to the right edge (trackOffset clamps that final offset).
+	 * scrolls flush to the right edge (trackOffset clamps that final offset). In auto this is
+	 * the pre-measurement estimate (one position per slide); the measured count replaces it
+	 * below, once the slides have been measured.
 	 */
-	const maxIndex = Math.max(0, Math.ceil(slideCount - spv));
+	const derivedMaxIndex = Math.max(0, Math.ceil(slideCount - spv));
 
 	/**
 	 * Flow and autoplay are presence-based: passing the node turns the mode on. Flow needs
 	 * the loop-clone structure to wrap seamlessly, so it forces effectiveLoop on.
 	 */
 	const effectiveFlow =
-		flow != null && flow !== false && maxIndex > 0 && !loading && motionAllowed;
-	const effectiveLoop = (loop || effectiveFlow) && maxIndex > 0;
+		flow != null &&
+		flow !== false &&
+		derivedMaxIndex > 0 &&
+		!loading &&
+		motionAllowed;
+	const effectiveLoop = (loop || effectiveFlow) && derivedMaxIndex > 0;
 	const hasAutoplay = autoplay != null && autoplay !== false;
 
 	/**
@@ -172,7 +178,6 @@ function LightSlideInner(
 	 */
 	const store = storeRef.current;
 	store.slideCount = slideCount;
-	store.maxIndex = maxIndex;
 	store.slidesPerView = spv;
 	store.gap = gap;
 	store.dirSign = isRtl ? -1 : 1;
@@ -183,13 +188,21 @@ function LightSlideInner(
 
 	/** ————————————————— Motion & control ————————————————— */
 
-	const {slideWidth, measureSlideWidth} = useSlideMetrics(
+	const {slideWidth, autoMaxIndex, measureSlideWidth} = useSlideMetrics(
 		viewportRef,
 		trackRef,
 		storeRef,
 		isCentered,
 		isAuto,
 	);
+
+	/**
+	 * Variable-width positions are measured, not derived: trailing slides that share the final
+	 * viewport collapse into one flush position, so the count only settles once the strip has
+	 * been measured (-1 until then, when the derived estimate stands in).
+	 */
+	const maxIndex = isAuto && autoMaxIndex >= 0 ? autoMaxIndex : derivedMaxIndex;
+	store.maxIndex = maxIndex;
 
 	const {snapToVisual, snapTrack} = useTrackSnap(trackRef, storeRef);
 
@@ -203,6 +216,7 @@ function LightSlideInner(
 		gap,
 		vertical: isVertical,
 		centered: isCentered,
+		auto: isAuto,
 		isLoop: loop,
 		flowEnabled: effectiveFlow,
 		loading,

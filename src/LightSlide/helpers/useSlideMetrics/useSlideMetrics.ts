@@ -2,12 +2,16 @@ import {useCallback, useState} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
-import {buildSlideOffsets} from '../slideOffsets/slideOffsets';
+import {
+	buildSlideOffsets,
+	measuredMaxIndex,
+} from '../slideOffsets/slideOffsets';
 import type {LightSlideStore} from '../store';
 import {useIsomorphicLayoutEffect} from '../useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
 
 type SlideMetrics = {
 	slideWidth: number;
+	autoMaxIndex: number;
 	measureSlideWidth: () => void;
 };
 
@@ -43,6 +47,12 @@ export function useSlideMetrics(
 	auto: boolean,
 ): SlideMetrics {
 	const [slideWidth, setSlideWidth] = useState(0);
+	/**
+	 * Variable-width mode's reachable-position count, measured rather than derived from
+	 * slidesPerView. -1 until the first measure, so the carousel can tell "not measured yet"
+	 * from a genuine single-position strip.
+	 */
+	const [autoMaxIndex, setAutoMaxIndex] = useState(-1);
 
 	const measureSlideWidth = useCallback(() => {
 		const viewport = viewportRef.current;
@@ -59,8 +69,24 @@ export function useSlideMetrics(
 					? (child as HTMLElement).offsetHeight
 					: (child as HTMLElement).offsetWidth,
 			);
-			storeRef.current.slideOffsets = buildSlideOffsets(sizes, gap);
+			const offsets = buildSlideOffsets(sizes, gap);
+			storeRef.current.slideOffsets = offsets;
 			storeRef.current.centerInset = 0;
+			/**
+			 * Clone edges are part of the strip but never scroll targets, so the reachable count
+			 * is measured over the real slides only (loopOffset per side).
+			 */
+			const {loopOffset, isLoop} = storeRef.current;
+			const real = isLoop
+				? offsets.slice(loopOffset, offsets.length - loopOffset)
+				: offsets;
+			const measured = measuredMaxIndex(real, gap, size);
+			/**
+			 * Written imperatively as well as into state: the layout-resync effect runs before
+			 * React processes the state update and must clamp against the fresh count.
+			 */
+			storeRef.current.maxIndex = measured;
+			setAutoMaxIndex(measured);
 			return;
 		}
 
@@ -83,5 +109,5 @@ export function useSlideMetrics(
 		return () => ro.disconnect();
 	}, [measureSlideWidth, viewportRef, trackRef, auto]);
 
-	return {slideWidth, measureSlideWidth};
+	return {slideWidth, autoMaxIndex, measureSlideWidth};
 }
