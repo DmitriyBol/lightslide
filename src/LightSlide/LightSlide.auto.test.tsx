@@ -2,6 +2,7 @@ import React from 'react';
 
 import {act, render, screen} from '@testing-library/react';
 
+import {A11y} from '../modules/a11y';
 import {Navigation} from '../modules/Navigation';
 import {Pagination} from '../modules/Pagination';
 import {Slide} from '../Slide/Slide';
@@ -168,6 +169,31 @@ describe('LightSlide — variable width', () => {
 				screen.getByRole('group', {name: /5 of 7/i}),
 			).toBeInTheDocument();
 		});
+	});
+
+	it('keeps every on-screen slide interactive under the focus guard', () => {
+		/**
+		 * slidesPerView is 1 in auto, so a derived window would mark all but the active slide
+		 * inert — and inert also swallows clicks, hiding slides in plain view. The measured
+		 * count keeps the four that share the viewport (120+210+90 fit, 250 peeks) interactive.
+		 */
+		render(
+			<LightSlide
+				slidesPerView="auto"
+				gap={12}
+				style={{width: 564}}
+				a11y={<A11y />}>
+				{SIZES.map((w, i) => (
+					<Slide key={i}>
+						<div style={{width: w}}>slide {i}</div>
+					</Slide>
+				))}
+			</LightSlide>,
+		);
+
+		const slides = screen.getAllByRole('group', {name: /of 7/});
+		const interactive = slides.filter(s => !s.hasAttribute('inert'));
+		expect(interactive).toHaveLength(4);
 	});
 
 	it('applies no inline width to the slides — each keeps its content size', () => {

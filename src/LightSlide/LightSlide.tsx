@@ -193,13 +193,8 @@ function LightSlideInner(
 
 	/** ————————————————— Motion & control ————————————————— */
 
-	const {slideWidth, autoMaxIndex, measureSlideWidth} = useSlideMetrics(
-		viewportRef,
-		trackRef,
-		storeRef,
-		isCentered,
-		isAuto,
-	);
+	const {slideWidth, autoMaxIndex, autoVisibleCount, measureSlideWidth} =
+		useSlideMetrics(viewportRef, trackRef, storeRef, isCentered, isAuto);
 
 	/**
 	 * Variable-width positions are measured, not derived: trailing slides that share the final
@@ -287,6 +282,7 @@ function LightSlideInner(
 		effectiveFlow,
 		isCentered,
 		lazyMount,
+		visibleCount: autoVisibleCount,
 		slideLabel,
 	});
 

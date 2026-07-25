@@ -2,13 +2,18 @@ import {useCallback, useState} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
-import {buildSlideOffsets, measuredMaxIndex} from '../buildOffsets/buildOffsets';
+import {
+	buildSlideOffsets,
+	maxVisibleCount,
+	measuredMaxIndex,
+} from '../buildOffsets/buildOffsets';
 import type {LightSlideStore} from '../store';
 import {useIsomorphicLayoutEffect} from '../useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
 
 type SlideMetrics = {
 	slideWidth: number;
 	autoMaxIndex: number;
+	autoVisibleCount: number;
 	measureSlideWidth: () => void;
 };
 
@@ -50,6 +55,8 @@ export function useSlideMetrics(
 	 * from a genuine single-position strip.
 	 */
 	const [autoMaxIndex, setAutoMaxIndex] = useState(-1);
+	/** Measured slides-on-screen, for the render-side lazyMount window. */
+	const [autoVisibleCount, setAutoVisibleCount] = useState(0);
 
 	const measureSlideWidth = useCallback(() => {
 		const viewport = viewportRef.current;
@@ -77,6 +84,9 @@ export function useSlideMetrics(
 			const real = isLoop
 				? offsets.slice(loopOffset, offsets.length - loopOffset)
 				: offsets;
+			const onScreen = maxVisibleCount(offsets, gap, size);
+			storeRef.current.visibleCount = onScreen;
+			setAutoVisibleCount(onScreen);
 			const measured = measuredMaxIndex(real, gap, size);
 			/**
 			 * Written imperatively as well as into state: the layout-resync effect runs before
@@ -106,5 +116,5 @@ export function useSlideMetrics(
 		return () => ro.disconnect();
 	}, [measureSlideWidth, viewportRef, trackRef, auto]);
 
-	return {slideWidth, autoMaxIndex, measureSlideWidth};
+	return {slideWidth, autoMaxIndex, autoVisibleCount, measureSlideWidth};
 }

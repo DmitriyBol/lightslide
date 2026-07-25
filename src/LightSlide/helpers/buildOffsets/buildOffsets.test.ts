@@ -1,4 +1,8 @@
-import {buildSlideOffsets, measuredMaxIndex} from './buildOffsets';
+import {
+	buildSlideOffsets,
+	maxVisibleCount,
+	measuredMaxIndex,
+} from './buildOffsets';
 
 /**
  * The measuring half of variable-width geometry. buildSlideOffsets is the array the reading
@@ -49,5 +53,32 @@ describe('measuredMaxIndex', () => {
 		/** Sizes 200/200/200 + gap 20 → content 640, viewport 400, max offset 240; edge 220 < 240, 440 ≥ 240. */
 		const offsets = buildSlideOffsets([200, 200, 200], 20);
 		expect(measuredMaxIndex(offsets, 20, 400)).toBe(2);
+	});
+});
+
+describe('maxVisibleCount', () => {
+	it('counts the fully visible slides plus the partial peek', () => {
+		/**
+		 * 120/210/90/250… at gap 12 in a 564px viewport: from slide 0 three slides fit (444px)
+		 * and the fourth peeks — four on screen.
+		 */
+		const offsets = buildSlideOffsets([120, 210, 90, 250, 110, 150, 170], 12);
+		expect(maxVisibleCount(offsets, 12, 564)).toBe(4);
+	});
+
+	it('takes the widest run, not the one at index 0', () => {
+		/** A wide lead slide hides how many of the narrow tail share a viewport. */
+		const offsets = buildSlideOffsets([500, 60, 60, 60, 60], 0);
+		expect(maxVisibleCount(offsets, 0, 300)).toBe(5);
+	});
+
+	it('never exceeds the slide count', () => {
+		const offsets = buildSlideOffsets([50, 50], 0);
+		expect(maxVisibleCount(offsets, 0, 9999)).toBe(2);
+	});
+
+	it('is at least one even when a slide overflows the viewport', () => {
+		const offsets = buildSlideOffsets([900, 900], 0);
+		expect(maxVisibleCount(offsets, 0, 300)).toBe(1);
 	});
 });

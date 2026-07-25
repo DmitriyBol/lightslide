@@ -26,7 +26,10 @@ import type {EmitNav} from './navigation';
  * default) is the uniform fixed-width path — every offset stays `visualIndex × (slideWidth +
  * gap)`, byte-for-byte unchanged. `viewportSize` is the measured main-axis viewport px,
  * meaningful only in the variable-width path (the non-loop flush clamp needs the real content
- * width minus the viewport); 0 in fixed mode.
+ * width minus the viewport); 0 in fixed mode. `visibleCount` is how many slides a viewport can
+ * show at once, measured for variable widths so the consumers that reason about what is on
+ * screen (the lazyMount window, the a11y focus guard) don't fall back to `ceil(slidesPerView)`,
+ * which is 1 in auto and would hide slides the user can see; 0 in fixed mode.
  * `centerInset` is the px shift that centres the active slide — (container − slide) / 2,
  * written by useSlideMetrics alongside slideWidth (0 unless align is center with more than
  * one slide per view) and subtracted by trackOffset, so every snap/drag/settle path centres
@@ -79,6 +82,7 @@ export type LightSlideStore = {
 	slideWidth: number;
 	slideOffsets: number[] | null;
 	viewportSize: number;
+	visibleCount: number;
 	autoScrollPaused: boolean;
 	hovered: boolean;
 	focusWithin: boolean;
@@ -108,6 +112,7 @@ export function createStore(
 		slideWidth: 0,
 		slideOffsets: null,
 		viewportSize: 0,
+		visibleCount: 0,
 		autoScrollPaused: false,
 		hovered: false,
 		focusWithin: false,

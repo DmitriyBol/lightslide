@@ -41,3 +41,32 @@ export function measuredMaxIndex(
 	}
 	return count - 1;
 }
+
+/**
+ * The most slides any single viewport can show at once, partial peek included — variable
+ * width's answer to `ceil(slidesPerView)`. Consumers that reason about "what is on screen"
+ * (the lazyMount window, the a11y focus guard) need one count that holds at every position, so
+ * this takes the widest run: too small would unmount or `inert` a slide the user can see.
+ * The scan is two-pointer — the run's end never moves backwards as its start advances.
+ */
+export function maxVisibleCount(
+	slideOffsets: number[],
+	gap: number,
+	viewportSize: number,
+): number {
+	const count = slideOffsets.length - 1;
+	if (count <= 0) return 0;
+	let best = 1;
+	let end = 0;
+	for (let start = 0; start < count; start++) {
+		if (end < start) end = start;
+		while (
+			end + 1 <= count &&
+			slideOffsets[end + 1] - gap - slideOffsets[start] <= viewportSize
+		) {
+			end++;
+		}
+		best = Math.max(best, end - start + 1);
+	}
+	return Math.min(best, count);
+}

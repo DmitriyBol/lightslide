@@ -17,6 +17,7 @@ type DisplayChildrenParams = {
 	effectiveFlow: boolean;
 	isCentered: boolean;
 	lazyMount: boolean | LazyMountConfig | undefined;
+	visibleCount: number;
 	slideLabel: (index: number, count: number) => string;
 };
 
@@ -38,6 +39,7 @@ export function useDisplayChildren({
 	effectiveFlow,
 	isCentered,
 	lazyMount,
+	visibleCount,
 	slideLabel,
 }: DisplayChildrenParams): ReactNode[] {
 	const lazyActive = lazyMount ? !effectiveFlow : false;
@@ -57,6 +59,7 @@ export function useDisplayChildren({
 						effectiveLoop,
 						lazyMargin,
 						isCentered,
+						visibleCount,
 					)
 				: null,
 		[
@@ -68,6 +71,7 @@ export function useDisplayChildren({
 			effectiveLoop,
 			lazyMargin,
 			isCentered,
+			visibleCount,
 		],
 	);
 
