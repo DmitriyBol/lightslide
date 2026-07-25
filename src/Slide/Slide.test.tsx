@@ -7,9 +7,9 @@ import {Slide} from './Slide';
 
 import '@testing-library/jest-dom';
 
-function renderSlide(slideWidth: number, vertical: boolean) {
+function renderSlide(slideWidth: number, vertical: boolean, auto = false) {
 	render(
-		<SlideMetricsContext.Provider value={{slideWidth, vertical}}>
+		<SlideMetricsContext.Provider value={{slideWidth, vertical, auto}}>
 			<Slide>
 				<div>Content</div>
 			</Slide>
@@ -35,6 +35,13 @@ describe('Slide', () => {
 
 	it('stays size-less before the client measures (the SSR calc owns the size)', () => {
 		const slide = renderSlide(0, false);
+		expect(slide.style.width).toBe('');
+		expect(slide.style.height).toBe('');
+	});
+
+	it('applies no inline size in variable-width mode, even once measured', () => {
+		/** auto slides keep their own content width — a stray measured value must not leak in. */
+		const slide = renderSlide(320, false, true);
 		expect(slide.style.width).toBe('');
 		expect(slide.style.height).toBe('');
 	});

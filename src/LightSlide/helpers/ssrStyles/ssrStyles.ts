@@ -9,6 +9,7 @@ type SsrCssInput = {
 	isLoop: boolean;
 	rtl: boolean;
 	vertical: boolean;
+	auto: boolean;
 };
 
 /**
@@ -43,6 +44,12 @@ type SsrCssInput = {
  * height) and give the track the definite 100% height the percentage math needs. The
  * caller passes rtl as false when vertical (vertical order has no reading direction).
  *
+ * `auto` (variable-width) drops the size/transform calc entirely: the server can't know
+ * content-driven widths, so slides render at their natural size (`flex-shrink:0`, no width)
+ * and no resting transform is emitted. Start-aligned at index 0 that is already the final
+ * layout (zero CLS); a non-zero start index or loop can't be positioned server-side and
+ * settles on the client's first measure.
+ *
  * The string lands in the DOM via dangerouslySetInnerHTML, so nothing non-numeric may reach
  * it: `slidesId` and the class names are library-generated (useId / build-time CSS-module
  * hashes), and the three prop-fed values are coerced to finite numbers below — an untyped JS
@@ -58,6 +65,7 @@ export function buildSsrCss({
 	isLoop,
 	rtl,
 	vertical,
+	auto,
 }: SsrCssInput): string {
 	const spv =
 		Number.isFinite(slidesPerView) && slidesPerView > 0 ? slidesPerView : 1;
@@ -82,6 +90,21 @@ export function buildSsrCss({
 	const base =
 		`.${styles.container},.${styles.stage}{position:relative;width:100%}` +
 		`.${styles.viewport}{width:100%;overflow:hidden}`;
+
+	if (auto) {
+		const slide = `${track}>*{box-sizing:border-box;flex-shrink:0}`;
+		if (vertical) {
+			return (
+				base +
+				`.${styles.vertical}{display:flex;flex-direction:column}` +
+				`.${styles.vertical} .${styles.stage}{flex:1;min-height:0}` +
+				`.${styles.vertical} .${styles.viewport}{height:100%}` +
+				`${track}{display:flex;flex-direction:column;height:100%}` +
+				slide
+			);
+		}
+		return base + `${track}{display:flex}` + slide;
+	}
 
 	if (vertical) {
 		return (

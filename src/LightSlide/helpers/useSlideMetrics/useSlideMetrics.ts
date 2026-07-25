@@ -2,6 +2,7 @@ import {useCallback, useState} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
+import {buildSlideOffsets} from '../slideOffsets/slideOffsets';
 import type {LightSlideStore} from '../store';
 import {useIsomorphicLayoutEffect} from '../useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
 
@@ -25,14 +26,21 @@ type SlideMetrics = {
  * transform from the cached value (no per-frame offsetWidth read, and the transform can
  * never drift from the slides' rendered size). offsetWidth/offsetHeight is touched only
  * here, on mount and on each ResizeObserver callback.
+ * In variable-width mode (`auto`) there is no single slide size: the hook measures the
+ * main-axis size of every rendered track child (real slides and loop clones alike) and writes
+ * the cumulative `store.slideOffsets` array that trackOffset indexes; the ResizeObserver also
+ * watches the track so slide-content resizes (images loading) re-measure. `slideWidth` stays 0
+ * so the slide applies no inline size and keeps its content width.
  * `store.centerInset` — the centring shift (viewport − slide) / 2, 0 unless centered — is
  * measured in the same pass and stays imperative-only: nothing renders from it, the
  * layout-resync snap re-applies it to the transform.
  */
 export function useSlideMetrics(
 	viewportRef: RefObject<HTMLDivElement>,
+	trackRef: RefObject<HTMLDivElement>,
 	storeRef: MutableRefObject<LightSlideStore>,
 	centered: boolean,
+	auto: boolean,
 ): SlideMetrics {
 	const [slideWidth, setSlideWidth] = useState(0);
 
@@ -41,21 +49,39 @@ export function useSlideMetrics(
 		if (!viewport) return;
 		const {slidesPerView, gap, vertical} = storeRef.current;
 		const size = vertical ? viewport.offsetHeight : viewport.offsetWidth;
+		storeRef.current.viewportSize = size;
+
+		if (auto) {
+			const track = trackRef.current;
+			if (!track) return;
+			const sizes = Array.from(track.children, child =>
+				vertical
+					? (child as HTMLElement).offsetHeight
+					: (child as HTMLElement).offsetWidth,
+			);
+			storeRef.current.slideOffsets = buildSlideOffsets(sizes, gap);
+			storeRef.current.centerInset = 0;
+			return;
+		}
+
 		const visibleGaps = (Math.ceil(slidesPerView) - 1) * gap;
 		const w = Math.max(0, Math.floor((size - visibleGaps) / slidesPerView));
 		storeRef.current.centerInset = centered ? Math.round((size - w) / 2) : 0;
 		if (w === storeRef.current.slideWidth) return;
 		storeRef.current.slideWidth = w;
 		setSlideWidth(w);
-	}, [viewportRef, storeRef, centered]);
+	}, [viewportRef, trackRef, storeRef, centered, auto]);
 
 	useIsomorphicLayoutEffect(() => {
 		measureSlideWidth();
-		if (!viewportRef.current) return;
+		const viewport = viewportRef.current;
+		if (!viewport) return;
 		const ro = new ResizeObserver(measureSlideWidth);
-		ro.observe(viewportRef.current);
+		ro.observe(viewport);
+		const track = trackRef.current;
+		if (auto && track) ro.observe(track);
 		return () => ro.disconnect();
-	}, [measureSlideWidth, viewportRef]);
+	}, [measureSlideWidth, viewportRef, trackRef, auto]);
 
 	return {slideWidth, measureSlideWidth};
 }

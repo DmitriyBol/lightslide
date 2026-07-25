@@ -17,14 +17,15 @@ import styles from './Slide.module.scss';
  * The measured main-axis size applies as inline width — or height on a vertical carousel
  * (the axis comes with the metrics context; the cross axis is left to the flex stretch).
  * No inline size until the client has measured — the carousel's SSR critical CSS owns
- * the pre-measure calc() size, so server and first client paint agree.
+ * the pre-measure calc() size, so server and first client paint agree. In variable-width
+ * mode (`auto`) no inline main-axis size is applied at all — the slide keeps its content size.
  */
 function SlideInner<T>(
 	{children, style, className, data, ...rest}: SlideProps<T>,
 	ref: ForwardedRef<HTMLDivElement>,
 ) {
-	const {slideWidth, vertical} = useSlideMetricsContext();
-	const size = slideWidth > 0 ? `${slideWidth}px` : undefined;
+	const {slideWidth, vertical, auto} = useSlideMetricsContext();
+	const size = !auto && slideWidth > 0 ? `${slideWidth}px` : undefined;
 
 	return (
 		<div
