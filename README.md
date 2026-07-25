@@ -25,7 +25,7 @@ for what you import.
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [loop](#loop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
-- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
+- [slidesPerView & gap](#slidesperview--gap) · [Variable width](#variable-width-slidesperviewauto) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -44,7 +44,8 @@ for what you import.
 - **Interactive content friendly** — links/buttons inside slides stay clickable; a tap passes
   through, a drag never triggers them, native image/anchor drag can't hijack the gesture, and a
   drag that leaves the carousel mid-gesture never gets stuck.
-- **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek).
+- **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek), or
+  `"auto"` to let every slide keep its own content width.
 - **gap** — px spacing between slides, folded into all geometry (snap, drag, loop, flow,
   fractional views) — no padding workarounds.
 - **Center align** (`align="center"`) — the active slide rests centred with its neighbours
@@ -249,7 +250,7 @@ itself is not generic.)
 | `trackClassName` | `string` | — | Class for the inner track |
 | `label` | `string` | — | Accessible name — makes the carousel a labelled `region` landmark (see [Accessibility](#accessibility)) |
 | `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
-| `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
+| `slidesPerView` | `number \| 'auto'` | `1` | How many slides are visible at once (floats allowed); `'auto'` sizes each slide by its own content (see [Variable width](#variable-width-slidesperviewauto)) |
 | `gap` | `number` | `0` | Space between slides along the scroll axis, px (see [slidesPerView & gap](#slidesperview--gap)) |
 | `axis` | `'x' \| 'y'` | `'x'` | Scroll axis — `'y'` is a vertical carousel; give it an explicit height (see [Vertical axis](#vertical-axis-axisy)) |
 | `dir` | `'ltr' \| 'rtl'` | `'ltr'` | Reading direction — `'rtl'` mirrors layout, gestures, controls, and loop (see [Right-to-left](#right-to-left-dirrtl)) |
@@ -525,6 +526,36 @@ in every computation: each slide fills
 `slideWidth + gap`, a fractional view still lands the last slide flush against the right edge,
 and loop clones and the flow ticker space identically. No padding inside the slide, so card
 backgrounds and shadows span the full slide width.
+
+## Variable width (`slidesPerView="auto"`)
+
+```tsx
+<LightSlide slidesPerView="auto" gap={12} navigation={<Navigation />}>
+  <Slide><Tag>Design</Tag></Slide>
+  <Slide><Tag>Engineering</Tag></Slide>
+</LightSlide>
+```
+
+`slidesPerView="auto"` drops the equal-fraction sizing: **each slide keeps its own content
+width** — tag rows, chips, hero strips, cards that size themselves. The carousel measures every
+slide (and re-measures when their content resizes) and drives all the geometry from those
+measurements instead of a single stride:
+
+- **Positions are measured, not derived.** Trailing slides that share the final viewport
+  collapse into one flush position, so there is a dot per *reachable* position rather than per
+  slide, and the last one rests flush against the right edge — never blank space.
+- **Snapping lands on real boundaries.** Drag, free-mode settling, and `free snap` all project
+  onto the measured edges; a flick still advances at least one slide.
+- **`loop`, `flow`, `gap`, `axis="y"`, and `breakpoints` all work** (a breakpoint may switch
+  between a number and `"auto"`). Looping duplicates the whole strip on each side, since no
+  clone count can be known before measuring — pair it with `lazyMount` for long strips.
+- **Sizing is yours.** Give slides a width (or let their content do it); the carousel sets no
+  inline size. Set it on the `<Slide>` or on the content inside it.
+
+Server-side, slides render at their natural width and no resting transform is emitted: at
+`initialIndex` 0 without `loop` that is already the final layout (zero CLS). A non-zero start
+index or `loop` can't be positioned before the widths are known, so those settle on the first
+client measure.
 
 ## Center align
 
