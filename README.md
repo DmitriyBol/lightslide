@@ -1022,7 +1022,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 360 unit/integration tests (Jest + jsdom) across 38 suites
+npm test             # 362 unit/integration tests (Jest + jsdom) across 38 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

@@ -211,3 +211,16 @@ describe('Navigation — readiness', () => {
 		);
 	});
 });
+
+describe('Navigation — misuse', () => {
+	it('fails loudly outside <LightSlide>', () => {
+		/** React logs the render-phase throw — silence the expected noise. */
+		const consoleError = jest
+			.spyOn(console, 'error')
+			.mockImplementation(() => {});
+		expect(() => render(<Navigation />)).toThrow(
+			'<Navigation>/<Pagination> must be rendered inside <LightSlide navigation={…}/pagination={…}>',
+		);
+		consoleError.mockRestore();
+	});
+});

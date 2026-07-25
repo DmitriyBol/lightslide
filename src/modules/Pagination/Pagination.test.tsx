@@ -67,4 +67,15 @@ describe('Pagination', () => {
 		renderPagination(makeContext({maxIndex: 0}));
 		expect(screen.getAllByRole('button')).toHaveLength(1);
 	});
+
+	it('fails loudly outside <LightSlide>', () => {
+		/** React logs the render-phase throw — silence the expected noise. */
+		const consoleError = jest
+			.spyOn(console, 'error')
+			.mockImplementation(() => {});
+		expect(() => render(<Pagination />)).toThrow(
+			'<Navigation>/<Pagination> must be rendered inside <LightSlide navigation={…}/pagination={…}>',
+		);
+		consoleError.mockRestore();
+	});
 });

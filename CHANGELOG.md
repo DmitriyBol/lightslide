@@ -6,6 +6,26 @@ All notable changes to this project are documented here. The format follows
 [Versioning & stability](README.md#versioning--stability) for the contract. Pre-1.0 (`0.x`)
 minors sometimes carried breaking changes, noted per entry below.
 
+## [Unreleased]
+
+## [1.0.1] — 2026-07-26
+
+### Changed
+
+- `<Navigation>` and `<Pagination>` now throw a descriptive dev-only error when rendered
+  outside a `<LightSlide>`, matching every other opt-in plugin (a11y / flow / wheel / free /
+  autoplay / analytics). They previously read the navigation context's default and rendered a
+  silently inert control (index 0, no-op clicks) — a harder-to-debug DX than the rest of the
+  family. Correct usage — passing them to the `navigation` / `pagination` slots — is unchanged,
+  and the long message is stripped from production bundles.
+
+### Docs
+
+- CHANGELOG hygiene: released versions link to their GitHub release; the internal milestones
+  that were merged but never tagged/published (0.8–0.19 except the released ones) no longer
+  render as literal-bracketed text, and an `[Unreleased]` section now collects changes toward
+  the next release.
+
 ## [1.0.0] — 2026-07-18
 
 First stable release. The public API is now frozen under
@@ -44,7 +64,7 @@ a documented deprecation policy.
 - Unmounting `<FreeScroll>` mid-coast no longer strands the internal drag-pause flag, which
   could freeze a coexisting `<Autoplay>` or flow.
 
-## [0.19.0] — 2026-07-18
+## 0.19.0 — 2026-07-18
 
 Vertical-axis release (LIG-23): the whole carousel turns top-to-bottom behind one prop. All
 1-D math was already axis-agnostic — the axis is consulted only where logical pixels meet
@@ -89,7 +109,7 @@ critical CSS.
   1.74 → 1.78 kB (budget 1.75 → 1.8), free budget 1.75 → 1.8 (size unchanged at 1.74);
   README size mentions swept (~5.5 kB core, 5.6 kB min+gzip in the comparison).
 
-## [0.18.0] — 2026-07-18
+## 0.18.0 — 2026-07-18
 
 RTL release (LIG-22): first-class right-to-left support behind one prop. In the coordinate
 model the direction is a sign, not a mirror — the browser mirrors the flex layout under
@@ -124,7 +144,7 @@ once to incoming pointer/wheel deltas, once in the track transform.
   navigation +~0.05 kB (now 1.13); README size mentions swept (~5 kB core, 5.2 kB min+gzip
   in the comparison).
 
-## [0.17.1] — 2026-07-18
+## 0.17.1 — 2026-07-18
 
 Security hardening pass (LIG-24). No changes to the published package — the audit found the
 runtime surface clean (zero runtime deps; the SSR critical-CSS string is fully guarded).
@@ -138,7 +158,7 @@ runtime surface clean (zero runtime deps; the SSR critical-CSS string is fully g
 - Added `SECURITY.md` — private vulnerability reporting via GitHub security advisories,
   supported-versions and scope notes.
 
-## [0.17.0] — 2026-07-18
+## 0.17.0 — 2026-07-18
 
 Slim-core release (LIG-21): the features not every carousel needs moved out of the base
 entry into tree-shakeable modules. The core drops **5.80 → 4.87 kB** brotli (budget
@@ -202,7 +222,7 @@ use" now covers analytics, autoplay, and breakpoints too.
   the seam the navigation/pagination entries bind to). Import-path-only change, nothing
   public moved.
 
-## [0.16.0] — 2026-07-17
+## 0.16.0 — 2026-07-17
 
 ### Added
 
@@ -236,7 +256,7 @@ use" now covers analytics, autoplay, and breakpoints too.
   message only outside production builds — consumer bundlers drop the long literals from
   production bundles.
 
-## [0.15.1] — 2026-07-17
+## 0.15.1 — 2026-07-17
 
 ### Fixed
 
@@ -271,7 +291,7 @@ use" now covers analytics, autoplay, and breakpoints too.
   README/playground marketing numbers updated to match (~5.7 kB core, 5.9 kB in the
   comparison table).
 
-## [0.15.0] — 2026-07-17
+## 0.15.0 — 2026-07-17
 
 ### Added
 
@@ -298,7 +318,7 @@ use" now covers analytics, autoplay, and breakpoints too.
   path — it cannot ship as a tree-shakeable entry). Actual: 5.45 kB brotli, 5.7 kB min+gzip;
   README/playground marketing numbers updated to match.
 
-## [0.14.2] — 2026-07-17
+## 0.14.2 — 2026-07-17
 
 ### Added
 
@@ -335,7 +355,7 @@ use" now covers analytics, autoplay, and breakpoints too.
 - `settle` navigation source and `store.restOffset` — the core understands a track resting
   between slide boundaries.
 
-## [0.13.0] — 2026-07-16
+## 0.13.0 — 2026-07-16
 
 ### Added
 
@@ -349,7 +369,7 @@ use" now covers analytics, autoplay, and breakpoints too.
   window).
 - Loop clones no longer intercept pointer events; the gesture surface is the viewport.
 
-## [0.12.0] — 2026-07-16
+## 0.12.0 — 2026-07-16
 
 ### Added
 
@@ -363,14 +383,14 @@ use" now covers analytics, autoplay, and breakpoints too.
 - `breakpoints` prop — media-query overrides of `slidesPerView`/`gap`; the carousel re-lays
   itself out on match changes (SSR-safe, `useSyncExternalStore`).
 
-## [0.10.0] — 2026-07-16
+## 0.10.0 — 2026-07-16
 
 ### Added
 
 - `gap` prop — px spacing between slides, folded into all geometry (snap, drag, loop, flow,
   fractional views).
 
-## [0.9.0] — 2026-07-16
+## 0.9.0 — 2026-07-16
 
 ### Changed
 
@@ -378,14 +398,14 @@ use" now covers analytics, autoplay, and breakpoints too.
   `lightslide/navigation`, `lightslide/pagination`, `lightslide/flow` — passed as nodes to
   the matching slot props. The base entry no longer bundles them (core ≈ 4.5 kB at the time).
 
-## [0.8.1] — 2026-07-15
+## 0.8.1 — 2026-07-15
 
 ### Added
 
 - External control: semi-controlled `index` prop, `onIndexChange`, and a ref handle with
   `goTo` / `next` / `prev` / `getIndex` (`'api'` analytics source).
 
-## [0.8.0] — 2026-07-13
+## 0.8.0 — 2026-07-13
 
 ### Added
 
@@ -448,6 +468,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.1
 [1.0.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.0
 [0.14.1]: https://github.com/DmitriyBol/lightslide/releases/tag/0.14.1
 [0.11.0]: https://github.com/DmitriyBol/lightslide/releases/tag/0.11.0

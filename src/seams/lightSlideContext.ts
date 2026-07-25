@@ -36,14 +36,23 @@ export type NavContextType = {
 	goToIndex: (index: number, source: 'button' | 'pagination') => void;
 };
 
-export const NavContext = createContext<NavContextType>({
-	currentIndex: 0,
-	maxIndex: 0,
-	isLoop: false,
-	isReady: false,
-	vertical: false,
-	slidesId: '',
-	goToIndex: () => {},
-});
+export const NavContext = createContext<NavContextType | null>(null);
 
-export const useNavContext = () => useContext(NavContext);
+/**
+ * <Navigation> / <Pagination> must be rendered inside a <LightSlide> (via its
+ * `navigation`/`pagination` slots); using one anywhere else is a wiring bug, so fail loudly
+ * rather than read a default that renders a silently inert control. Matches the rest of the
+ * plugin family (a11y/flow/wheel/free/…). The full message is dev-only — consumer bundlers
+ * substitute NODE_ENV and drop the long literal from production builds.
+ */
+export function useNavContext(): NavContextType {
+	const ctx = useContext(NavContext);
+	if (!ctx) {
+		throw new Error(
+			process.env.NODE_ENV !== 'production'
+				? '<Navigation>/<Pagination> must be rendered inside <LightSlide navigation={…}/pagination={…}>'
+				: 'lightslide seam',
+		);
+	}
+	return ctx;
+}
