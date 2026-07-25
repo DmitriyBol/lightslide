@@ -997,6 +997,8 @@ src/
 │       ├── store.ts                #   single core-data store (LightSlideStore)
 │       ├── loopClones/             #   per-slide ARIA + loop clones
 │       ├── lazyMount/              #   index-window mount predicate for lazyMount
+│       ├── buildOffsets/           #   measured sizes → cumulative edges + reachable count (auto)
+│       ├── slideOffsets/           #   reads those edges: loop home/span, nearest boundary
 │       ├── ssrStyles/              #   critical layout CSS served with the markup
 │       ├── trackOffset/            #   pure px offset for a visual index
 │       ├── trackTransform/         #   offset → translateX/translateY string (axis + direction applied once)
@@ -1005,7 +1007,7 @@ src/
 │       ├── useNavigation/          #   navigateToIndex — the single navigation path
 │       ├── useExternalControl/     #   controlled index prop + LightSlideHandle ref
 │       ├── useLayoutResync/        #   re-measure/clamp/re-snap on layout-shape changes
-│       ├── useSlideMetrics/        #   measure container → cached slide px width
+│       ├── useSlideMetrics/        #   measure viewport (and each slide in auto) → cached geometry
 │       ├── useTrackSnap/           #   transform/translateX snapping
 │       ├── useDisplayChildren/     #   ARIA + loop clones + lazy window → rendered children
 │       ├── useGestureHandlers/     #   which handler bag owns the viewport (drag/flow/free)
@@ -1053,7 +1055,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 362 unit/integration tests (Jest + jsdom) across 38 suites
+npm test             # 402 unit/integration tests (Jest + jsdom) across 41 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
@@ -1069,8 +1071,9 @@ Two layers:
 - **Integration** (`npm test`) — Jest + Testing Library in jsdom; the fast inner loop over
   component logic.
 - **End-to-end** (`npm run test:e2e`) — Playwright (Chromium) driving the live playground in a
-  real browser. Covers what jsdom can't: pointer drag/snap, layout-measured slide widths,
-  loop/flow motion, and the a11y layer's real keyboard focus flow + `inert` guarding. See
+  real browser (65 specs). Covers what jsdom can't: pointer drag/snap, layout-measured slide
+  widths (including variable width), loop/flow motion, and the a11y layer's real keyboard focus
+  flow + `inert` guarding. See
   [`e2e/`](https://github.com/DmitriyBol/lightslide/tree/main/e2e).
 
 ```bash

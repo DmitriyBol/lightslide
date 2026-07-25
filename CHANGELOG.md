@@ -8,6 +8,8 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-07-26
+
 ### Added
 
 - **Variable-width slides — `slidesPerView="auto"`.** Each slide keeps its own content width
@@ -490,7 +492,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.0
 [1.0.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.1
 [1.0.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.0
 [0.14.1]: https://github.com/DmitriyBol/lightslide/releases/tag/0.14.1
