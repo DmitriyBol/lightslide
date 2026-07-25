@@ -20,6 +20,13 @@ import type {EmitNav} from './navigation';
  * mount/resize and read by every motion/gesture/snap path so the hot loop never touches layout
  * (offsetWidth). `gap` is the px space between adjacent slides (CSS gap on the track);
  * every offset computation steps by the stride `slideWidth + gap`.
+ * `slideOffsets` is the variable-width (`slidesPerView: 'auto'`) model: when non-null it is the
+ * precomputed cumulative leading-edge px of every slide in the visual strip (loop clones
+ * included), so trackOffset indexes it instead of multiplying by one stride. `null` (the
+ * default) is the uniform fixed-width path — every offset stays `visualIndex × (slideWidth +
+ * gap)`, byte-for-byte unchanged. `viewportSize` is the measured main-axis viewport px,
+ * meaningful only in the variable-width path (the non-loop flush clamp needs the real content
+ * width minus the viewport); 0 in fixed mode.
  * `centerInset` is the px shift that centres the active slide — (container − slide) / 2,
  * written by useSlideMetrics alongside slideWidth (0 unless align is center with more than
  * one slide per view) and subtracted by trackOffset, so every snap/drag/settle path centres
@@ -70,6 +77,8 @@ export type LightSlideStore = {
 	isLoop: boolean;
 	loopOffset: number;
 	slideWidth: number;
+	slideOffsets: number[] | null;
+	viewportSize: number;
 	autoScrollPaused: boolean;
 	hovered: boolean;
 	focusWithin: boolean;
@@ -97,6 +106,8 @@ export function createStore(
 		isLoop: false,
 		loopOffset: 0,
 		slideWidth: 0,
+		slideOffsets: null,
+		viewportSize: 0,
 		autoScrollPaused: false,
 		hovered: false,
 		focusWithin: false,
