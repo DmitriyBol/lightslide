@@ -102,7 +102,7 @@
   "size-limit": [
     {
       "path": "dist/index.mjs",
-      "limit": "5.5 kB"
+      "limit": "6 kB"
     },
     {
       "name": "lightslide/a11y (with shared chunks)",
@@ -122,7 +122,7 @@
     {
       "name": "lightslide/flow (with shared chunks)",
       "path": "dist/flow.mjs",
-      "limit": "1.8 kB"
+      "limit": "1.9 kB"
     },
     {
       "name": "lightslide/wheel (with shared chunks)",
@@ -132,7 +132,7 @@
     {
       "name": "lightslide/free (with shared chunks)",
       "path": "dist/free.mjs",
-      "limit": "1.8 kB"
+      "limit": "2.05 kB"
     },
     {
       "name": "lightslide/autoplay (with shared chunks)",

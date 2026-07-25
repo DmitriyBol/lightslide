@@ -7,7 +7,7 @@
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, infinite loop, center align, zero-CLS server
-rendering, and lazy slide mounting in a ~5.5 kB fully-typed core with zero runtime
+rendering, and lazy slide mounting in a ~5.9 kB fully-typed core with zero runtime
 dependencies beyond React. Navigation, pagination, autoplay, a continuous flow (ticker)
 mode, wheel gestures, momentum scrolling, responsive breakpoints, one typed analytics event
 stream, and the deep accessibility layer all ship as tree-shakeable entries — you only pay
@@ -84,7 +84,7 @@ for what you import.
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, autoplay, flow, wheel gestures, free scrolling,
   breakpoints, analytics, and the a11y layer ship as tree-shakeable entries; the core stays
-  ~5.5 kB and an unused module never reaches your bundle.
+  ~5.9 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -106,7 +106,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.6 kB** core, +0.4–1.9 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
+| **lightslide** | **6.1 kB** core, +0.4–2.1 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -166,7 +166,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5.5 kB). Arrows, dots, autoplay, the flow
+The core ships only what every carousel needs (~5.9 kB). Arrows, dots, autoplay, the flow
 ticker, wheel gestures, free scrolling, breakpoints, analytics, and the accessibility layer
 are separate tree-shakeable entries — import a module and pass its node to the matching slot
 prop (or call its hook); skip the import and none of its code or styles reaches your bundle.

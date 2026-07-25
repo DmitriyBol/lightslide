@@ -2,10 +2,7 @@ import {useCallback, useState} from 'react';
 
 import type {MutableRefObject, RefObject} from 'react';
 
-import {
-	buildSlideOffsets,
-	measuredMaxIndex,
-} from '../slideOffsets/slideOffsets';
+import {buildSlideOffsets, measuredMaxIndex} from '../buildOffsets/buildOffsets';
 import type {LightSlideStore} from '../store';
 import {useIsomorphicLayoutEffect} from '../useIsomorphicLayoutEffect/useIsomorphicLayoutEffect';
 
