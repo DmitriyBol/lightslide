@@ -10,7 +10,9 @@ import {useA11yContext} from '../../seams/a11ySeam';
  *
  * The visible window is [currentIndex, currentIndex + ⌈slidesPerView⌉ − 1] — ceil so a fractional
  * `slidesPerView` keeps its partially-visible peek slide interactive; center mode extends it one
- * slide left, the peek the centring inset exposes. DOM child positions map back to logical slide
+ * slide left, the peek the centring inset exposes. With variable widths the count is measured
+ * (`store.visibleCount`) rather than derived: `slidesPerView` is 1 there, and trusting it would
+ * make every slide but the active one inert — swallowing clicks on slides in plain view. DOM child positions map back to logical slide
  * indices through the store's loopOffset (center mode prepends extra clones, so it is not
  * derivable from slidesPerView here); clones sit below 0 or at ≥ slideCount and are skipped. On
  * unmount every guard this plugin set is cleared, so slides are interactive again.
@@ -35,9 +37,10 @@ export function FocusGuard() {
 		const track = trackRef.current;
 		if (!track) return;
 
-		const {loopOffset, centerInset} = storeRef.current;
+		const {loopOffset, centerInset, visibleCount} = storeRef.current;
 		const firstVisible = centerInset > 0 ? currentIndex - 1 : currentIndex;
-		const lastVisible = currentIndex + Math.ceil(slidesPerView) - 1;
+		const onScreen = visibleCount > 0 ? visibleCount : Math.ceil(slidesPerView);
+		const lastVisible = currentIndex + onScreen - 1;
 		const {children} = track;
 
 		const realSlides: {el: HTMLElement; logical: number}[] = [];

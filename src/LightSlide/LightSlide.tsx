@@ -119,18 +119,32 @@ function LightSlideInner(
 	const slideCount = childArray.length;
 
 	/**
-	 * ceil so a fractional slidesPerView gets one extra reachable position — the last slide
-	 * scrolls flush to the right edge (trackOffset clamps that final offset).
+	 * `'auto'` (variable-width) resolves all geometry from measured slideOffsets; the numeric
+	 * `spv` is the fixed-mode view count and, in auto, the pre-measurement fallback of one slide
+	 * per position (measuredMaxIndex then narrows maxIndex once widths are known).
 	 */
-	const maxIndex = Math.max(0, Math.ceil(slideCount - slidesPerView));
+	const isAuto = slidesPerView === 'auto';
+	const spv = isAuto ? 1 : slidesPerView;
+
+	/**
+	 * ceil so a fractional slidesPerView gets one extra reachable position — the last slide
+	 * scrolls flush to the right edge (trackOffset clamps that final offset). In auto this is
+	 * the pre-measurement estimate (one position per slide); the measured count replaces it
+	 * below, once the slides have been measured.
+	 */
+	const derivedMaxIndex = Math.max(0, Math.ceil(slideCount - spv));
 
 	/**
 	 * Flow and autoplay are presence-based: passing the node turns the mode on. Flow needs
 	 * the loop-clone structure to wrap seamlessly, so it forces effectiveLoop on.
 	 */
 	const effectiveFlow =
-		flow != null && flow !== false && maxIndex > 0 && !loading && motionAllowed;
-	const effectiveLoop = (loop || effectiveFlow) && maxIndex > 0;
+		flow != null &&
+		flow !== false &&
+		derivedMaxIndex > 0 &&
+		!loading &&
+		motionAllowed;
+	const effectiveLoop = (loop || effectiveFlow) && derivedMaxIndex > 0;
 	const hasAutoplay = autoplay != null && autoplay !== false;
 
 	/**
@@ -139,15 +153,20 @@ function LightSlideInner(
 	 * inset exposes slides left of the active one, and the backward wrap-dance parks that
 	 * far into the prepend strip (capped — clones can't outnumber the slides they copy).
 	 */
-	const isCentered = align === 'center' && slidesPerView > 1;
+	const isCentered = align === 'center' && spv > 1;
 	const isVertical = axis === 'y';
 	/** Vertical order has no reading direction — the axis wins over `dir` for the sign. */
 	const isRtl = dir === 'rtl' && !isVertical;
+	/**
+	 * Variable widths can't say how many clones cover a viewport before measuring — and the
+	 * clones are built during render — so auto duplicates the whole strip on each side. The
+	 * count is measurement-independent, which is exactly what makes auto + loop reliable; pair
+	 * it with lazyMount when the strip is long.
+	 */
 	const loopOffset = effectiveLoop
-		? Math.min(
-				slideCount,
-				Math.ceil(slidesPerView) + (isCentered ? centerLead(slidesPerView) : 0),
-			)
+		? isAuto
+			? slideCount
+			: Math.min(slideCount, Math.ceil(spv) + (isCentered ? centerLead(spv) : 0))
 		: 0;
 
 	/**
@@ -164,8 +183,7 @@ function LightSlideInner(
 	 */
 	const store = storeRef.current;
 	store.slideCount = slideCount;
-	store.maxIndex = maxIndex;
-	store.slidesPerView = slidesPerView;
+	store.slidesPerView = spv;
 	store.gap = gap;
 	store.dirSign = isRtl ? -1 : 1;
 	store.vertical = isVertical;
@@ -175,11 +193,16 @@ function LightSlideInner(
 
 	/** ————————————————— Motion & control ————————————————— */
 
-	const {slideWidth, measureSlideWidth} = useSlideMetrics(
-		viewportRef,
-		storeRef,
-		isCentered,
-	);
+	const {slideWidth, autoMaxIndex, autoVisibleCount, measureSlideWidth} =
+		useSlideMetrics(viewportRef, trackRef, storeRef, isCentered, isAuto);
+
+	/**
+	 * Variable-width positions are measured, not derived: trailing slides that share the final
+	 * viewport collapse into one flush position, so the count only settles once the strip has
+	 * been measured (-1 until then, when the derived estimate stands in).
+	 */
+	const maxIndex = isAuto && autoMaxIndex >= 0 ? autoMaxIndex : derivedMaxIndex;
+	store.maxIndex = maxIndex;
 
 	const {snapToVisual, snapTrack} = useTrackSnap(trackRef, storeRef);
 
@@ -189,10 +212,11 @@ function LightSlideInner(
 		snapTrack,
 		onIndexChangeRef,
 		setCurrentIndex,
-		slidesPerView,
+		slidesPerView: spv,
 		gap,
 		vertical: isVertical,
 		centered: isCentered,
+		auto: isAuto,
 		isLoop: loop,
 		flowEnabled: effectiveFlow,
 		loading,
@@ -250,7 +274,7 @@ function LightSlideInner(
 	const displayChildren = useDisplayChildren({
 		childArray,
 		slideCount,
-		slidesPerView,
+		slidesPerView: spv,
 		maxIndex,
 		currentIndex,
 		loopOffset,
@@ -258,6 +282,7 @@ function LightSlideInner(
 		effectiveFlow,
 		isCentered,
 		lazyMount,
+		visibleCount: autoVisibleCount,
 		slideLabel,
 	});
 
@@ -271,13 +296,14 @@ function LightSlideInner(
 	const [ssrCss] = useState(() =>
 		buildSsrCss({
 			slidesId,
-			slidesPerView,
+			slidesPerView: spv,
 			gap,
 			startVisual: loopOffset + Math.min(startIndex, maxIndex),
 			centered: isCentered,
 			isLoop: effectiveLoop,
 			rtl: isRtl,
 			vertical: isVertical,
+			auto: isAuto,
 		}),
 	);
 
@@ -288,8 +314,8 @@ function LightSlideInner(
 	 * never re-renders the slides. navigateToIndex doubles as the contexts' goToIndex.
 	 */
 	const metricsValue = useMemo(
-		() => ({slideWidth, vertical: isVertical}),
-		[slideWidth, isVertical],
+		() => ({slideWidth, vertical: isVertical, auto: isAuto}),
+		[slideWidth, isVertical, isAuto],
 	);
 	const navValue = useMemo(
 		() => ({
@@ -391,7 +417,7 @@ function LightSlideInner(
 								currentIndex,
 								slideCount,
 								maxIndex,
-								slidesPerView,
+								slidesPerView: spv,
 								isLoop: effectiveLoop,
 								isFlow: effectiveFlow,
 								autoMotion,

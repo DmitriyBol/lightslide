@@ -4,16 +4,20 @@ import {createContext, useContext} from 'react';
  * Slide geometry only. Consumed by <Slide>; this changes just on resize, so slides do not
  * re-render on navigation (currentIndex lives in the separate NavContext below).
  * `slideWidth` is the main-axis slide size; `vertical` says which axis that is, so the
- * slide knows whether to apply it as inline width or height.
+ * slide knows whether to apply it as inline width or height. `auto` is variable-width mode
+ * (`slidesPerView: 'auto'`): the slide keeps its own content size, so no inline main-axis size
+ * is applied at all.
  */
 export type SlideMetricsContextType = {
 	slideWidth: number;
 	vertical: boolean;
+	auto: boolean;
 };
 
 export const SlideMetricsContext = createContext<SlideMetricsContextType>({
 	slideWidth: 0,
 	vertical: false,
+	auto: false,
 });
 
 export const useSlideMetricsContext = () => useContext(SlideMetricsContext);

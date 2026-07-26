@@ -19,6 +19,7 @@ type Overrides = {
 	gap?: number;
 	restOffset?: number;
 	centerInset?: number;
+	slideOffsets?: number[] | null;
 };
 
 function setupFreeDrag(overrides: Overrides = {}) {
@@ -37,6 +38,7 @@ function setupFreeDrag(overrides: Overrides = {}) {
 		gap: overrides.gap ?? 0,
 		restOffset: overrides.restOffset ?? 0,
 		centerInset: overrides.centerInset ?? 0,
+		slideOffsets: overrides.slideOffsets ?? null,
 	});
 	const storeRef = {current: store};
 	const {result, unmount} = renderHook(() =>
@@ -299,6 +301,26 @@ describe('useFreeDrag — free-snap', () => {
 		result.current.onPointerMove(moveEvent(400)); /** dx -100, velocity -1 px/ms */
 		result.current.onPointerUp(moveEvent(400));
 		/** 1000 + 325 projected = 1325 → visual 4 → logical 4 − loopOffset 2 = 2. */
+		expect(navigate).toHaveBeenCalledWith(2, 'drag');
+	});
+
+	it('projects onto the measured boundaries with variable widths', () => {
+		/**
+		 * Slides 100/300/200 → edges [0,100,400,600]. Resting at 0, a flick of −1 px/ms
+		 * projects 325px, and the boundary nearest 325 is 400 (index 2), not a stride multiple.
+		 */
+		const {result, navigate} = setupFreeDrag({
+			snap: true,
+			slideCount: 3,
+			maxIndex: 2,
+			slideWidth: 0,
+			slideOffsets: [0, 100, 400, 600],
+		});
+		result.current.onPointerDown(downEvent(500));
+		jest.setSystemTime(100);
+		result.current.onPointerMove(moveEvent(400)); /** dx -100, velocity -1 px/ms */
+		result.current.onPointerUp(moveEvent(400));
+		/** Rests at 100, projects +325 → 425; nearest measured boundary is 400 → index 2. */
 		expect(navigate).toHaveBeenCalledWith(2, 'drag');
 	});
 });

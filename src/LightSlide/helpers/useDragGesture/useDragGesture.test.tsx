@@ -13,6 +13,8 @@ type Overrides = {
 	slideCount?: number;
 	slideWidth?: number;
 	gap?: number;
+	slideOffsets?: number[] | null;
+	viewportSize?: number;
 };
 
 function setupDrag(overrides: Overrides = {}) {
@@ -31,6 +33,8 @@ function setupDrag(overrides: Overrides = {}) {
 		/** Cached width the gesture sizes its snap/transform from (was getComputedSlideWidth). */
 		slideWidth: overrides.slideWidth ?? 300,
 		gap: overrides.gap ?? 0,
+		slideOffsets: overrides.slideOffsets ?? null,
+		viewportSize: overrides.viewportSize ?? 0,
 	});
 	const storeRef = {current: store};
 	const {result} = renderHook(() =>
@@ -126,6 +130,43 @@ describe('useDragGesture', () => {
 		result.current.onPointerDown(downEvent(500));
 		jest.setSystemTime(1000); /** slow → velocity below threshold */
 		result.current.onPointerMove(moveEvent(470)); /** dx -30, below distance threshold */
+		result.current.onPointerUp(moveEvent(470));
+		expect(navigate).toHaveBeenCalledWith(1, 'drag');
+	});
+
+	it('snaps to the boundary nearest the released position with variable widths', () => {
+		/**
+		 * Slides 100/300/200 → offsets [0,100,400,600]. From index 0, a 250px left drag rests
+		 * the track at offset 250 — equidistant from boundaries 100 and 400, so the tie lands on
+		 * the earlier slide 1. slideWidth is 0 in auto; the array drives the snap.
+		 */
+		const {result, navigate} = setupDrag({
+			currentIndex: 0,
+			maxIndex: 2,
+			slideCount: 3,
+			slideWidth: 0,
+			slideOffsets: [0, 100, 400, 600],
+			viewportSize: 100,
+		});
+		result.current.onPointerDown(downEvent(500));
+		jest.setSystemTime(1000); /** slow → position, not velocity, decides */
+		result.current.onPointerMove(moveEvent(250)); /** dx -250 → rest offset 250 */
+		result.current.onPointerUp(moveEvent(250));
+		expect(navigate).toHaveBeenCalledWith(1, 'drag');
+	});
+
+	it('advances one slide on a fast flick below the half-way point with variable widths', () => {
+		const {result, navigate} = setupDrag({
+			currentIndex: 0,
+			maxIndex: 2,
+			slideCount: 3,
+			slideWidth: 0,
+			slideOffsets: [0, 100, 400, 600],
+			viewportSize: 100,
+		});
+		result.current.onPointerDown(downEvent(500));
+		jest.setSystemTime(50); /** fast → velocity above threshold */
+		result.current.onPointerMove(moveEvent(470)); /** dx -30 → still on slide 0 by distance */
 		result.current.onPointerUp(moveEvent(470));
 		expect(navigate).toHaveBeenCalledWith(1, 'drag');
 	});

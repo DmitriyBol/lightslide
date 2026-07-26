@@ -1,12 +1,20 @@
+import {offsetAt} from '../slideOffsets/slideOffsets';
 import type {LightSlideStore} from '../store';
 
 /**
- * The maximum scroll offset in px — content width minus viewport width, expressed in store
- * terms as `(slideCount − slidesPerView) × slideWidth + (slideCount − ceil(slidesPerView)) × gap`.
- * Non-loop offsets clamp to it (trackOffset, the free-drag bounds); loop mode ignores it.
+ * The maximum scroll offset in px — content width minus viewport width. In fixed mode that is
+ * `(slideCount − slidesPerView) × slideWidth + (slideCount − ceil(slidesPerView)) × gap`; with
+ * variable widths (`slideOffsets` set) it is the measured content width (the last cumulative
+ * edge, minus its trailing gap) minus the measured viewport. Non-loop offsets clamp to it
+ * (trackOffset, the free-drag bounds); loop mode ignores it.
  */
 export function maxTrackOffset(store: LightSlideStore): number {
-	const {slideWidth, gap, slideCount, slidesPerView} = store;
+	const {slideWidth, gap, slideCount, slidesPerView, slideOffsets, viewportSize} =
+		store;
+	if (slideOffsets) {
+		const content = offsetAt(slideOffsets, slideOffsets.length - 1) - gap;
+		return Math.max(0, content - viewportSize);
+	}
 	return Math.max(
 		0,
 		(slideCount - slidesPerView) * slideWidth +
@@ -29,7 +37,8 @@ export function centerLead(slidesPerView: number): number {
 /**
  * The px the track is translated (the caller negates it) to bring `visualIndex` to its
  * resting position — the viewport's left edge, or `centerInset` px inside it in center mode.
- * Positions step by the stride `slideWidth + gap`.
+ * Positions step by the stride `slideWidth + gap`, or, with variable widths, come straight
+ * from the measured `slideOffsets` array (same value under uniform widths).
  *
  * In non-loop mode the result is clamped to [0, maxTrackOffset]: a fractional
  * `slidesPerView` (e.g. 1.5) lands the final slide flush against the right edge instead of
@@ -48,8 +57,11 @@ export function trackOffset(
 	visualIndex: number,
 	store: LightSlideStore,
 ): number {
-	const {slideWidth, gap, isLoop, centerInset} = store;
-	const raw = visualIndex * (slideWidth + gap) - centerInset;
+	const {slideWidth, gap, isLoop, centerInset, slideOffsets} = store;
+	const linear = slideOffsets
+		? offsetAt(slideOffsets, visualIndex)
+		: visualIndex * (slideWidth + gap);
+	const raw = linear - centerInset;
 	if (isLoop) return raw;
 	return Math.max(0, Math.min(raw, maxTrackOffset(store)));
 }

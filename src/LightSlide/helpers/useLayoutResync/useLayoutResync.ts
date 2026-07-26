@@ -14,6 +14,7 @@ type LayoutResyncParams = {
 	gap: number;
 	vertical: boolean;
 	centered: boolean;
+	auto: boolean;
 	isLoop: boolean;
 	flowEnabled: boolean;
 	loading: boolean;
@@ -37,6 +38,7 @@ export function useLayoutResync({
 	gap,
 	vertical,
 	centered,
+	auto,
 	isLoop,
 	flowEnabled,
 	loading,
@@ -44,7 +46,10 @@ export function useLayoutResync({
 	useIsomorphicLayoutEffect(() => {
 		measureSlideWidth();
 		const s = storeRef.current;
-		const newMax = Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));
+		/** Variable widths: the measure above already wrote the measured count. */
+		const newMax = auto
+			? s.maxIndex
+			: Math.max(0, Math.ceil(s.slideCount - s.slidesPerView));
 		s.maxIndex = newMax;
 		const corrected = Math.min(s.currentIndex, newMax);
 		if (corrected !== s.currentIndex) onIndexChangeRef.current?.(corrected);
@@ -56,6 +61,7 @@ export function useLayoutResync({
 		gap,
 		vertical,
 		centered,
+		auto,
 		isLoop,
 		flowEnabled,
 		loading,

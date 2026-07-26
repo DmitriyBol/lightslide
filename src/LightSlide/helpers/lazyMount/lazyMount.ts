@@ -6,7 +6,9 @@ export const DEFAULT_LAZY_MARGIN = 1;
 /**
  * Builds the per-slide mount predicate for the `lazyMount` prop: true for logical indices
  * inside `[visible start − margin, visible end + margin]`. All arguments are in logical
- * slide indices; `slidesPerView` is the effective (post-breakpoint) value. The visible
+ * slide indices; `slidesPerView` is the effective (post-breakpoint) value, except with variable
+ * widths, where `measuredVisible` carries the measured slides-on-screen — slidesPerView is 1
+ * there, so deriving the window would unmount slides still in view. The visible
  * range is `currentIndex .. currentIndex + ceil(slidesPerView) − 1`, except at the last
  * position with a fractional slidesPerView (non-loop), where the flush clamp shifts the
  * leftmost visible slide to `slideCount − ceil(slidesPerView)` — the same clamp
@@ -25,8 +27,9 @@ export function buildMountPredicate(
 	isLoop: boolean,
 	margin: number,
 	centered: boolean,
+	measuredVisible = 0,
 ): (index: number) => boolean {
-	const visibleCount = Math.ceil(slidesPerView);
+	const visibleCount = measuredVisible > 0 ? measuredVisible : Math.ceil(slidesPerView);
 	const leftPad = margin + (centered ? centerLead(slidesPerView) : 0);
 
 	if (isLoop) {

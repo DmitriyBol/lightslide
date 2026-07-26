@@ -1,5 +1,5 @@
 import {createStore} from '../store';
-import {trackOffset} from './trackOffset';
+import {maxTrackOffset, trackOffset} from './trackOffset';
 
 /**
  * trackOffset is the single source of the track's translateX magnitude, shared by the snap
@@ -143,6 +143,60 @@ describe('trackOffset', () => {
 			});
 			expect(trackOffset(3, loop)).toBe(1100);
 			expect(trackOffset(1, loop)).toBe(300);
+		});
+	});
+
+	describe('variable widths (slideOffsets set, slidesPerView: auto)', () => {
+		/**
+		 * Three slides of 100 / 300 / 200 px, no gap. slideOffsets are the cumulative leading
+		 * edges plus a trailing entry: [0, 100, 400, 600]. Content 600, viewport 400 → max
+		 * offset 200. Uniform-width parity is covered by the fixed-mode suites above; here the
+		 * point is that a non-uniform array drives the offsets.
+		 */
+		const store = createStore({
+			slideCount: 3,
+			slideOffsets: [0, 100, 400, 600],
+			viewportSize: 400,
+		});
+
+		it('reads each slide boundary straight from the array', () => {
+			expect(trackOffset(0, store)).toBe(0);
+			expect(trackOffset(1, store)).toBe(100);
+		});
+
+		it('clamps the last position flush to the measured content edge', () => {
+			expect(trackOffset(2, store)).toBe(200);
+		});
+
+		it('subtracts the trailing gap from the content width in maxTrackOffset', () => {
+			/**
+			 * Sizes 100/300/200 with a 20px gap → cumulative edges [0, 120, 440, 660], the last
+			 * carrying a trailing gap. Content 660 − 20 = 640, viewport 400 → max offset 240.
+			 */
+			const gapped = createStore({
+				slideCount: 3,
+				gap: 20,
+				slideOffsets: [0, 120, 440, 660],
+				viewportSize: 400,
+			});
+			expect(maxTrackOffset(gapped)).toBe(240);
+		});
+
+		it('shifts by centerInset and never clamps in loop mode', () => {
+			const loop = createStore({
+				slideCount: 3,
+				isLoop: true,
+				loopOffset: 3,
+				centerInset: 50,
+				slideOffsets: [0, 100, 400, 600, 700, 1000, 1200],
+				viewportSize: 400,
+			});
+			expect(trackOffset(4, loop)).toBe(650);
+		});
+
+		it('pins out-of-range indices to the first and last edge', () => {
+			expect(trackOffset(-2, store)).toBe(0);
+			expect(trackOffset(99, store)).toBe(200);
 		});
 	});
 

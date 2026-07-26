@@ -8,6 +8,30 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-07-26
+
+### Added
+
+- **Variable-width slides — `slidesPerView="auto"`.** Each slide keeps its own content width
+  instead of an equal fraction of the viewport (tag rows, chips, hero strips, self-sizing
+  cards). The carousel measures every slide, re-measures when their content resizes, and drives
+  all geometry from those measurements: positions are measured rather than derived (trailing
+  slides sharing the final viewport collapse into one flush position), drag / free / `free snap`
+  project onto the real boundaries, and the last position rests flush — never blank space. Works
+  with `loop`, `flow`, `gap`, `align`, `axis="y"`, `lazyMount`, and `breakpoints` (a breakpoint
+  may switch between a number and `"auto"`). Looping duplicates the whole strip per side, since
+  no clone count can be known before measuring. Server-side the slides render at their natural
+  width with no resting transform, so `initialIndex` 0 without `loop` is zero-CLS; a non-zero
+  start index or `loop` settles on the first client measure. See
+  [Variable width](README.md#variable-width-slidesperviewauto).
+
+### Changed
+
+- Bundle budgets raised for the above: core 5.5 → 6 kB, `lightslide/free` 1.8 → 2.05 kB,
+  `lightslide/flow` 1.8 → 1.9 kB (actual 5.85 / 1.95 / 1.81, brotli). Carousels that pass a
+  numeric `slidesPerView` behave exactly as before — the variable-width paths are skipped by a
+  single branch — but they do pay the ~0.5 kB, so winning it back is tracked separately.
+
 ## [1.0.1] — 2026-07-26
 
 ### Changed
@@ -468,7 +492,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.0
 [1.0.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.1
 [1.0.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.0
 [0.14.1]: https://github.com/DmitriyBol/lightslide/releases/tag/0.14.1

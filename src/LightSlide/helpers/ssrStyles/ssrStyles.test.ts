@@ -15,6 +15,7 @@ describe('buildSsrCss', () => {
 			isLoop: false,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 
 		expect(css).toContain('.container,.stage{position:relative;width:100%}');
@@ -32,6 +33,7 @@ describe('buildSsrCss', () => {
 			isLoop: false,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 
 		expect(css).toContain(
@@ -49,6 +51,7 @@ describe('buildSsrCss', () => {
 			isLoop: false,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 		const offset = buildSsrCss({
 			slidesId: ':r1:',
@@ -59,6 +62,7 @@ describe('buildSsrCss', () => {
 			isLoop: true,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 
 		expect(atStart).not.toContain('transform');
@@ -77,6 +81,7 @@ describe('buildSsrCss', () => {
 			isLoop: false,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 
 		/** min(0px, …): trackOffset rests the first position flush at offset 0. */
@@ -95,6 +100,7 @@ describe('buildSsrCss', () => {
 			isLoop: true,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 
 		expect(css).toContain(
@@ -118,6 +124,7 @@ describe('buildSsrCss', () => {
 			isLoop: false,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 
 		expect(css).not.toContain('script');
@@ -136,6 +143,7 @@ describe('buildSsrCss', () => {
 			isLoop: true,
 			rtl: false,
 			vertical: false,
+			auto: false,
 		});
 
 		expect(css.match(/\[id="«r7»"\]/g)).toHaveLength(2);
@@ -151,6 +159,7 @@ describe('buildSsrCss', () => {
 			isLoop: true,
 			rtl: false,
 			vertical: true,
+			auto: false,
 		});
 
 		expect(css).toContain('.vertical{display:flex;flex-direction:column}');
@@ -176,6 +185,7 @@ describe('buildSsrCss', () => {
 			isLoop: false,
 			rtl: false,
 			vertical: true,
+			auto: false,
 		});
 
 		/** The shared base rules must stay identical to the horizontal output. */
@@ -194,6 +204,7 @@ describe('buildSsrCss', () => {
 			isLoop: true,
 			rtl: true,
 			vertical: false,
+			auto: false,
 		});
 
 		expect(css).toContain(
@@ -211,11 +222,70 @@ describe('buildSsrCss', () => {
 			isLoop: false,
 			rtl: true,
 			vertical: false,
+			auto: false,
 		});
 
 		/** max(0px, …): the clamped offset is the translate itself when the layout is mirrored. */
 		expect(css).toContain(
 			'transform:translateX(max(0px,calc(((100% - 0px)/1.5 + 0px)*0 - (100% - ((100% - 0px)/1.5))/2)))',
 		);
+	});
+
+	describe('variable-width (auto)', () => {
+		it('leaves slides at their natural size — no width calc, no rest transform', () => {
+			const css = buildSsrCss({
+				slidesId: ':r1:',
+				slidesPerView: 1,
+				gap: 16,
+				startVisual: 0,
+				centered: false,
+				isLoop: false,
+				rtl: false,
+				vertical: false,
+				auto: true,
+			});
+
+			expect(css).toContain('[id=":r1:"]{display:flex}');
+			expect(css).toContain('[id=":r1:"]>*{box-sizing:border-box;flex-shrink:0}');
+			expect(css).not.toContain('width:calc');
+			expect(css).not.toContain('transform');
+		});
+
+		it('omits the rest transform even for a non-zero start (client positions after measuring)', () => {
+			const css = buildSsrCss({
+				slidesId: ':r1:',
+				slidesPerView: 1,
+				gap: 0,
+				startVisual: 4,
+				centered: false,
+				isLoop: true,
+				rtl: false,
+				vertical: false,
+				auto: true,
+			});
+
+			expect(css).not.toContain('transform');
+		});
+
+		it('keeps the vertical height chain but leaves slide heights natural', () => {
+			const css = buildSsrCss({
+				slidesId: ':r1:',
+				slidesPerView: 1,
+				gap: 0,
+				startVisual: 0,
+				centered: false,
+				isLoop: false,
+				rtl: false,
+				vertical: true,
+				auto: true,
+			});
+
+			expect(css).toContain('.vertical .viewport{height:100%}');
+			expect(css).toContain(
+				'[id=":r1:"]{display:flex;flex-direction:column;height:100%}',
+			);
+			expect(css).toContain('[id=":r1:"]>*{box-sizing:border-box;flex-shrink:0}');
+			expect(css).not.toContain('height:calc');
+		});
 	});
 });

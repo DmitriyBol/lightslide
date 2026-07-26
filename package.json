@@ -1,7 +1,7 @@
 {
   "name": "lightslide",
-  "version": "1.0.1",
-  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~5.5 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
+  "version": "1.1.0",
+  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~5.9 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -60,15 +60,33 @@
   },
   "typesVersions": {
     "*": {
-      "a11y": ["dist/a11y.d.ts"],
-      "navigation": ["dist/navigation.d.ts"],
-      "pagination": ["dist/pagination.d.ts"],
-      "flow": ["dist/flow.d.ts"],
-      "wheel": ["dist/wheel.d.ts"],
-      "free": ["dist/free.d.ts"],
-      "autoplay": ["dist/autoplay.d.ts"],
-      "analytics": ["dist/analytics.d.ts"],
-      "breakpoints": ["dist/breakpoints.d.ts"]
+      "a11y": [
+        "dist/a11y.d.ts"
+      ],
+      "navigation": [
+        "dist/navigation.d.ts"
+      ],
+      "pagination": [
+        "dist/pagination.d.ts"
+      ],
+      "flow": [
+        "dist/flow.d.ts"
+      ],
+      "wheel": [
+        "dist/wheel.d.ts"
+      ],
+      "free": [
+        "dist/free.d.ts"
+      ],
+      "autoplay": [
+        "dist/autoplay.d.ts"
+      ],
+      "analytics": [
+        "dist/analytics.d.ts"
+      ],
+      "breakpoints": [
+        "dist/breakpoints.d.ts"
+      ]
     }
   },
   "sideEffects": [
@@ -102,7 +120,7 @@
   "size-limit": [
     {
       "path": "dist/index.mjs",
-      "limit": "5.5 kB"
+      "limit": "6.1 kB"
     },
     {
       "name": "lightslide/a11y (with shared chunks)",
@@ -122,7 +140,7 @@
     {
       "name": "lightslide/flow (with shared chunks)",
       "path": "dist/flow.mjs",
-      "limit": "1.8 kB"
+      "limit": "1.9 kB"
     },
     {
       "name": "lightslide/wheel (with shared chunks)",
@@ -132,7 +150,7 @@
     {
       "name": "lightslide/free (with shared chunks)",
       "path": "dist/free.mjs",
-      "limit": "1.8 kB"
+      "limit": "2.05 kB"
     },
     {
       "name": "lightslide/autoplay (with shared chunks)",

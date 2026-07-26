@@ -32,7 +32,7 @@ const ROWS: CompareRow[] = [
 		name: 'lightslide',
 		isOurs: true,
 		cells: [
-			{label: '5.6 kB core', isPositive: true},
+			{label: '6.1 kB core', isPositive: true},
 			{label: 'APG always on · +1 kB opt-in layer', isPositive: true},
 			{label: '✓ tree-shakeable', isPositive: true},
 			{label: '✓ typed events', isPositive: true},
@@ -119,7 +119,7 @@ export function CompareExample() {
 				<>
 					Sizes are min+gzip via Bundlephobia (July 2026); lightslide's core is
 					measured the same way from its ESM build, and each opt-in module adds
-					0.4–1.9 kB. To be fair: Embla is headless on purpose (and shadcn/ui's
+					0.4–2.1 kB. To be fair: Embla is headless on purpose (and shadcn/ui's
 					default) — pick it to own every byte of markup; Swiper's size buys the
 					biggest feature set. lightslide's lane is the intersection — small,
 					maintained, accessible and complete out of the box.

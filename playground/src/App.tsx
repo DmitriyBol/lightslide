@@ -10,6 +10,7 @@ import {useTheme} from './components/useTheme';
 import {AccessibilityExample} from './examples/AccessibilityExample';
 import {AlignExample} from './examples/AlignExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
+import {AutoWidthExample} from './examples/AutoWidthExample';
 import {BasicExample} from './examples/BasicExample';
 import {BreakpointsExample} from './examples/BreakpointsExample';
 import {CompareExample} from './examples/CompareExample';
@@ -55,6 +56,7 @@ export function App() {
 
 				<PhaseLabel label="Navigation" />
 				<SlidesPerViewExample />
+				<AutoWidthExample />
 				<AlignExample />
 				<BreakpointsExample />
 				<NavigationExample />
@@ -95,7 +97,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~5.5&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~5.9&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub

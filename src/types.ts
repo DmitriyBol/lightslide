@@ -24,6 +24,11 @@ export type SlideDirection = 'left' | 'right' | 'up' | 'down';
  *   `region` landmark (else a plain `group`); either way it is announced as a carousel.
  * - `slideLabel` — formats each slide's automatic accessible name (default
  *   `${index + 1} of ${count}`); a per-slide `aria-label` on `<Slide>` overrides it.
+ * - `slidesPerView` — how many slides fill the viewport (default 1). A number sizes every slide
+ *   to an equal fraction of the viewport (fractional values like 1.2 peek the next slide);
+ *   `'auto'` instead lets each slide keep its own content width, and the carousel measures them
+ *   (variable-width mode — tag rows, hero strips, natural-width cards). With `'auto'` the slides
+ *   size themselves, so `align`/`gap`/`loop` still apply but the equal-fraction math does not.
  * - `gap` — space between adjacent slides along the scroll axis, px (default 0). Applied as
  *   CSS `gap` on the track and folded into all geometry: slide size, snap positions,
  *   the fractional flush of the last slide, loop clones, and flow.
@@ -94,7 +99,7 @@ export type LightSlideProps = {
 	trackClassName?: string;
 	label?: string;
 	slideLabel?: (index: number, count: number) => string;
-	slidesPerView?: number;
+	slidesPerView?: number | 'auto';
 	gap?: number;
 	axis?: 'x' | 'y';
 	dir?: 'ltr' | 'rtl';

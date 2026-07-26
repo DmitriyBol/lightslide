@@ -7,7 +7,7 @@
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, infinite loop, center align, zero-CLS server
-rendering, and lazy slide mounting in a ~5.5 kB fully-typed core with zero runtime
+rendering, and lazy slide mounting in a ~5.9 kB fully-typed core with zero runtime
 dependencies beyond React. Navigation, pagination, autoplay, a continuous flow (ticker)
 mode, wheel gestures, momentum scrolling, responsive breakpoints, one typed analytics event
 stream, and the deep accessibility layer all ship as tree-shakeable entries — you only pay
@@ -25,7 +25,7 @@ for what you import.
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
 - [loop](#loop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
-- [slidesPerView & gap](#slidesperview--gap) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
+- [slidesPerView & gap](#slidesperview--gap) · [Variable width](#variable-width-slidesperviewauto) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -44,7 +44,8 @@ for what you import.
 - **Interactive content friendly** — links/buttons inside slides stay clickable; a tap passes
   through, a drag never triggers them, native image/anchor drag can't hijack the gesture, and a
   drag that leaves the carousel mid-gesture never gets stuck.
-- **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek).
+- **slidesPerView** — show N slides at once (floats allowed, e.g. `1.5` for a peek), or
+  `"auto"` to let every slide keep its own content width.
 - **gap** — px spacing between slides, folded into all geometry (snap, drag, loop, flow,
   fractional views) — no padding workarounds.
 - **Center align** (`align="center"`) — the active slide rests centred with its neighbours
@@ -84,7 +85,7 @@ for what you import.
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, autoplay, flow, wheel gestures, free scrolling,
   breakpoints, analytics, and the a11y layer ship as tree-shakeable entries; the core stays
-  ~5.5 kB and an unused module never reaches your bundle.
+  ~5.9 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -106,7 +107,7 @@ the package's most recent npm publish as of the same date.
 
 | Library | Bundle (min+gzip) | A11y out of the box | Built-in arrows & dots | Analytics | Generic slide data | Last release |
 |---|---|---|---|---|---|---|
-| **lightslide** | **5.6 kB** core, +0.4–1.9 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
+| **lightslide** | **6.1 kB** core, +0.4–2.1 kB per opt-in module | APG semantics always on; keyboard/announcements +1 kB opt-in | ✓ (tree-shakeable) | ✓ one typed event stream (opt-in module) | ✓ | active |
 | [embla-carousel-react](https://www.embla-carousel.com) | 7.3 kB | — headless by design, bring your own ARIA | — (DIY / plugins) | — (event emitter) | — | active (Apr 2026) |
 | [keen-slider](https://keen-slider.io) | 5.9 kB | — | — (DIY) | — (event hooks) | — | Jul 2023 |
 | [swiper](https://swiperjs.com) | 19.6 kB | ✓ a11y module, on by default | ✓ | — (events) | — | active (Jul 2026) |
@@ -166,7 +167,7 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5.5 kB). Arrows, dots, autoplay, the flow
+The core ships only what every carousel needs (~5.9 kB). Arrows, dots, autoplay, the flow
 ticker, wheel gestures, free scrolling, breakpoints, analytics, and the accessibility layer
 are separate tree-shakeable entries — import a module and pass its node to the matching slot
 prop (or call its hook); skip the import and none of its code or styles reaches your bundle.
@@ -249,7 +250,7 @@ itself is not generic.)
 | `trackClassName` | `string` | — | Class for the inner track |
 | `label` | `string` | — | Accessible name — makes the carousel a labelled `region` landmark (see [Accessibility](#accessibility)) |
 | `slideLabel` | `(index, count) => string` | `"${i+1} of ${n}"` | Formats each slide's automatic accessible name |
-| `slidesPerView` | `number` | `1` | How many slides are visible at once (floats allowed) |
+| `slidesPerView` | `number \| 'auto'` | `1` | How many slides are visible at once (floats allowed); `'auto'` sizes each slide by its own content (see [Variable width](#variable-width-slidesperviewauto)) |
 | `gap` | `number` | `0` | Space between slides along the scroll axis, px (see [slidesPerView & gap](#slidesperview--gap)) |
 | `axis` | `'x' \| 'y'` | `'x'` | Scroll axis — `'y'` is a vertical carousel; give it an explicit height (see [Vertical axis](#vertical-axis-axisy)) |
 | `dir` | `'ltr' \| 'rtl'` | `'ltr'` | Reading direction — `'rtl'` mirrors layout, gestures, controls, and loop (see [Right-to-left](#right-to-left-dirrtl)) |
@@ -525,6 +526,36 @@ in every computation: each slide fills
 `slideWidth + gap`, a fractional view still lands the last slide flush against the right edge,
 and loop clones and the flow ticker space identically. No padding inside the slide, so card
 backgrounds and shadows span the full slide width.
+
+## Variable width (`slidesPerView="auto"`)
+
+```tsx
+<LightSlide slidesPerView="auto" gap={12} navigation={<Navigation />}>
+  <Slide><Tag>Design</Tag></Slide>
+  <Slide><Tag>Engineering</Tag></Slide>
+</LightSlide>
+```
+
+`slidesPerView="auto"` drops the equal-fraction sizing: **each slide keeps its own content
+width** — tag rows, chips, hero strips, cards that size themselves. The carousel measures every
+slide (and re-measures when their content resizes) and drives all the geometry from those
+measurements instead of a single stride:
+
+- **Positions are measured, not derived.** Trailing slides that share the final viewport
+  collapse into one flush position, so there is a dot per *reachable* position rather than per
+  slide, and the last one rests flush against the right edge — never blank space.
+- **Snapping lands on real boundaries.** Drag, free-mode settling, and `free snap` all project
+  onto the measured edges; a flick still advances at least one slide.
+- **`loop`, `flow`, `gap`, `axis="y"`, and `breakpoints` all work** (a breakpoint may switch
+  between a number and `"auto"`). Looping duplicates the whole strip on each side, since no
+  clone count can be known before measuring — pair it with `lazyMount` for long strips.
+- **Sizing is yours.** Give slides a width (or let their content do it); the carousel sets no
+  inline size. Set it on the `<Slide>` or on the content inside it.
+
+Server-side, slides render at their natural width and no resting transform is emitted: at
+`initialIndex` 0 without `loop` that is already the final layout (zero CLS). A non-zero start
+index or `loop` can't be positioned before the widths are known, so those settle on the first
+client measure.
 
 ## Center align
 
@@ -966,6 +997,8 @@ src/
 │       ├── store.ts                #   single core-data store (LightSlideStore)
 │       ├── loopClones/             #   per-slide ARIA + loop clones
 │       ├── lazyMount/              #   index-window mount predicate for lazyMount
+│       ├── buildOffsets/           #   measured sizes → cumulative edges + reachable count (auto)
+│       ├── slideOffsets/           #   reads those edges: loop home/span, nearest boundary
 │       ├── ssrStyles/              #   critical layout CSS served with the markup
 │       ├── trackOffset/            #   pure px offset for a visual index
 │       ├── trackTransform/         #   offset → translateX/translateY string (axis + direction applied once)
@@ -974,7 +1007,7 @@ src/
 │       ├── useNavigation/          #   navigateToIndex — the single navigation path
 │       ├── useExternalControl/     #   controlled index prop + LightSlideHandle ref
 │       ├── useLayoutResync/        #   re-measure/clamp/re-snap on layout-shape changes
-│       ├── useSlideMetrics/        #   measure container → cached slide px width
+│       ├── useSlideMetrics/        #   measure viewport (and each slide in auto) → cached geometry
 │       ├── useTrackSnap/           #   transform/translateX snapping
 │       ├── useDisplayChildren/     #   ARIA + loop clones + lazy window → rendered children
 │       ├── useGestureHandlers/     #   which handler bag owns the viewport (drag/flow/free)
@@ -1022,7 +1055,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 362 unit/integration tests (Jest + jsdom) across 38 suites
+npm test             # 402 unit/integration tests (Jest + jsdom) across 41 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
@@ -1038,8 +1071,9 @@ Two layers:
 - **Integration** (`npm test`) — Jest + Testing Library in jsdom; the fast inner loop over
   component logic.
 - **End-to-end** (`npm run test:e2e`) — Playwright (Chromium) driving the live playground in a
-  real browser. Covers what jsdom can't: pointer drag/snap, layout-measured slide widths,
-  loop/flow motion, and the a11y layer's real keyboard focus flow + `inert` guarding. See
+  real browser (65 specs). Covers what jsdom can't: pointer drag/snap, layout-measured slide
+  widths (including variable width), loop/flow motion, and the a11y layer's real keyboard focus
+  flow + `inert` guarding. See
   [`e2e/`](https://github.com/DmitriyBol/lightslide/tree/main/e2e).
 
 ```bash
