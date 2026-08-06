@@ -5,6 +5,7 @@ import type {AnalyticsEvent} from 'lightslide/analytics';
 import {Analytics} from 'lightslide/analytics';
 import {FreeScroll} from 'lightslide/free';
 import {Pagination} from 'lightslide/pagination';
+import type {ReactElement} from 'react';
 
 import {Console} from '../components/Console';
 import {Controls, Demo, Well} from '../components/Demo';
@@ -32,7 +33,7 @@ const MODES: {label: string; value: Mode}[] = [
 	{label: 'free-snap', value: 'free-snap'},
 ];
 
-const PLUGINS: Record<Mode, JSX.Element | undefined> = {
+const PLUGINS: Record<Mode, ReactElement | undefined> = {
 	snap: undefined,
 	free: <FreeScroll />,
 	'free-snap': <FreeScroll snap />,
