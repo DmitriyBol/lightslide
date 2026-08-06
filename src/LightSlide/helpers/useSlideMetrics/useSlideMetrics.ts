@@ -42,8 +42,8 @@ type SlideMetrics = {
  * layout-resync snap re-applies it to the transform.
  */
 export function useSlideMetrics(
-	viewportRef: RefObject<HTMLDivElement>,
-	trackRef: RefObject<HTMLDivElement>,
+	viewportRef: RefObject<HTMLDivElement | null>,
+	trackRef: RefObject<HTMLDivElement | null>,
 	storeRef: MutableRefObject<LightSlideStore>,
 	centered: boolean,
 	auto: boolean,

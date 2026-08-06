@@ -17,7 +17,7 @@ import type {PointerHandlers} from '../LightSlide/helpers/usePointerGesture/useP
  * Provider ↔ consumer.
  */
 export type FreeSeamValue = {
-	trackRef: RefObject<HTMLDivElement>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	active: boolean;
 	goToIndex: NavigateFn;

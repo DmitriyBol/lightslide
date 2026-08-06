@@ -32,7 +32,7 @@ const FREE_MIN_VELOCITY = 0.02;
 /** `snap` is the free-snap variant: coast the same distance, land on a slide boundary. */
 type FreeDragParams = {
 	snap: boolean;
-	trackRef: RefObject<HTMLDivElement>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	goToIndex: NavigateFn;
 };

@@ -26,7 +26,7 @@ type TrackSnap = {
  * last index when slidesPerView is fractional.
  */
 export function useTrackSnap(
-	trackRef: RefObject<HTMLDivElement>,
+	trackRef: RefObject<HTMLDivElement | null>,
 	storeRef: MutableRefObject<LightSlideStore>,
 ): TrackSnap {
 	/**

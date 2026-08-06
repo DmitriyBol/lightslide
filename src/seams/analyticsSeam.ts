@@ -15,7 +15,7 @@ import type {LightSlideStore} from '../LightSlide/helpers/store';
  * duplicated context would silently fail to match Provider ↔ consumer.
  */
 export type AnalyticsSeamValue = {
-	containerRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	slides: ReactNode[];
 };

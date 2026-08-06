@@ -18,8 +18,8 @@ import type {LightSlideStore} from '../store';
 import type {PointerHandlers} from '../usePointerGesture/usePointerGesture';
 
 type SeamValuesParams = {
-	containerRef: RefObject<HTMLDivElement>;
-	trackRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	effectiveFlow: boolean;
 	pluginActive: boolean;
