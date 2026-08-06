@@ -8,6 +8,19 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-08-06
+
+### Changed
+
+- **Bundle budgets tightened back after the variable-width size audit:** core 6.1 → 6 kB
+  (actual ~5.96), `lightslide/free` 2.05 → 2 kB (~1.94), `lightslide/flow` 1.9 → 1.85 kB
+  (~1.81). A source-level pass (the loop-clone index shift is now unconditional —
+  `loopOffset` is 0 when not looping — one SSR CSS template instead of four branches,
+  direct `slideOffsets` indexing) clawed back ~35 B; the rest of the variable-width cost is
+  the feature's own logic, which brotli already compresses too well for micro-golf to touch,
+  so the new limits document the honest floor. No behaviour change — 402 unit and 65 e2e
+  tests pass byte-identically.
+
 ## [1.1.1] — 2026-08-06
 
 ### Fixed
@@ -503,7 +516,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.2...HEAD
+[1.1.2]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.2
 [1.1.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.1
 [1.1.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.0
 [1.0.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.1
