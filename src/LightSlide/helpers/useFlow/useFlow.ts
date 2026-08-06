@@ -19,7 +19,7 @@ type FlowParams = {
 	resumeDelay: number;
 	pauseOnHover: boolean;
 	pauseOnFocus: boolean;
-	trackRef: RefObject<HTMLDivElement>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 };
 

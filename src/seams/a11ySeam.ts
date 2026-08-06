@@ -24,8 +24,8 @@ import type {LightSlideStore} from '../LightSlide/helpers/store';
  * and `setMotionAllowed` lets the reduced-motion plugin stop auto-motion reactively.
  */
 export type A11yContextType = {
-	containerRef: RefObject<HTMLDivElement>;
-	trackRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	currentIndex: number;
 	slideCount: number;

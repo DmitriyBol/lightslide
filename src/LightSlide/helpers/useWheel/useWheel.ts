@@ -19,7 +19,7 @@ import type {LightSlideStore} from '../store';
 type WheelParams = {
 	enabled: boolean;
 	threshold: number;
-	containerRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	goToIndex: NavigateFn;
 };

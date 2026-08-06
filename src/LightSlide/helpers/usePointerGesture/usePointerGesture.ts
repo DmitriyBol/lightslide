@@ -46,7 +46,7 @@ type PointerGestureCallbacks = {
 };
 
 type PointerGestureParams = PointerGestureCallbacks & {
-	trackRef: RefObject<HTMLDivElement>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 };
 

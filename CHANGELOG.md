@@ -8,6 +8,17 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-08-06
+
+### Fixed
+
+- **React 19: loop clones stayed reachable by assistive tech.** React 19 promoted `inert` to
+  a real boolean prop and treats the React-18 empty-string form as *false* (with a console
+  warning) — so on React 19 the loop clones silently lost their `inert`, putting their
+  focusable duplicates back into the tab order. The attribute now follows the running React
+  major: `true` on 19+, `''` on 18. The peer range is unchanged (`>=18`); the repo's own
+  test matrix now covers both (unit suite on React 19, e2e playground on 18).
+
 ## [1.1.0] — 2026-07-26
 
 ### Added
@@ -492,7 +503,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.1...HEAD
+[1.1.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.1
 [1.1.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.0
 [1.0.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.1
 [1.0.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.0
