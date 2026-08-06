@@ -94,9 +94,8 @@ export function useTrackSnap(
 
 	const snapTrack = useCallback(
 		(logicalIndex: number, animate: boolean) => {
-			const {isLoop, loopOffset} = storeRef.current;
-			const visualIndex = isLoop ? logicalIndex + loopOffset : logicalIndex;
-			snapToVisual(visualIndex, animate);
+			/** loopOffset is 0 when not looping, so the visual shift is unconditional. */
+			snapToVisual(logicalIndex + storeRef.current.loopOffset, animate);
 		},
 		[snapToVisual, storeRef],
 	);
