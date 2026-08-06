@@ -144,15 +144,15 @@ export function useFreeDrag({
 		store.settleForward = forward;
 		store.autoScrollPaused = false;
 		const stride = slideWidth + gap;
-		/** Boundaries sit at index × stride − centerInset, so the inset re-joins before rounding. */
+		/**
+		 * Boundaries sit at index × stride − centerInset, so the inset re-joins before
+		 * rounding; loopOffset is 0 when not looping.
+		 */
 		let idx: number;
 		if (slideOffsets) {
-			idx =
-				nearestVisualIndex(slideOffsets, pos + centerInset) -
-				(isLoop ? loopOffset : 0);
+			idx = nearestVisualIndex(slideOffsets, pos + centerInset) - loopOffset;
 		} else if (stride > 0) {
-			idx =
-				Math.round((pos + centerInset) / stride) - (isLoop ? loopOffset : 0);
+			idx = Math.round((pos + centerInset) / stride) - loopOffset;
 		} else {
 			idx = store.currentIndex;
 		}
@@ -245,18 +245,17 @@ export function useFreeDrag({
 
 		if (snap) {
 			store.autoScrollPaused = false;
+			/** loopOffset is 0 when not looping. */
 			const projected = pos - velocityX * FREE_DECAY_MS + centerInset;
 			if (slideOffsets) {
 				goToIndex(
-					nearestVisualIndex(slideOffsets, projected) -
-						(isLoop ? loopOffset : 0),
+					nearestVisualIndex(slideOffsets, projected) - loopOffset,
 					'drag',
 				);
 				return;
 			}
 			if (stride === 0) return;
-			const idx = Math.round(projected / stride) - (isLoop ? loopOffset : 0);
-			goToIndex(idx, 'drag');
+			goToIndex(Math.round(projected / stride) - loopOffset, 'drag');
 			return;
 		}
 

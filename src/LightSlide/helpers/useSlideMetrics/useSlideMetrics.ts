@@ -78,12 +78,11 @@ export function useSlideMetrics(
 			storeRef.current.centerInset = 0;
 			/**
 			 * Clone edges are part of the strip but never scroll targets, so the reachable count
-			 * is measured over the real slides only (loopOffset per side).
+			 * is measured over the real slides only (loopOffset per side; 0 — the whole strip —
+			 * when not looping).
 			 */
-			const {loopOffset, isLoop} = storeRef.current;
-			const real = isLoop
-				? offsets.slice(loopOffset, offsets.length - loopOffset)
-				: offsets;
+			const {loopOffset} = storeRef.current;
+			const real = offsets.slice(loopOffset, offsets.length - loopOffset);
 			const onScreen = maxVisibleCount(offsets, gap, size);
 			storeRef.current.visibleCount = onScreen;
 			setAutoVisibleCount(onScreen);

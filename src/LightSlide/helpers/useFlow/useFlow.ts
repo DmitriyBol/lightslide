@@ -77,15 +77,9 @@ export function useFlow({
 }: FlowParams): PointerHandlers {
 	const flow = useRef<FlowState>(initialFlowState());
 
-	/** Latest-refs of the prop knobs so changing any of them never restarts the rAF loop. */
-	const speedRef = useRef(speed);
-	speedRef.current = speed;
-	const resumeDelayRef = useRef(resumeDelay);
-	resumeDelayRef.current = resumeDelay;
-	const pauseOnHoverRef = useRef(pauseOnHover);
-	pauseOnHoverRef.current = pauseOnHover;
-	const pauseOnFocusRef = useRef(pauseOnFocus);
-	pauseOnFocusRef.current = pauseOnFocus;
+	/** One latest-ref of the prop knobs so changing any of them never restarts the rAF loop. */
+	const knobs = useRef({speed, resumeDelay, pauseOnHover, pauseOnFocus});
+	knobs.current = {speed, resumeDelay, pauseOnHover, pauseOnFocus};
 
 	/** Drifts from the loop's home offset — `loopOffset × stride`, or the measured edge in auto. */
 	const applyTransform = useCallback(() => {
@@ -111,7 +105,7 @@ export function useFlow({
 		flow.current.resumeTimer = setTimeout(() => {
 			flow.current.resumeTimer = null;
 			flow.current.interacting = false;
-		}, resumeDelayRef.current);
+		}, knobs.current.resumeDelay);
 	}, [clearResumeTimer]);
 
 	/**
@@ -143,17 +137,18 @@ export function useFlow({
 			 */
 			const store = storeRef.current;
 			const {hovered, focusWithin, apiPaused, wheelDeltaX} = store;
+			const k = knobs.current;
 			store.wheelDeltaX = 0;
 			const engaged =
 				apiPaused ||
-				(pauseOnHoverRef.current && hovered) ||
-				(pauseOnFocusRef.current && focusWithin);
+				(k.pauseOnHover && hovered) ||
+				(k.pauseOnFocus && focusWithin);
 			/**
 			 * Wheel deltas drift the strip even while the hover/focus pause is engaged (wheeling
 			 * implies hovering); a drag in progress owns the transform, so they drop then.
 			 */
 			let delta = f.interacting ? 0 : wheelDeltaX;
-			if (!f.interacting && !engaged) delta += (speedRef.current * dt) / 1000;
+			if (!f.interacting && !engaged) delta += (k.speed * dt) / 1000;
 			const span = contentSpan(store);
 			if (delta !== 0 && span > 0) {
 				f.offset = wrap(f.offset + delta, span);
