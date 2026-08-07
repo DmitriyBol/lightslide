@@ -9,6 +9,7 @@ import {useReveal} from './components/useReveal';
 import {useTheme} from './components/useTheme';
 import {AccessibilityExample} from './examples/AccessibilityExample';
 import {AlignExample} from './examples/AlignExample';
+import {AutoHeightExample} from './examples/AutoHeightExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
 import {AutoWidthExample} from './examples/AutoWidthExample';
 import {BasicExample} from './examples/BasicExample';
@@ -57,6 +58,7 @@ export function App() {
 				<PhaseLabel label="Navigation" />
 				<SlidesPerViewExample />
 				<AutoWidthExample />
+				<AutoHeightExample />
 				<AlignExample />
 				<BreakpointsExample />
 				<NavigationExample />

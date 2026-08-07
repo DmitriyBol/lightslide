@@ -9,6 +9,7 @@ import type {
 } from 'react';
 
 import type {AnalyticsSeamValue} from '../../../seams/analyticsSeam';
+import type {AutoHeightSeamValue} from '../../../seams/autoHeightSeam';
 import type {AutoplaySeamValue} from '../../../seams/autoplaySeam';
 import type {FlowSeamValue} from '../../../seams/flowSeam';
 import type {FreeSeamValue} from '../../../seams/freeSeam';
@@ -19,12 +20,14 @@ import type {PointerHandlers} from '../usePointerGesture/usePointerGesture';
 
 type SeamValuesParams = {
 	containerRef: RefObject<HTMLDivElement | null>;
+	viewportRef: RefObject<HTMLDivElement | null>;
 	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	effectiveFlow: boolean;
 	pluginActive: boolean;
 	wheelActive: boolean;
 	autoplayActive: boolean;
+	autoHeightActive: boolean;
 	goToIndex: NavigateFn;
 	setFlowHandlers: Dispatch<SetStateAction<PointerHandlers | null>>;
 	setFreeHandlers: Dispatch<SetStateAction<PointerHandlers | null>>;
@@ -36,6 +39,7 @@ type SeamValues = {
 	freeSeamValue: FreeSeamValue;
 	wheelSeamValue: WheelSeamValue;
 	autoplaySeamValue: AutoplaySeamValue;
+	autoHeightSeamValue: AutoHeightSeamValue;
 	analyticsSeamValue: AnalyticsSeamValue;
 };
 
@@ -47,12 +51,14 @@ type SeamValues = {
  */
 export function useSeamValues({
 	containerRef,
+	viewportRef,
 	trackRef,
 	storeRef,
 	effectiveFlow,
 	pluginActive,
 	wheelActive,
 	autoplayActive,
+	autoHeightActive,
 	goToIndex,
 	setFlowHandlers,
 	setFreeHandlers,
@@ -90,6 +96,11 @@ export function useSeamValues({
 		[containerRef, storeRef, autoplayActive, goToIndex],
 	);
 
+	const autoHeightSeamValue = useMemo(
+		() => ({viewportRef, trackRef, storeRef, active: autoHeightActive}),
+		[viewportRef, trackRef, storeRef, autoHeightActive],
+	);
+
 	const analyticsSeamValue = useMemo(
 		() => ({containerRef, storeRef, slides: childArray}),
 		[containerRef, storeRef, childArray],
@@ -100,6 +111,7 @@ export function useSeamValues({
 		freeSeamValue,
 		wheelSeamValue,
 		autoplaySeamValue,
+		autoHeightSeamValue,
 		analyticsSeamValue,
 	};
 }

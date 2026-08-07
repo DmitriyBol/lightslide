@@ -10,6 +10,7 @@ const SECTION_IDS = [
 	'custom-styles',
 	'slides-per-view',
 	'auto-width',
+	'auto-height',
 	'align',
 	'breakpoints',
 	'navigation',
