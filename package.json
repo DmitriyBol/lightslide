@@ -1,7 +1,7 @@
 {
   "name": "lightslide",
-  "version": "1.1.0",
-  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~5.9 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
+  "version": "1.2.0",
+  "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~6 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, adaptive height, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -56,6 +56,11 @@
       "import": "./dist/breakpoints.mjs",
       "require": "./dist/breakpoints.js"
     },
+    "./autoheight": {
+      "types": "./dist/autoheight.d.ts",
+      "import": "./dist/autoheight.mjs",
+      "require": "./dist/autoheight.js"
+    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
@@ -86,6 +91,9 @@
       ],
       "breakpoints": [
         "dist/breakpoints.d.ts"
+      ],
+      "autoheight": [
+        "dist/autoheight.d.ts"
       ]
     }
   },
@@ -120,7 +128,7 @@
   "size-limit": [
     {
       "path": "dist/index.mjs",
-      "limit": "6.1 kB"
+      "limit": "6.05 kB"
     },
     {
       "name": "lightslide/a11y (with shared chunks)",
@@ -140,7 +148,7 @@
     {
       "name": "lightslide/flow (with shared chunks)",
       "path": "dist/flow.mjs",
-      "limit": "1.9 kB"
+      "limit": "1.85 kB"
     },
     {
       "name": "lightslide/wheel (with shared chunks)",
@@ -150,7 +158,7 @@
     {
       "name": "lightslide/free (with shared chunks)",
       "path": "dist/free.mjs",
-      "limit": "2.05 kB"
+      "limit": "2 kB"
     },
     {
       "name": "lightslide/autoplay (with shared chunks)",
@@ -166,6 +174,11 @@
       "name": "lightslide/breakpoints (with shared chunks)",
       "path": "dist/breakpoints.mjs",
       "limit": "0.6 kB"
+    },
+    {
+      "name": "lightslide/autoheight (with shared chunks)",
+      "path": "dist/autoheight.mjs",
+      "limit": "1 kB"
     }
   ],
   "repository": {
@@ -200,9 +213,9 @@
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.5.2",
-    "@types/jest": "^29.5.12",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.7.0",
@@ -212,12 +225,12 @@
     "eslint-plugin-simple-import-sort": "^14.0.0",
     "globals": "^15.8.0",
     "identity-obj-proxy": "^3.0.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "postcss-scss": "^4.0.9",
     "prettier": "^3.9.6",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "rollup": "^4.62.4",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-postcss": "^4.0.2",

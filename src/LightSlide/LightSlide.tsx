@@ -4,6 +4,7 @@ import type {ForwardedRef} from 'react';
 
 import {A11yContext} from '../seams/a11ySeam';
 import {AnalyticsContext} from '../seams/analyticsSeam';
+import {AutoHeightContext} from '../seams/autoHeightSeam';
 import {AutoplayContext} from '../seams/autoplaySeam';
 import {FlowContext} from '../seams/flowSeam';
 import {FreeContext} from '../seams/freeSeam';
@@ -38,8 +39,9 @@ import styles from './LightSlide.module.scss';
  * the track, is the gesture surface: the track's flex box does not cover its overflowing
  * slides, so a pointerdown falling through a pointer-events-none loop clone would miss
  * handlers attached to the track — events from real slides bubble to the viewport all the
- * same. navigation / pagination / flow / wheel / free / autoplay / analytics / a11y are
- * consumer-passed plugin nodes from their tree-shakeable entries, rendered into their slots;
+ * same. navigation / pagination / flow / wheel / free / autoplay / analytics / a11y /
+ * autoHeight are consumer-passed plugin nodes from their tree-shakeable entries, rendered
+ * into their slots;
  * their providers only materialise when a node is passed, so base consumers pay nothing for
  * any of them. Flow and free are presence-based: the node being there turns the mode on, and
  * the plugin hands its pointer handlers back through its seam.
@@ -69,6 +71,7 @@ function LightSlideInner(
 		autoplay,
 		analytics,
 		a11y,
+		autoHeight,
 		loop = false,
 		lazyMount,
 		loading = false,
@@ -248,21 +251,29 @@ function LightSlideInner(
 	const autoplayActive = pluginActive && motionAllowed && !effectiveFlow;
 	/** The wheel slot is inert on a vertical carousel — a vertical wheel is page scrolling. */
 	const wheelActive = pluginActive && !isVertical;
+	/**
+	 * The autoHeight slot is inert during flow (continuous motion has no active slide to size
+	 * against) and on a vertical carousel (there the viewport height is the layout input).
+	 */
+	const autoHeightActive = pluginActive && !effectiveFlow && !isVertical;
 
 	const {
 		flowSeamValue,
 		freeSeamValue,
 		wheelSeamValue,
 		autoplaySeamValue,
+		autoHeightSeamValue,
 		analyticsSeamValue,
 	} = useSeamValues({
 		containerRef,
+		viewportRef,
 		trackRef,
 		storeRef,
 		effectiveFlow,
 		pluginActive,
 		wheelActive,
 		autoplayActive,
+		autoHeightActive,
 		goToIndex: navigateToIndex,
 		setFlowHandlers,
 		setFreeHandlers,
@@ -406,6 +417,12 @@ function LightSlideInner(
 						<AnalyticsContext.Provider value={analyticsSeamValue}>
 							{analytics}
 						</AnalyticsContext.Provider>
+					)}
+
+					{autoHeight && (
+						<AutoHeightContext.Provider value={autoHeightSeamValue}>
+							{autoHeight}
+						</AutoHeightContext.Provider>
 					)}
 
 					{a11y && (

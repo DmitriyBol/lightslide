@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
+
 import type {RefObject} from 'react';
 
 import {Controls, Demo} from '../components/Demo';
@@ -31,8 +32,8 @@ type StripProps = {
 	label: string;
 	note: string;
 	ms: number;
-	containerRef: RefObject<HTMLDivElement>;
-	trackRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
+	trackRef: RefObject<HTMLDivElement | null>;
 };
 
 function Strip({label, note, ms, containerRef, trackRef}: StripProps) {

@@ -41,7 +41,8 @@ describe('buildDisplayChildren', () => {
 		for (const clone of [result[0], result[4]]) {
 			const props = propsOf(clone);
 			expect(props['aria-hidden']).toBe(true);
-			expect(props.inert).toBe('');
+			/** boolean on the React 19 the suite runs on; '' is the React 18 form */
+			expect(props.inert).toBe(true);
 			/** no redundant "N of M" label on an already-hidden node */
 			expect(props['aria-label']).toBeUndefined();
 			/** a grab over a clone must fall through to the track (inert swallows pointer events) */

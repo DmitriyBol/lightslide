@@ -1,6 +1,13 @@
-import {cloneElement, isValidElement} from 'react';
+import {cloneElement, isValidElement, version} from 'react';
 
 import type {CSSProperties, ReactElement, ReactNode} from 'react';
+
+/**
+ * React 19 supports `inert` as a real boolean prop and treats the React-18 empty-string
+ * trick as FALSE (with a warning) — so the value must follow the running major: `true` on
+ * 19+, `''` on 18 (rendered as the boolean attribute's presence).
+ */
+const INERT = Number(version.split('.')[0]) > 18 ? true : '';
 
 type SlideLabeler = (index: number, count: number) => string;
 
@@ -32,7 +39,6 @@ function slideAria(
  * Loop clones are pixel-duplicates of real slides, so they must be invisible to assistive tech:
  * aria-hidden keeps a screen reader from announcing the content twice, and inert removes their
  * focusable descendants from the tab order (otherwise Tab would stop on off-screen duplicates).
- * `inert=''` — the empty-string form React 18 renders as the boolean attribute's presence.
  *
  * They also get `pointer-events: none`: the browser never dispatches pointer events for an
  * inert target — not even to its ancestors — so a grab that lands on a clone would silently
@@ -48,7 +54,7 @@ function cloneProps(child: ReactNode, key: string): Record<string, unknown> {
 		: undefined;
 	return {
 		'aria-hidden': true,
-		inert: '',
+		inert: INERT,
 		key,
 		style: {...style, pointerEvents: 'none'},
 	};

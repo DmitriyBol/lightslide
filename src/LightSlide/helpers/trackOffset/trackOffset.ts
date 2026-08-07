@@ -12,7 +12,7 @@ export function maxTrackOffset(store: LightSlideStore): number {
 	const {slideWidth, gap, slideCount, slidesPerView, slideOffsets, viewportSize} =
 		store;
 	if (slideOffsets) {
-		const content = offsetAt(slideOffsets, slideOffsets.length - 1) - gap;
+		const content = slideOffsets[slideOffsets.length - 1] - gap;
 		return Math.max(0, content - viewportSize);
 	}
 	return Math.max(
