@@ -7,11 +7,11 @@
 
 A lightweight React carousel that is **accessible by default** and **batteries included**:
 WAI-ARIA carousel semantics out of the box, infinite loop, center align, zero-CLS server
-rendering, and lazy slide mounting in a ~5.9 kB fully-typed core with zero runtime
+rendering, and lazy slide mounting in a ~6 kB fully-typed core with zero runtime
 dependencies beyond React. Navigation, pagination, autoplay, a continuous flow (ticker)
-mode, wheel gestures, momentum scrolling, responsive breakpoints, one typed analytics event
-stream, and the deep accessibility layer all ship as tree-shakeable entries — you only pay
-for what you import.
+mode, wheel gestures, momentum scrolling, adaptive height, responsive breakpoints, one typed
+analytics event stream, and the deep accessibility layer all ship as tree-shakeable entries
+— you only pay for what you import.
 
 **[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
 
@@ -23,7 +23,8 @@ for what you import.
 - [Components & props](#components--props) — [`<LightSlide>`](#lightslide), [`<Slide>`](#slidet),
   [Navigation](#navigation-lightslidenavigation), [Pagination](#pagination-lightslidepagination),
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
-  [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree)
+  [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree),
+  [Adaptive height](#adaptive-height-lightslideautoheight)
 - [loop](#loop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
 - [slidesPerView & gap](#slidesperview--gap) · [Variable width](#variable-width-slidesperviewauto) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
@@ -51,6 +52,9 @@ for what you import.
 - **Center align** (`align="center"`) — the active slide rests centred with its neighbours
   peeking symmetrically (the hero / stories pattern); edges stay flush without loop, every
   position is centred with it.
+- **Adaptive height** (`lightslide/autoheight`) — the viewport tracks the active slide's
+  height and animates the change in step with the snap, instead of staying as tall as the
+  tallest slide (dead air) or cropping — product cards, posts, variable-length text.
 - **Right-to-left** (`dir="rtl"`) — full mirroring for RTL locales: slides advance
   right-to-left, drag/wheel/keyboard follow the visual direction, the arrows swap sides, and
   loop, center align, free momentum, and the zero-CLS server paint all follow.
@@ -84,8 +88,8 @@ for what you import.
   final layout: zero CLS, no unstyled flash, no hydration mismatches. See
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, autoplay, flow, wheel gestures, free scrolling,
-  breakpoints, analytics, and the a11y layer ship as tree-shakeable entries; the core stays
-  ~5.9 kB and an unused module never reaches your bundle.
+  adaptive height, breakpoints, analytics, and the a11y layer ship as tree-shakeable
+  entries; the core stays ~6 kB and an unused module never reaches your bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -167,10 +171,11 @@ function ProductCarousel() {
 }
 ```
 
-The core ships only what every carousel needs (~5.9 kB). Arrows, dots, autoplay, the flow
-ticker, wheel gestures, free scrolling, breakpoints, analytics, and the accessibility layer
-are separate tree-shakeable entries — import a module and pass its node to the matching slot
-prop (or call its hook); skip the import and none of its code or styles reaches your bundle.
+The core ships only what every carousel needs (~6 kB). Arrows, dots, autoplay, the flow
+ticker, wheel gestures, free scrolling, adaptive height, breakpoints, analytics, and the
+accessibility layer are separate tree-shakeable entries — import a module and pass its node
+to the matching slot prop (or call its hook); skip the import and none of its code or styles
+reaches your bundle.
 
 ### The full kit, via spread
 
@@ -266,6 +271,7 @@ itself is not generic.)
 | `free` | `ReactNode` | — | Momentum drag physics from `lightslide/free` — pass `<FreeScroll />` (see [Free scrolling](#free-scrolling-lightslidefree)) |
 | `analytics` | `ReactNode` | — | Typed event stream from `lightslide/analytics` — pass `<Analytics onEvent={…} />` (see [Analytics](#analytics)) |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
+| `autoHeight` | `ReactNode` | — | Adaptive viewport height from `lightslide/autoheight` — pass `<AutoHeight />` (see [Adaptive height](#adaptive-height-lightslideautoheight)) |
 | `loop` | `boolean` | `false` | Seamless infinite loop |
 | `lazyMount` | `boolean \| LazyMountConfig` | `false` | Mount only slides near the current position (see [Lazy slide mounting](#lazy-slide-mounting)) |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
@@ -465,6 +471,35 @@ plugin owns the track — free scrolling stands by until it stops.
 
 **`FreeScrollProps`**: `snap?: boolean` (default `false`) — land on the nearest slide
 boundary instead of resting anywhere.
+
+### Adaptive height (`lightslide/autoheight`)
+
+```tsx
+import { AutoHeight } from "lightslide/autoheight";
+
+<LightSlide autoHeight={<AutoHeight />} />
+```
+
+For slides of different natural heights — product cards, posts, variable-length text. By
+default the viewport is as tall as the tallest slide; with the plugin it takes the **active
+slide's measured height** and animates every change in step with the snap (same duration
+and easing), for every navigation source — drag, buttons, dots, autoplay, the external API,
+a free-scroll coast settling. The height also re-measures when the active slide's content
+resizes (an image loads, text expands) and when the viewport reflows.
+
+While engaged, slides top-align instead of stretching to a common height (that stretch is
+what the plugin replaces), and a taller neighbour peeking into view is clipped by the
+viewport box — the expected look for this pattern. `prefers-reduced-motion` applies each
+height instantly. The plugin is inert while `flow` runs (continuous motion has no active
+slide) and on a vertical carousel (`axis="y"` — there the viewport height is the layout
+input, not the output); unmounting it (or passing `autoHeight={null}`) restores the default
+tallest-slide box.
+
+On the server the markup paints at its natural height — the measured height lands at the
+first client commit, without animation. If the content below the carousel must not shift at
+hydration, keep the slides equal-height or give the container a fixed height instead.
+
+`<AutoHeight />` takes no props.
 
 ## loop
 
@@ -1030,10 +1065,12 @@ src/
 │   ├── autoplay/                   #   `lightslide/autoplay` (interval cycling + tests)
 │   ├── analytics/                  #   `lightslide/analytics` (event types, engagement,
 │   │                               #   viewed tracking, slide data + tests)
-│   └── breakpoints/                #   `lightslide/breakpoints` (useBreakpoints hook + test)
+│   ├── breakpoints/                #   `lightslide/breakpoints` (useBreakpoints hook + test)
+│   └── autoHeight/                 #   `lightslide/autoheight` (adaptive viewport height + test)
 ├── seams/                          # Context seams — core-side glue, one shared chunk each
 │   ├── a11ySeam.ts                 #   core ↔ a11y plugins
 │   ├── analyticsSeam.ts            #   core ↔ analytics plugin
+│   ├── autoHeightSeam.ts           #   core ↔ autoheight plugin
 │   ├── autoplaySeam.ts             #   core ↔ autoplay plugin
 │   ├── flowSeam.ts                 #   core ↔ flow plugin
 │   ├── freeSeam.ts                 #   core ↔ free plugin

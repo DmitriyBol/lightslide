@@ -8,6 +8,30 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-08-07
+
+### Added
+
+- **Adaptive viewport height — `lightslide/autoheight`.** New tree-shakeable entry: pass
+  `autoHeight={<AutoHeight />}` and the viewport takes the **active slide's measured
+  height**, animating every change in step with the snap (same duration and easing) instead
+  of staying as tall as the tallest slide (dead air) or cropping. Slides top-align while
+  engaged (the flex stretch that equalised their heights is what the plugin replaces); the
+  height re-measures when the active slide's content resizes (an image loads, text expands)
+  and when the viewport reflows, and follows every navigation source — drag, controls,
+  autoplay, the external API, a free-scroll coast settling. `prefers-reduced-motion` applies
+  each height instantly. Inert while `flow` runs and on a vertical carousel (`axis="y"` —
+  the viewport height is the layout input there); unmounting the plugin restores the default
+  tallest-slide box. The entry weighs ~0.67 kB brotli (limit 1 kB). See
+  [Adaptive height](README.md#adaptive-height-lightslideautoheight).
+
+### Changed
+
+- Core budget 6 → 6.05 kB (actual ~6.02): the autoheight slot's core-side seam — the shared
+  context, the conditional provider, one memoized value — costs ~55 B brotli; the plugin
+  logic itself lives entirely in the opt-in entry, so bundles that never import
+  `lightslide/autoheight` pay only that.
+
 ## [1.1.2] — 2026-08-06
 
 ### Changed
@@ -516,7 +540,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.2...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.2.0
 [1.1.2]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.2
 [1.1.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.1
 [1.1.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.0
