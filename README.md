@@ -1092,7 +1092,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 402 unit/integration tests (Jest + jsdom) across 41 suites
+npm test             # 410 unit/integration tests (Jest + jsdom) across 42 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
@@ -1108,7 +1108,7 @@ Two layers:
 - **Integration** (`npm test`) — Jest + Testing Library in jsdom; the fast inner loop over
   component logic.
 - **End-to-end** (`npm run test:e2e`) — Playwright (Chromium) driving the live playground in a
-  real browser (65 specs). Covers what jsdom can't: pointer drag/snap, layout-measured slide
+  real browser (68 specs). Covers what jsdom can't: pointer drag/snap, layout-measured slide
   widths (including variable width), loop/flow motion, and the a11y layer's real keyboard focus
   flow + `inert` guarding. See
   [`e2e/`](https://github.com/DmitriyBol/lightslide/tree/main/e2e).
