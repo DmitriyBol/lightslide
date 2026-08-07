@@ -13,7 +13,7 @@ import type {PointerHandlers} from '../usePointerGesture/usePointerGesture';
 import {usePointerGesture} from '../usePointerGesture/usePointerGesture';
 
 type DragGestureParams = {
-	trackRef: RefObject<HTMLDivElement>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	snapToVisual: (
 		visualIndex: number,
@@ -36,14 +36,6 @@ export function useDragGesture({
 	snapToVisual,
 	goToIndex,
 }: DragGestureParams): PointerHandlers {
-	const visualIndexOf = useCallback(
-		(logicalIndex: number) => {
-			const {isLoop, loopOffset} = storeRef.current;
-			return isLoop ? logicalIndex + loopOffset : logicalIndex;
-		},
-		[storeRef],
-	);
-
 	const onStart = useCallback(() => {
 		storeRef.current.autoScrollPaused = true;
 		/** Clear any leftover snap transition so the drag tracks the finger 1:1. */
@@ -52,24 +44,25 @@ export function useDragGesture({
 
 	const onMove = useCallback(
 		(dx: number) => {
-			const {isLoop, currentIndex, maxIndex} = storeRef.current;
+			const {isLoop, currentIndex, maxIndex, loopOffset} = storeRef.current;
 			/** Rubber-band resistance when dragging past the first/last slide (non-loop only). */
 			const atStart = !isLoop && currentIndex <= 0 && dx > 0;
 			const atEnd = !isLoop && currentIndex >= maxIndex && dx < 0;
 			const delta = atStart || atEnd ? dx / RUBBER_BAND_DIVISOR : dx;
 			if (trackRef.current) {
 				/**
-				 * Same clamped base offset the resting snap uses, so a fractional slidesPerView
-				 * never jumps half a slide when the gesture starts.
+				 * Same clamped base offset the resting snap uses (loopOffset is 0 when not
+				 * looping), so a fractional slidesPerView never jumps half a slide when the
+				 * gesture starts.
 				 */
-				const base = trackOffset(visualIndexOf(currentIndex), storeRef.current);
+				const base = trackOffset(currentIndex + loopOffset, storeRef.current);
 				trackRef.current.style.transform = trackTransform(
 					base - delta,
 					storeRef.current,
 				);
 			}
 		},
-		[storeRef, trackRef, visualIndexOf],
+		[storeRef, trackRef],
 	);
 
 	const onEnd = useCallback(
@@ -83,7 +76,7 @@ export function useDragGesture({
 
 			if (slideOffsets) {
 				const {loopOffset, centerInset} = store;
-				const currentVisual = isLoop ? currentIndex + loopOffset : currentIndex;
+				const currentVisual = currentIndex + loopOffset;
 				/**
 				 * Position-based snap: the drag left the track resting near
 				 * `trackOffset(currentVisual) − dx`; land on the boundary nearest that offset. A
@@ -94,7 +87,7 @@ export function useDragGesture({
 				let visual = nearestVisualIndex(slideOffsets, pos);
 				if (visual === currentVisual && Math.abs(velocityX) > VELOCITY_THRESHOLD)
 					visual = currentVisual + (velocityX < 0 ? 1 : -1);
-				goToIndex(visual - (isLoop ? loopOffset : 0), 'drag');
+				goToIndex(visual - loopOffset, 'drag');
 				return;
 			}
 
@@ -112,10 +105,11 @@ export function useDragGesture({
 	);
 
 	const onCancel = useCallback(() => {
+		const {currentIndex, loopOffset} = storeRef.current;
 		storeRef.current.autoScrollPaused = false;
 		/** Abort: return the track to the current slide's resting position. */
-		snapToVisual(visualIndexOf(storeRef.current.currentIndex), true);
-	}, [storeRef, snapToVisual, visualIndexOf]);
+		snapToVisual(currentIndex + loopOffset, true);
+	}, [storeRef, snapToVisual]);
 
 	return usePointerGesture({trackRef, storeRef, onStart, onMove, onEnd, onCancel});
 }

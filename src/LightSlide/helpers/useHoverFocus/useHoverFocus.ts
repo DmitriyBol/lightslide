@@ -6,7 +6,7 @@ import type {LightSlideStore} from '../store';
 
 type HoverFocusParams = {
 	enabled: boolean;
-	containerRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 };
 

@@ -78,48 +78,37 @@ export function buildSsrCss({
 	const shift = `(${slideSize} + ${gapPx}px)*${rtl ? start : -start}`;
 	const translate = vertical ? 'translateY' : 'translateX';
 
+	/** Auto renders natural sizes and no rest transform — the server can't know widths. */
 	let restTransform = '';
-	if (centered) {
-		const c = `calc(${shift} ${rtl ? '-' : '+'} (100% - (${slideSize}))/2)`;
-		const clamped = rtl ? `max(0px,${c})` : `min(0px,${c})`;
-		restTransform = `;transform:${translate}(${isLoop ? c : clamped})`;
-	} else if (start > 0) {
-		restTransform = `;transform:${translate}(calc(${shift}))`;
+	if (!auto) {
+		if (centered) {
+			const c = `calc(${shift} ${rtl ? '-' : '+'} (100% - (${slideSize}))/2)`;
+			const clamped = rtl ? `max(0px,${c})` : `min(0px,${c})`;
+			restTransform = `;transform:${translate}(${isLoop ? c : clamped})`;
+		} else if (start > 0) {
+			restTransform = `;transform:${translate}(calc(${shift}))`;
+		}
 	}
 
 	const base =
 		`.${styles.container},.${styles.stage}{position:relative;width:100%}` +
 		`.${styles.viewport}{width:100%;overflow:hidden}`;
 
-	if (auto) {
-		const slide = `${track}>*{box-sizing:border-box;flex-shrink:0}`;
-		if (vertical) {
-			return (
-				base +
-				`.${styles.vertical}{display:flex;flex-direction:column}` +
-				`.${styles.vertical} .${styles.stage}{flex:1;min-height:0}` +
-				`.${styles.vertical} .${styles.viewport}{height:100%}` +
-				`${track}{display:flex;flex-direction:column;height:100%}` +
-				slide
-			);
-		}
-		return base + `${track}{display:flex}` + slide;
-	}
-
-	if (vertical) {
-		return (
-			base +
-			`.${styles.vertical}{display:flex;flex-direction:column}` +
+	/** The vertical height chain: consumer-set container height → stage → viewport. */
+	const heightChain = vertical
+		? `.${styles.vertical}{display:flex;flex-direction:column}` +
 			`.${styles.vertical} .${styles.stage}{flex:1;min-height:0}` +
-			`.${styles.vertical} .${styles.viewport}{height:100%}` +
-			`${track}{display:flex;flex-direction:column;height:100%${restTransform}}` +
-			`${track}>*{box-sizing:border-box;flex-shrink:0;height:calc(${slideSize})}`
-		);
-	}
+			`.${styles.vertical} .${styles.viewport}{height:100%}`
+		: '';
+	const axisRules = vertical ? ';flex-direction:column;height:100%' : '';
+	const sizeMirror = auto
+		? ''
+		: `;${vertical ? 'height' : 'width'}:calc(${slideSize})`;
 
 	return (
 		base +
-		`${track}{display:flex${restTransform}}` +
-		`${track}>*{box-sizing:border-box;flex-shrink:0;width:calc(${slideSize})}`
+		heightChain +
+		`${track}{display:flex${axisRules}${restTransform}}` +
+		`${track}>*{box-sizing:border-box;flex-shrink:0${sizeMirror}}`
 	);
 }

@@ -66,17 +66,21 @@ export type SlideDirection = 'left' | 'right' | 'up' | 'down';
  * - `onIndexChange` — fires after every settled position change, from any source: drag,
  *   buttons, pagination, autoplay, or the external API.
  * - `navigation` / `pagination` / `flow` / `wheel` / `free` / `autoplay` / `analytics` /
- *   `a11y` — the opt-in plugin slots. Each takes the node(s) from its tree-shakeable entry
- *   (`lightslide/navigation`, `lightslide/pagination`, `lightslide/flow`,
- *   `lightslide/wheel`, `lightslide/free`, `lightslide/autoplay`, `lightslide/analytics`,
- *   `lightslide/a11y`), e.g. `navigation={<Navigation />}` or `flow={<Flow speed={60} />}`.
- *   Omit a slot and none of that entry's code or styles enters your bundle. Flow supersedes
- *   autoplay and forces looping on while it runs. Wheel turns horizontal trackpad/wheel
- *   gestures into page turns (drift during flow) without touching vertical page scrolling.
- *   Free replaces the drag-to-snap gesture with momentum scrolling (`<FreeScroll />` rests
- *   anywhere, `<FreeScroll snap />` lands on a boundary); flow, when running, still owns the
- *   track. Autoplay cycles slides on an interval and pauses on hover/focus. Analytics
- *   receives every carousel event through one typed handler.
+ *   `a11y` / `autoHeight` — the opt-in plugin slots. Each takes the node(s) from its
+ *   tree-shakeable entry (`lightslide/navigation`, `lightslide/pagination`,
+ *   `lightslide/flow`, `lightslide/wheel`, `lightslide/free`, `lightslide/autoplay`,
+ *   `lightslide/analytics`, `lightslide/a11y`, `lightslide/autoheight`), e.g.
+ *   `navigation={<Navigation />}` or `flow={<Flow speed={60} />}`. Omit a slot and none of
+ *   that entry's code or styles enters your bundle. Flow supersedes autoplay and forces
+ *   looping on while it runs. Wheel turns horizontal trackpad/wheel gestures into page turns
+ *   (drift during flow) without touching vertical page scrolling. Free replaces the
+ *   drag-to-snap gesture with momentum scrolling (`<FreeScroll />` rests anywhere,
+ *   `<FreeScroll snap />` lands on a boundary); flow, when running, still owns the track.
+ *   Autoplay cycles slides on an interval and pauses on hover/focus. Analytics receives
+ *   every carousel event through one typed handler. AutoHeight sizes the viewport to the
+ *   active slide's height and animates the change in step with the snap — instead of the
+ *   default box as tall as the tallest slide; it is inert during flow and on a vertical
+ *   carousel (`axis="y"` — there the viewport height is the layout input).
  * - `lazyMount` — defer mounting far-away slides: `true` or `{margin}` renders slides
  *   outside the visible window (± `margin` slides, default 1) as empty shells. The shell is
  *   the consumer's own slide element with all its props — size, class, style, ARIA — so
@@ -115,6 +119,7 @@ export type LightSlideProps = {
 	autoplay?: ReactNode;
 	analytics?: ReactNode;
 	a11y?: ReactNode;
+	autoHeight?: ReactNode;
 	loop?: boolean;
 	lazyMount?: boolean | LazyMountConfig;
 	loading?: boolean;

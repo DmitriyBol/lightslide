@@ -15,7 +15,7 @@ import type {LightSlideStore} from '../LightSlide/helpers/store';
  * Provider ↔ consumer.
  */
 export type AutoplaySeamValue = {
-	containerRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	active: boolean;
 	goToIndex: NavigateFn;

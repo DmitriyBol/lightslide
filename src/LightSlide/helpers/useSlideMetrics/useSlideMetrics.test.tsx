@@ -36,7 +36,7 @@ function container(offsetWidth: number) {
 }
 
 /** A track whose children report the given main-axis sizes (jsdom measures 0 otherwise). */
-function track(...sizes: number[]): RefObject<HTMLDivElement> {
+function track(...sizes: number[]): RefObject<HTMLDivElement | null> {
 	const el = document.createElement('div');
 	for (const size of sizes) {
 		const child = document.createElement('div');
@@ -46,7 +46,7 @@ function track(...sizes: number[]): RefObject<HTMLDivElement> {
 	return {current: el};
 }
 
-const noTrack: RefObject<HTMLDivElement> = {current: null};
+const noTrack: RefObject<HTMLDivElement | null> = {current: null};
 
 describe('useSlideMetrics', () => {
 	beforeEach(() => {

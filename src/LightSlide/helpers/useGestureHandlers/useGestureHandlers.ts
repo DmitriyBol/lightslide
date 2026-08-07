@@ -14,7 +14,7 @@ import {useDragGesture} from '../useDragGesture/useDragGesture';
 import type {PointerHandlers} from '../usePointerGesture/usePointerGesture';
 
 type GestureHandlersParams = {
-	trackRef: RefObject<HTMLDivElement>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	snapToVisual: (
 		visualIndex: number,

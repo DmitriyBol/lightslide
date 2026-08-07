@@ -25,7 +25,8 @@ export function offsetAt(offsets: number[], visualIndex: number): number {
 export function loopHome(store: LightSlideStore): number {
 	const {slideOffsets, loopOffset, slideWidth, gap} = store;
 	if (!slideOffsets) return loopOffset * (slideWidth + gap);
-	return offsetAt(slideOffsets, loopOffset);
+	/** loopOffset ≤ clone-inclusive length by construction — no clamp needed. */
+	return slideOffsets[loopOffset];
 }
 
 /**
@@ -35,10 +36,8 @@ export function loopHome(store: LightSlideStore): number {
 export function contentSpan(store: LightSlideStore): number {
 	const {slideOffsets, loopOffset, slideCount, slideWidth, gap} = store;
 	if (!slideOffsets) return slideCount * (slideWidth + gap);
-	return (
-		offsetAt(slideOffsets, loopOffset + slideCount) -
-		offsetAt(slideOffsets, loopOffset)
-	);
+	/** Both indices are within the clone-inclusive strip by construction — no clamp. */
+	return slideOffsets[loopOffset + slideCount] - slideOffsets[loopOffset];
 }
 
 /**

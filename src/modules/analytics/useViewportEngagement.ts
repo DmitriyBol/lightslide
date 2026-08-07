@@ -21,7 +21,7 @@ const VIEWPORT_THRESHOLD = 0.5;
  * of the onEvent prop, read at fire time.
  */
 type ViewportEngagementParams<T> = {
-	containerRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	onEventRef: MutableRefObject<(payload: AnalyticsEvent<T>) => void>;
 	viewedTimeout: number | undefined;

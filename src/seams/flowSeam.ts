@@ -16,8 +16,8 @@ import type {PointerHandlers} from '../LightSlide/helpers/usePointerGesture/useP
  * context would silently fail to match Provider ↔ consumer.
  */
 export type FlowSeamValue = {
-	containerRef: RefObject<HTMLDivElement>;
-	trackRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
+	trackRef: RefObject<HTMLDivElement | null>;
 	storeRef: MutableRefObject<LightSlideStore>;
 	active: boolean;
 	setPointerHandlers: (handlers: PointerHandlers | null) => void;

@@ -8,6 +8,54 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-08-07
+
+### Added
+
+- **Adaptive viewport height — `lightslide/autoheight`.** New tree-shakeable entry: pass
+  `autoHeight={<AutoHeight />}` and the viewport takes the **active slide's measured
+  height**, animating every change in step with the snap (same duration and easing) instead
+  of staying as tall as the tallest slide (dead air) or cropping. Slides top-align while
+  engaged (the flex stretch that equalised their heights is what the plugin replaces); the
+  height re-measures when the active slide's content resizes (an image loads, text expands)
+  and when the viewport reflows, and follows every navigation source — drag, controls,
+  autoplay, the external API, a free-scroll coast settling. `prefers-reduced-motion` applies
+  each height instantly. Inert while `flow` runs and on a vertical carousel (`axis="y"` —
+  the viewport height is the layout input there); unmounting the plugin restores the default
+  tallest-slide box. The entry weighs ~0.67 kB brotli (limit 1 kB). See
+  [Adaptive height](README.md#adaptive-height-lightslideautoheight).
+
+### Changed
+
+- Core budget 6 → 6.05 kB (actual ~6.02): the autoheight slot's core-side seam — the shared
+  context, the conditional provider, one memoized value — costs ~55 B brotli; the plugin
+  logic itself lives entirely in the opt-in entry, so bundles that never import
+  `lightslide/autoheight` pay only that.
+
+## [1.1.2] — 2026-08-06
+
+### Changed
+
+- **Bundle budgets tightened back after the variable-width size audit:** core 6.1 → 6 kB
+  (actual ~5.96), `lightslide/free` 2.05 → 2 kB (~1.94), `lightslide/flow` 1.9 → 1.85 kB
+  (~1.81). A source-level pass (the loop-clone index shift is now unconditional —
+  `loopOffset` is 0 when not looping — one SSR CSS template instead of four branches,
+  direct `slideOffsets` indexing) clawed back ~35 B; the rest of the variable-width cost is
+  the feature's own logic, which brotli already compresses too well for micro-golf to touch,
+  so the new limits document the honest floor. No behaviour change — 402 unit and 65 e2e
+  tests pass byte-identically.
+
+## [1.1.1] — 2026-08-06
+
+### Fixed
+
+- **React 19: loop clones stayed reachable by assistive tech.** React 19 promoted `inert` to
+  a real boolean prop and treats the React-18 empty-string form as *false* (with a console
+  warning) — so on React 19 the loop clones silently lost their `inert`, putting their
+  focusable duplicates back into the tab order. The attribute now follows the running React
+  major: `true` on 19+, `''` on 18. The peer range is unchanged (`>=18`); the repo's own
+  test matrix now covers both (unit suite on React 19, e2e playground on 18).
+
 ## [1.1.0] — 2026-07-26
 
 ### Added
@@ -492,7 +540,10 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.2.0
+[1.1.2]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.2
+[1.1.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.1
 [1.1.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.0
 [1.0.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.1
 [1.0.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.0

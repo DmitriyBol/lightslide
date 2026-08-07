@@ -57,6 +57,13 @@ export default defineConfig({
 				),
 			},
 			{
+				find: 'lightslide/autoheight',
+				replacement: path.resolve(
+					__dirname,
+					'../src/modules/autoHeight/index.ts',
+				),
+			},
+			{
 				find: 'lightslide',
 				replacement: path.resolve(__dirname, '../src/index.ts'),
 			},
