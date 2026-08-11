@@ -19,6 +19,7 @@ const SECTION_IDS = [
 	'thumbnails',
 	'auto-scroll',
 	'loop',
+	'fade',
 	'flow',
 	'flow-perf',
 	'wheel',

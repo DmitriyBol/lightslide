@@ -19,6 +19,7 @@ import {ControlledExample} from './examples/ControlledExample';
 import {CustomStylesExample} from './examples/CustomStylesExample';
 import {CustomTimeoutExample} from './examples/CustomTimeoutExample';
 import {DragModeExample} from './examples/DragModeExample';
+import {FadeExample} from './examples/FadeExample';
 import {FlowExample} from './examples/FlowExample';
 import {FlowPerfExample} from './examples/FlowPerfExample';
 import {LazyMountExample} from './examples/LazyMountExample';
@@ -69,6 +70,7 @@ export function App() {
 				<PhaseLabel label="Motion" />
 				<AutoScrollExample />
 				<LoopExample />
+				<FadeExample />
 				<FlowExample />
 				<FlowPerfExample />
 				<WheelExample />
@@ -99,7 +101,7 @@ export function App() {
 						LightSlide
 					</a>
 					<code className={styles.footerCmd}>{INSTALL_COMMAND}</code>
-					<span className={styles.footerMeta}>MIT · ~5.9&nbsp;kB core · zero-dep</span>
+					<span className={styles.footerMeta}>MIT · ~6.1&nbsp;kB core · zero-dep</span>
 					<span className={styles.footerLinks}>
 						<a href={GITHUB_URL} target="_blank" rel="noreferrer">
 							GitHub

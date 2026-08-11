@@ -9,9 +9,9 @@ A lightweight React carousel that is **accessible by default** and **batteries i
 WAI-ARIA carousel semantics out of the box, infinite loop, center align, zero-CLS server
 rendering, and lazy slide mounting in a ~6 kB fully-typed core with zero runtime
 dependencies beyond React. Navigation, pagination, autoplay, a continuous flow (ticker)
-mode, wheel gestures, momentum scrolling, adaptive height, responsive breakpoints, one typed
-analytics event stream, and the deep accessibility layer all ship as tree-shakeable entries
-— you only pay for what you import.
+mode, wheel gestures, momentum scrolling, adaptive height, a crossfade effect, responsive
+breakpoints, one typed analytics event stream, and the deep accessibility layer all ship as
+tree-shakeable entries — you only pay for what you import.
 
 **[Live demo →](https://lightslide.vercel.app)** — every feature as an interactive example.
 
@@ -24,7 +24,7 @@ analytics event stream, and the deep accessibility layer all ship as tree-shakea
   [Navigation](#navigation-lightslidenavigation), [Pagination](#pagination-lightslidepagination),
   [Autoplay](#autoplay-lightslideautoplay), [Flow](#flow-continuous-ticker-lightslideflow),
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree),
-  [Adaptive height](#adaptive-height-lightslideautoheight)
+  [Adaptive height](#adaptive-height-lightslideautoheight), [Fade effect](#fade-effect-lightslidefade)
 - [loop](#loop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
 - [slidesPerView & gap](#slidesperview--gap) · [Variable width](#variable-width-slidesperviewauto) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
@@ -55,6 +55,10 @@ analytics event stream, and the deep accessibility layer all ship as tree-shakea
 - **Adaptive height** (`lightslide/autoheight`) — the viewport tracks the active slide's
   height and animates the change in step with the snap, instead of staying as tall as the
   tallest slide (dead air) or cropping — product cards, posts, variable-length text.
+- **Fade effect** (`lightslide/fade`) — slides stack in place and crossfade instead of
+  sliding sideways: the hero-banner / image-gallery transition. Every control keeps working
+  (swipe becomes "swipe to change"), and inactive slides are unclickable, `aria-hidden`,
+  and `inert`.
 - **Right-to-left** (`dir="rtl"`) — full mirroring for RTL locales: slides advance
   right-to-left, drag/wheel/keyboard follow the visual direction, the arrows swap sides, and
   loop, center align, free momentum, and the zero-CLS server paint all follow.
@@ -88,8 +92,9 @@ analytics event stream, and the deep accessibility layer all ship as tree-shakea
   final layout: zero CLS, no unstyled flash, no hydration mismatches. See
   [Server-side rendering](#server-side-rendering-nextjs-app-router).
 - **Pay for what you use** — arrows, dots, autoplay, flow, wheel gestures, free scrolling,
-  adaptive height, breakpoints, analytics, and the a11y layer ship as tree-shakeable
-  entries; the core stays ~6 kB and an unused module never reaches your bundle.
+  adaptive height, the fade effect, breakpoints, analytics, and the a11y layer ship as
+  tree-shakeable entries; the core stays ~6 kB and an unused module never reaches your
+  bundle.
 - **Accessible by default** — the container is an ARIA carousel region, each slide is a labelled
   `slide` group ("N of M"), loop clones are hidden from screen readers and removed from the tab
   order, controls are linked via `aria-controls`, and slide snapping respects
@@ -172,10 +177,10 @@ function ProductCarousel() {
 ```
 
 The core ships only what every carousel needs (~6 kB). Arrows, dots, autoplay, the flow
-ticker, wheel gestures, free scrolling, adaptive height, breakpoints, analytics, and the
-accessibility layer are separate tree-shakeable entries — import a module and pass its node
-to the matching slot prop (or call its hook); skip the import and none of its code or styles
-reaches your bundle.
+ticker, wheel gestures, free scrolling, adaptive height, the fade effect, breakpoints,
+analytics, and the accessibility layer are separate tree-shakeable entries — import a module
+and pass its node to the matching slot prop (or call its hook); skip the import and none of
+its code or styles reaches your bundle.
 
 ### The full kit, via spread
 
@@ -272,6 +277,7 @@ itself is not generic.)
 | `analytics` | `ReactNode` | — | Typed event stream from `lightslide/analytics` — pass `<Analytics onEvent={…} />` (see [Analytics](#analytics)) |
 | `a11y` | `ReactNode` | — | Opt-in accessibility layer from `lightslide/a11y` (see [Accessibility](#accessibility)) |
 | `autoHeight` | `ReactNode` | — | Adaptive viewport height from `lightslide/autoheight` — pass `<AutoHeight />` (see [Adaptive height](#adaptive-height-lightslideautoheight)) |
+| `fade` | `ReactNode` | — | Crossfade transition from `lightslide/fade` — pass `<Fade />` (see [Fade effect](#fade-effect-lightslidefade)) |
 | `loop` | `boolean` | `false` | Seamless infinite loop |
 | `lazyMount` | `boolean \| LazyMountConfig` | `false` | Mount only slides near the current position (see [Lazy slide mounting](#lazy-slide-mounting)) |
 | `loading` | `boolean` | `false` | Render `fallback` instead of the slides |
@@ -500,6 +506,32 @@ first client commit, without animation. If the content below the carousel must n
 hydration, keep the slides equal-height or give the container a fixed height instead.
 
 `<AutoHeight />` takes no props.
+
+### Fade effect (`lightslide/fade`)
+
+```tsx
+import { Fade } from "lightslide/fade";
+
+<LightSlide fade={<Fade />} />
+```
+
+The hero-banner / image-gallery transition: slides stack in one place and the active one
+**crossfades in over the outgoing one** instead of the track sliding sideways. Every
+navigation source keeps working — buttons, dots, autoplay, keyboard, the external API, and
+swipe, which becomes "swipe to change": the gesture math still decides next/prev, there is
+just no sideways motion to see. `loop` reduces to plain index wrapping. Inactive slides are
+taken out of the page for every audience — `pointer-events: none` for the pointer,
+`aria-hidden` for screen readers, `inert` for the tab order — so only the visible slide is
+ever clickable or focusable.
+
+The crossfade runs on the snap's own duration and easing, and `prefers-reduced-motion`
+swaps slides instantly. The plugin serves its own critical CSS with the markup, so the
+server paint is already the stacked layout — zero CLS, same as the core. Use it with
+`slidesPerView` 1 (the stack shows one slide by definition — anything else logs a dev
+warning); it is suspended while `flow` runs, and unmounting it (or passing `fade={null}`)
+restores the sliding track mid-session at the correct position.
+
+`<Fade />` takes no props.
 
 ## loop
 
@@ -1066,12 +1098,14 @@ src/
 │   ├── analytics/                  #   `lightslide/analytics` (event types, engagement,
 │   │                               #   viewed tracking, slide data + tests)
 │   ├── breakpoints/                #   `lightslide/breakpoints` (useBreakpoints hook + test)
-│   └── autoHeight/                 #   `lightslide/autoheight` (adaptive viewport height + test)
+│   ├── autoHeight/                 #   `lightslide/autoheight` (adaptive viewport height + test)
+│   └── fade/                       #   `lightslide/fade` (crossfade effect + test)
 ├── seams/                          # Context seams — core-side glue, one shared chunk each
 │   ├── a11ySeam.ts                 #   core ↔ a11y plugins
 │   ├── analyticsSeam.ts            #   core ↔ analytics plugin
 │   ├── autoHeightSeam.ts           #   core ↔ autoheight plugin
 │   ├── autoplaySeam.ts             #   core ↔ autoplay plugin
+│   ├── fadeSeam.ts                 #   core ↔ fade plugin
 │   ├── flowSeam.ts                 #   core ↔ flow plugin
 │   ├── freeSeam.ts                 #   core ↔ free plugin
 │   ├── wheelSeam.ts                #   core ↔ wheel plugin
@@ -1092,7 +1126,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 410 unit/integration tests (Jest + jsdom) across 42 suites
+npm test             # 418 unit/integration tests (Jest + jsdom) across 43 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)

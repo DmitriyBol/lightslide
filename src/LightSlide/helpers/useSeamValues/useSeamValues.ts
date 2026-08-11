@@ -11,6 +11,7 @@ import type {
 import type {AnalyticsSeamValue} from '../../../seams/analyticsSeam';
 import type {AutoHeightSeamValue} from '../../../seams/autoHeightSeam';
 import type {AutoplaySeamValue} from '../../../seams/autoplaySeam';
+import type {FadeSeamValue} from '../../../seams/fadeSeam';
 import type {FlowSeamValue} from '../../../seams/flowSeam';
 import type {FreeSeamValue} from '../../../seams/freeSeam';
 import type {WheelSeamValue} from '../../../seams/wheelSeam';
@@ -28,6 +29,7 @@ type SeamValuesParams = {
 	wheelActive: boolean;
 	autoplayActive: boolean;
 	autoHeightActive: boolean;
+	fadeActive: boolean;
 	goToIndex: NavigateFn;
 	setFlowHandlers: Dispatch<SetStateAction<PointerHandlers | null>>;
 	setFreeHandlers: Dispatch<SetStateAction<PointerHandlers | null>>;
@@ -40,6 +42,7 @@ type SeamValues = {
 	wheelSeamValue: WheelSeamValue;
 	autoplaySeamValue: AutoplaySeamValue;
 	autoHeightSeamValue: AutoHeightSeamValue;
+	fadeSeamValue: FadeSeamValue;
 	analyticsSeamValue: AnalyticsSeamValue;
 };
 
@@ -59,6 +62,7 @@ export function useSeamValues({
 	wheelActive,
 	autoplayActive,
 	autoHeightActive,
+	fadeActive,
 	goToIndex,
 	setFlowHandlers,
 	setFreeHandlers,
@@ -101,6 +105,11 @@ export function useSeamValues({
 		[viewportRef, trackRef, storeRef, autoHeightActive],
 	);
 
+	const fadeSeamValue = useMemo(
+		() => ({trackRef, storeRef, active: fadeActive}),
+		[trackRef, storeRef, fadeActive],
+	);
+
 	const analyticsSeamValue = useMemo(
 		() => ({containerRef, storeRef, slides: childArray}),
 		[containerRef, storeRef, childArray],
@@ -112,6 +121,7 @@ export function useSeamValues({
 		wheelSeamValue,
 		autoplaySeamValue,
 		autoHeightSeamValue,
+		fadeSeamValue,
 		analyticsSeamValue,
 	};
 }
