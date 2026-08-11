@@ -8,7 +8,7 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
-## 1.3.0 — 2026-08-11
+## [1.3.0] — 2026-08-11
 
 ### Added
 
@@ -565,7 +565,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.2.0...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.3.0...HEAD
+[1.3.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.3.0
 [1.2.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.2.0
 [1.1.2]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.2
 [1.1.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.1
