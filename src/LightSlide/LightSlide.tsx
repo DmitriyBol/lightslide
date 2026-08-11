@@ -6,6 +6,7 @@ import {A11yContext} from '../seams/a11ySeam';
 import {AnalyticsContext} from '../seams/analyticsSeam';
 import {AutoHeightContext} from '../seams/autoHeightSeam';
 import {AutoplayContext} from '../seams/autoplaySeam';
+import {FadeContext} from '../seams/fadeSeam';
 import {FlowContext} from '../seams/flowSeam';
 import {FreeContext} from '../seams/freeSeam';
 import {NavContext, SlideMetricsContext} from '../seams/lightSlideContext';
@@ -40,8 +41,8 @@ import styles from './LightSlide.module.scss';
  * slides, so a pointerdown falling through a pointer-events-none loop clone would miss
  * handlers attached to the track — events from real slides bubble to the viewport all the
  * same. navigation / pagination / flow / wheel / free / autoplay / analytics / a11y /
- * autoHeight are consumer-passed plugin nodes from their tree-shakeable entries, rendered
- * into their slots;
+ * autoHeight / fade are consumer-passed plugin nodes from their tree-shakeable entries,
+ * rendered into their slots;
  * their providers only materialise when a node is passed, so base consumers pay nothing for
  * any of them. Flow and free are presence-based: the node being there turns the mode on, and
  * the plugin hands its pointer handlers back through its seam.
@@ -72,6 +73,7 @@ function LightSlideInner(
 		analytics,
 		a11y,
 		autoHeight,
+		fade,
 		loop = false,
 		lazyMount,
 		loading = false,
@@ -256,6 +258,8 @@ function LightSlideInner(
 	 * against) and on a vertical carousel (there the viewport height is the layout input).
 	 */
 	const autoHeightActive = pluginActive && !effectiveFlow && !isVertical;
+	/** The fade slot is inert during flow — a continuous ticker has no slide change to crossfade. */
+	const fadeActive = pluginActive && !effectiveFlow;
 
 	const {
 		flowSeamValue,
@@ -263,6 +267,7 @@ function LightSlideInner(
 		wheelSeamValue,
 		autoplaySeamValue,
 		autoHeightSeamValue,
+		fadeSeamValue,
 		analyticsSeamValue,
 	} = useSeamValues({
 		containerRef,
@@ -274,6 +279,7 @@ function LightSlideInner(
 		wheelActive,
 		autoplayActive,
 		autoHeightActive,
+		fadeActive,
 		goToIndex: navigateToIndex,
 		setFlowHandlers,
 		setFreeHandlers,
@@ -423,6 +429,12 @@ function LightSlideInner(
 						<AutoHeightContext.Provider value={autoHeightSeamValue}>
 							{autoHeight}
 						</AutoHeightContext.Provider>
+					)}
+
+					{fade && (
+						<FadeContext.Provider value={fadeSeamValue}>
+							{fade}
+						</FadeContext.Provider>
 					)}
 
 					{a11y && (

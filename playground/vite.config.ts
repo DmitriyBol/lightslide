@@ -64,6 +64,10 @@ export default defineConfig({
 				),
 			},
 			{
+				find: 'lightslide/fade',
+				replacement: path.resolve(__dirname, '../src/modules/fade/index.ts'),
+			},
+			{
 				find: 'lightslide',
 				replacement: path.resolve(__dirname, '../src/index.ts'),
 			},

@@ -1,6 +1,6 @@
 {
   "name": "lightslide",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Lightweight, accessible-by-default React carousel & slider: WAI-ARIA semantics out of the box, infinite loop, center align, lazy mounting, and zero-CLS SSR in a ~6 kB core — navigation, pagination, autoplay, flow (ticker), wheel, free scrolling, adaptive height, breakpoints, and typed analytics as tree-shakeable modules. Zero runtime dependencies beyond React.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -61,6 +61,11 @@
       "import": "./dist/autoheight.mjs",
       "require": "./dist/autoheight.js"
     },
+    "./fade": {
+      "types": "./dist/fade.d.ts",
+      "import": "./dist/fade.mjs",
+      "require": "./dist/fade.js"
+    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
@@ -94,6 +99,9 @@
       ],
       "autoheight": [
         "dist/autoheight.d.ts"
+      ],
+      "fade": [
+        "dist/fade.d.ts"
       ]
     }
   },
@@ -128,7 +136,7 @@
   "size-limit": [
     {
       "path": "dist/index.mjs",
-      "limit": "6.05 kB"
+      "limit": "6.1 kB"
     },
     {
       "name": "lightslide/a11y (with shared chunks)",
@@ -178,6 +186,11 @@
     {
       "name": "lightslide/autoheight (with shared chunks)",
       "path": "dist/autoheight.mjs",
+      "limit": "1 kB"
+    },
+    {
+      "name": "lightslide/fade (with shared chunks)",
+      "path": "dist/fade.mjs",
       "limit": "1 kB"
     }
   ],

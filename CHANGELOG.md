@@ -8,6 +8,31 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## 1.3.0 — 2026-08-11
+
+### Added
+
+- **Crossfade effect — `lightslide/fade`.** New tree-shakeable entry: pass
+  `fade={<Fade />}` and the slides stack in one place, the active one **crossfading in over
+  the outgoing one** instead of the track sliding sideways — the hero-banner /
+  image-gallery transition. Every navigation source keeps working (swipe becomes "swipe to
+  change" — the gesture math still decides next/prev), `loop` reduces to plain index
+  wrapping, and inactive slides leave the page for every audience: `pointer-events: none`,
+  `aria-hidden`, `inert`. The crossfade runs on the snap's own duration/easing and
+  `prefers-reduced-motion` swaps instantly. The plugin serves its own critical CSS with the
+  markup (zero-CLS server paint, like the core), suppresses the track's inline transform
+  without touching the core — unmounting it restores the sliding track mid-session at the
+  correct position — and dev-warns when `slidesPerView` is not 1. Suspended while `flow`
+  runs. The entry weighs ~0.9 kB brotli (limit 1 kB). See
+  [Fade effect](README.md#fade-effect-lightslidefade).
+
+### Changed
+
+- Core budget 6.05 → 6.1 kB (actual ~6.07): the fade slot's core-side seam — the shared
+  context, the conditional provider, one memoized value — costs ~50 B brotli; the plugin
+  logic itself lives entirely in the opt-in entry, so bundles that never import
+  `lightslide/fade` pay only that.
+
 ## [1.2.0] — 2026-08-07
 
 ### Added

@@ -66,10 +66,11 @@ export type SlideDirection = 'left' | 'right' | 'up' | 'down';
  * - `onIndexChange` — fires after every settled position change, from any source: drag,
  *   buttons, pagination, autoplay, or the external API.
  * - `navigation` / `pagination` / `flow` / `wheel` / `free` / `autoplay` / `analytics` /
- *   `a11y` / `autoHeight` — the opt-in plugin slots. Each takes the node(s) from its
+ *   `a11y` / `autoHeight` / `fade` — the opt-in plugin slots. Each takes the node(s) from its
  *   tree-shakeable entry (`lightslide/navigation`, `lightslide/pagination`,
  *   `lightslide/flow`, `lightslide/wheel`, `lightslide/free`, `lightslide/autoplay`,
- *   `lightslide/analytics`, `lightslide/a11y`, `lightslide/autoheight`), e.g.
+ *   `lightslide/analytics`, `lightslide/a11y`, `lightslide/autoheight`,
+ *   `lightslide/fade`), e.g.
  *   `navigation={<Navigation />}` or `flow={<Flow speed={60} />}`. Omit a slot and none of
  *   that entry's code or styles enters your bundle. Flow supersedes autoplay and forces
  *   looping on while it runs. Wheel turns horizontal trackpad/wheel gestures into page turns
@@ -120,6 +121,7 @@ export type LightSlideProps = {
 	analytics?: ReactNode;
 	a11y?: ReactNode;
 	autoHeight?: ReactNode;
+	fade?: ReactNode;
 	loop?: boolean;
 	lazyMount?: boolean | LazyMountConfig;
 	loading?: boolean;

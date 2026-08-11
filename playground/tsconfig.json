@@ -20,7 +20,8 @@
       "lightslide/autoplay": ["../src/modules/autoplay/index.ts"],
       "lightslide/analytics": ["../src/modules/analytics/index.ts"],
       "lightslide/breakpoints": ["../src/modules/breakpoints/index.ts"],
-      "lightslide/autoheight": ["../src/modules/autoHeight/index.ts"]
+      "lightslide/autoheight": ["../src/modules/autoHeight/index.ts"],
+      "lightslide/fade": ["../src/modules/fade/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]
