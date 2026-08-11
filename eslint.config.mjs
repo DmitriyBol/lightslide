@@ -1,3 +1,4 @@
+import { fixupPluginRules } from "@eslint/compat";
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
@@ -28,7 +29,8 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
-      react: reactPlugin,
+      // eslint-plugin-react has no ESLint 10 release (peer ^9.7) — fixup shims the removed context methods
+      react: fixupPluginRules(reactPlugin),
       "react-hooks": reactHooksPlugin,
       "simple-import-sort": simpleImportSort,
     },
