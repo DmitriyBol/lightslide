@@ -27,7 +27,9 @@ export function FadeExample() {
 					<strong>crossfade</strong> instead of sliding sideways. Every control
 					keeps working — buttons, dots, swipe (it becomes “swipe to change”),
 					loop wraps without clones in sight — and inactive slides are
-					unclickable, <code>aria-hidden</code> and <code>inert</code>. Toggle
+					unclickable, <code>aria-hidden</code> and <code>inert</code>: each
+					banner title is a real link, and only the visible one is reachable by
+					Tab. Toggle
 					it off to compare with the default slide; from the tree-shakeable{' '}
 					<code>lightslide/fade</code> entry.
 				</>
@@ -56,7 +58,16 @@ export function FadeExample() {
 								<span className={slides.eyebrow}>
 									{String(i + 1).padStart(2, '0')}
 								</span>
-								<span style={{fontSize: 15, fontWeight: 600}}>{label}</span>
+								<a
+									href="#fade"
+									style={{
+										color: 'inherit',
+										fontSize: 15,
+										fontWeight: 600,
+										textDecoration: 'none',
+									}}>
+									{label}
+								</a>
 							</div>
 						</Slide>
 					))}

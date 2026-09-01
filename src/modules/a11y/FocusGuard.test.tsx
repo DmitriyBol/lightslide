@@ -17,6 +17,29 @@ function makeTrack(total: number) {
 	return track;
 }
 
+let attached: HTMLElement | null = null;
+
+afterEach(() => {
+	attached?.remove();
+	attached = null;
+});
+
+/**
+ * Same track, but inside a container and attached to the document, with a button in every
+ * slide — focus is only observable when the elements actually live in the page.
+ */
+function makeAttached(total: number) {
+	const container = document.createElement('div');
+	const track = makeTrack(total);
+	for (const slide of Array.from(track.children)) {
+		slide.appendChild(document.createElement('button'));
+	}
+	container.appendChild(track);
+	document.body.appendChild(container);
+	attached = container;
+	return {container, track};
+}
+
 function mount(track: HTMLDivElement, overrides?: Partial<A11yContextType>) {
 	const ctx: A11yContextType = {
 		containerRef: {current: null},
@@ -116,6 +139,37 @@ describe('FocusGuard', () => {
 		expect(inert(track, 1)).toBe(false);
 		expect(inert(track, 2)).toBe(false);
 		expect(inert(track, 3)).toBe(true);
+	});
+
+	it('hands focus to the container when it guards the slide focus is in', () => {
+		const {container, track} = makeAttached(3);
+		const offScreen = track.children[2].firstElementChild as HTMLButtonElement;
+		offScreen.focus();
+
+		mount(track, {
+			currentIndex: 0,
+			slideCount: 3,
+			containerRef: {current: container as HTMLDivElement},
+		});
+
+		/** Focus would otherwise fall to <body> and the arrow keys would stop arriving. */
+		expect(document.activeElement).toBe(container);
+		expect(container).toHaveAttribute('tabindex', '-1');
+	});
+
+	it('leaves focus alone when it sits outside the guarded slides', () => {
+		const {container, track} = makeAttached(3);
+		const visible = track.children[0].firstElementChild as HTMLButtonElement;
+		visible.focus();
+
+		mount(track, {
+			currentIndex: 0,
+			slideCount: 3,
+			containerRef: {current: container as HTMLDivElement},
+		});
+
+		expect(document.activeElement).toBe(visible);
+		expect(container).not.toHaveAttribute('tabindex');
 	});
 
 	it('clears the guards it set on unmount', () => {

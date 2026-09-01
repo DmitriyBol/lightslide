@@ -8,6 +8,30 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## 1.3.1 — 2026-09-01
+
+### Fixed
+
+- **Focus no longer knocks the track out of alignment.** The viewport was `overflow: hidden`,
+  which is a scroll container — so the browser scrolled it to reveal anything inside it that
+  took focus: a link in the half-visible peek slide, a button reached by Tab, a
+  `scrollIntoView` from consumer code. The strip moved without the transform knowing, and
+  stayed offset from it for the rest of the session — every later navigation landed short by
+  the same amount. The viewport is now clipped with `overflow: clip`, which clips identically
+  but cannot scroll at all, with `overflow: hidden` kept ahead of it as the fallback for
+  browsers without `clip` (Safari < 16). Costs ~10 B; no API change.
+- **`lightslide/a11y`: the arrow keys no longer die after one press.** Focus-guarding a slide
+  that currently holds focus made the browser blur it — focus fell to `<body>`, and since the
+  Keyboard plugin listens on the carousel container, every arrow key after the first went
+  nowhere. The guard now hands focus to the container (programmatically focusable, never
+  tabbable) whenever it inerts the slide focus was in, so navigation continues and the
+  announcement is the carousel's own region label.
+- **`lightslide/navigation`, `lightslide/pagination`: controls are unreachable before layout.**
+  The pre-measure state hid them with `opacity: 0` alone, which leaves a button tabbable and
+  still in the accessibility tree — Tab could land on an invisible control between the server
+  paint and the first client measure. They are now `visibility: hidden` while hidden, which
+  keeps the reserved box but drops them from both.
+
 ## [1.3.0] — 2026-08-11
 
 ### Added

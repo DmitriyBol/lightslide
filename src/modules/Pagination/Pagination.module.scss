@@ -11,9 +11,11 @@
 }
 
 // Held invisible until the carousel has measured on the client (matches the nav buttons),
-// so nothing flashes in before first layout.
+// so nothing flashes in before first layout. visibility, not opacity alone — that keeps the
+// dots out of the tab order and the a11y tree while they are invisible.
 .hidden {
 	opacity: 0;
+	visibility: hidden;
 	pointer-events: none;
 }
 

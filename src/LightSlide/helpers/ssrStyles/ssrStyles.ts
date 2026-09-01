@@ -92,7 +92,7 @@ export function buildSsrCss({
 
 	const base =
 		`.${styles.container},.${styles.stage}{position:relative;width:100%}` +
-		`.${styles.viewport}{width:100%;overflow:hidden}`;
+		`.${styles.viewport}{width:100%;overflow:hidden;overflow:clip}`;
 
 	/** The vertical height chain: consumer-set container height → stage → viewport. */
 	const heightChain = vertical

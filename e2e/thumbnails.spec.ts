@@ -17,15 +17,23 @@ test.describe('thumbnails recipe', () => {
 		await expect(thumb(/Air Runner/)).toHaveAttribute('aria-pressed', 'true');
 		await expect(c.prev).toBeDisabled();
 
+		/**
+		 * Only a thumb that is actually on screen can be clicked: the strip shows 4.2 of 6 and
+		 * its viewport clips rather than scrolls, so the last two start out of reach (a real
+		 * user would drag). Stepping onto the fourth pulls the strip along — it shares the
+		 * gallery's index — which brings the last thumb into view.
+		 */
+		await thumb(/Flip Pro/).click();
+		await expect(thumb(/Flip Pro/)).toHaveAttribute('aria-pressed', 'true');
+
 		/** Last thumb → the gallery lands on its final position, so next() has nowhere to go. */
 		await thumb(/Flat Step/).click();
 		await expect(thumb(/Flat Step/)).toHaveAttribute('aria-pressed', 'true');
 		await expect(c.next).toBeDisabled();
 
 		/**
-		 * And backward: with the strip now clamped to its end, the first thumb sits clipped
-		 * behind the viewport's overflow (a real user would drag first), so jump back onto a
-		 * thumb that stayed visible — landing mid-range re-enables both arrows.
+		 * And backward: the strip is clamped to its end, so jump back onto a thumb that stayed
+		 * visible — landing mid-range re-enables both arrows.
 		 */
 		await thumb(/Trail Boot/).click();
 		await expect(thumb(/Trail Boot/)).toHaveAttribute('aria-pressed', 'true');

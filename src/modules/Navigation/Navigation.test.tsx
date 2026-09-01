@@ -204,6 +204,17 @@ describe('Navigation — readiness', () => {
 		expect(screen.getByLabelText('Next slide').className).toContain('hidden');
 	});
 
+	it('keeps the pre-layout buttons out of the tab order', () => {
+		const {container} = renderNavigation(makeContext({isReady: false}));
+		/**
+		 * The critical CSS hides them with visibility, not opacity alone: an opacity-0 button
+		 * still takes Tab and still reaches a screen reader.
+		 */
+		expect(container.querySelector('style')?.innerHTML).toContain(
+			'visibility:hidden',
+		);
+	});
+
 	it('shows the buttons once ready', () => {
 		renderNavigation(makeContext({isReady: true}));
 		expect(screen.getByLabelText('Previous slide').className).not.toContain(

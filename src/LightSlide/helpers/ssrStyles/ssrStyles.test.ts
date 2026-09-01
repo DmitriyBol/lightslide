@@ -19,7 +19,9 @@ describe('buildSsrCss', () => {
 		});
 
 		expect(css).toContain('.container,.stage{position:relative;width:100%}');
-		expect(css).toContain('.viewport{width:100%;overflow:hidden}');
+		expect(css).toContain(
+			'.viewport{width:100%;overflow:hidden;overflow:clip}',
+		);
 		expect(css).toContain('[id=":r1:"]{display:flex}');
 	});
 
@@ -190,7 +192,9 @@ describe('buildSsrCss', () => {
 
 		/** The shared base rules must stay identical to the horizontal output. */
 		expect(css).toContain('.container,.stage{position:relative;width:100%}');
-		expect(css).toContain('.viewport{width:100%;overflow:hidden}');
+		expect(css).toContain(
+			'.viewport{width:100%;overflow:hidden;overflow:clip}',
+		);
 		expect(css.match(/flex-direction:column/g)).toHaveLength(2);
 	});
 
