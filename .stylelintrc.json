@@ -6,7 +6,8 @@
     "declaration-empty-line-before": null,
     "comment-empty-line-before": null,
     "alpha-value-notation": "number",
-    "color-function-notation": "legacy"
+    "color-function-notation": "legacy",
+    "color-function-alias-notation": "with-alpha"
   },
   "overrides": [
     {

@@ -15,13 +15,11 @@ updates:
           - "patch"
     ignore:
       # Deferred majors — these require a coordinated migration, not a weekly
-      # PR (TypeScript 7 and stylelint-config-standard 40 → stylelint 17 are
-      # held back). Ignoring the major bump stops the recurring red PR;
-      # minor/patch still flow. Re-evaluate deliberately, then drop the
-      # relevant entry (LIG-20, LIG-26 — React 19 and Jest 30 re-landed).
+      # PR (TypeScript 7 is held back). Ignoring the major bump stops the
+      # recurring red PR; minor/patch still flow. Re-evaluate deliberately,
+      # then drop the relevant entry (LIG-20, LIG-26 — React 19, Jest 30,
+      # ESLint 10 and the stylelint 17 stack have all re-landed).
       - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "stylelint-config-standard"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
