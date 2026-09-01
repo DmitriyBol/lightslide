@@ -17,6 +17,15 @@ import {useA11yContext} from '../../seams/a11ySeam';
  * derivable from slidesPerView here); clones sit below 0 or at ≥ slideCount and are skipped. On
  * unmount every guard this plugin set is cleared, so slides are interactive again.
  *
+ * Guarding the slide the user is standing in would otherwise throw focus to `<body>`: the browser
+ * blurs whatever an element inerts. That silently ends keyboard navigation — the Keyboard plugin
+ * listens on the carousel container, so once focus leaves it the arrow keys stop arriving, and one
+ * press moves one slide and then goes dead. So when the guarded slide holds focus it is handed to
+ * the container instead (made programmatically focusable, never tabbable): the arrows keep working,
+ * the announcement is the carousel's own region label, and focus stays where the user was working.
+ * The tabindex is left behind on unmount on purpose — removing it while the container holds focus
+ * would drop focus to `<body>`, which is the bug this avoids.
+ *
  * While the flow ticker runs the guard suspends and every real slide stays interactive: the
  * strip drifts without ever changing `currentIndex`, so a window computed from it goes stale
  * immediately — and an inert subtree also swallows pointer events, which would make the
@@ -24,6 +33,7 @@ import {useA11yContext} from '../../seams/a11ySeam';
  */
 export function FocusGuard() {
 	const {
+		containerRef,
 		trackRef,
 		storeRef,
 		currentIndex,
@@ -51,17 +61,37 @@ export function FocusGuard() {
 			}
 		}
 
+		let guardedFocus = false;
 		for (const {el, logical} of realSlides) {
 			const visible =
 				isFlow || (logical >= firstVisible && logical <= lastVisible);
-			if (visible) el.removeAttribute('inert');
-			else el.setAttribute('inert', '');
+			if (visible) {
+				el.removeAttribute('inert');
+			} else {
+				if (el.contains(document.activeElement)) guardedFocus = true;
+				el.setAttribute('inert', '');
+			}
+		}
+
+		const container = containerRef.current;
+		if (guardedFocus && container) {
+			container.tabIndex = -1;
+			container.focus({preventScroll: true});
 		}
 
 		return () => {
 			for (const {el} of realSlides) el.removeAttribute('inert');
 		};
-	}, [trackRef, storeRef, currentIndex, slideCount, slidesPerView, isLoop, isFlow]);
+	}, [
+		containerRef,
+		trackRef,
+		storeRef,
+		currentIndex,
+		slideCount,
+		slidesPerView,
+		isLoop,
+		isFlow,
+	]);
 
 	return null;
 }

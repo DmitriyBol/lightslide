@@ -9,14 +9,15 @@ import type {PaginationProps} from './Pagination.types';
  * Critical layout CSS served with the markup: until the JS bundle injects the stylesheet,
  * server-rendered dots would paint as a column of default-sized buttons and shift the
  * content below on hydration. These rules reserve the dot row's exact final box (flex row,
- * dot size, padding) and `.hidden` (isReady is false on the server) keeps it invisible.
+ * dot size, padding) and `.hidden` (isReady is false on the server) keeps it invisible —
+ * via visibility, so the dots are not tabbable before layout either.
  * Keep in sync with Pagination.module.scss.
  */
 const ssrCss =
 	`.${styles.container}` +
 	`{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 2px}` +
 	`.${styles.dot}{width:8px;height:8px;padding:0;border:none}` +
-	`.${styles.hidden}{opacity:0}`;
+	`.${styles.hidden}{opacity:0;visibility:hidden}`;
 
 /**
  * Pagination dots — one per scrollable position, the active one marked aria-current. Shipped

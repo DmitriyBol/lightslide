@@ -118,9 +118,12 @@
 }
 
 // Held invisible (but in the DOM) until the carousel has measured on the client, so the
-// controls never flash in an un-positioned spot during SSR / before first layout. Listed
-// last so it wins over the equal-specificity :disabled / .slotDisabled rules above.
+// controls never flash in an un-positioned spot during SSR / before first layout.
+// visibility, not opacity alone: an opacity-0 button is still tabbable and still read by
+// a screen reader, so Tab could land on an invisible control before layout. Listed last
+// so it wins over the equal-specificity :disabled / .slotDisabled rules above.
 .hidden {
 	opacity: 0;
+	visibility: hidden;
 	pointer-events: none;
 }

@@ -937,6 +937,10 @@ out of the box — no configuration required:
 ```
 - **Loop clones hidden** — the duplicate slides added for seamless looping are `aria-hidden` and
   `inert`, so a screen reader never reads them twice and Tab never lands on an off-screen copy.
+- **Focus never moves the track** — the viewport is clipped with `overflow: clip`, not
+  `overflow: hidden`, so the browser cannot scroll it to reveal a focused off-screen slide.
+  Tab into a link inside a partly visible card, or click one, and the strip stays exactly where
+  the transform put it — instead of being left offset from it for the rest of the session.
 - **Linked controls** — prev/next buttons and pagination dots set `aria-controls` to the slides
   container, and dots expose `aria-current`. Built-in buttons/dots already carry `aria-label`s.
 - **Autoplay pauses on hover and focus** — `autoplay` and `flow` hold while the pointer is
@@ -977,7 +981,7 @@ import { Pagination } from "lightslide/pagination";
 | Behaviour | Prop (default `true`) | What it does |
 |---|---|---|
 | Keyboard | `keyboard` | `←`/`→` step a slide, `Home`/`End` jump to the first/last, once focus is inside the carousel. Ignores keys typed into form fields. |
-| Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. Suspends while `flow` runs — a drifting strip has no fixed visible window, and every slide must stay grabbable. |
+| Focus guard | `focusGuard` | Marks off-screen slides `inert`, so keyboard focus can't land on a slide you can't see. If focus was already inside the slide being guarded, it is handed to the carousel container instead of being dropped on `<body>` — so the arrow keys keep arriving. Suspends while `flow` runs — a drifting strip has no fixed visible window, and every slide must stay grabbable. |
 | Live region | `liveRegion` | A polite live region announcing `"Slide N of M"` on manual navigation; silent during auto-motion. Customise via `announce={(i, n) => …}`. |
 | Reduced motion | `respectReducedMotion` | Stops **flow**/**autoplay** while the user prefers reduced motion (slide-snap is already instant — handled by the core). |
 
@@ -1126,7 +1130,7 @@ src/
 
 ```bash
 npm install          # install dependencies
-npm test             # 418 unit/integration tests (Jest + jsdom) across 43 suites
+npm test             # 421 unit/integration tests (Jest + jsdom) across 43 suites
 npm run lint         # ESLint
 npm run stylelint    # Stylelint
 npm run format       # Prettier (tabs)
@@ -1142,9 +1146,9 @@ Two layers:
 - **Integration** (`npm test`) — Jest + Testing Library in jsdom; the fast inner loop over
   component logic.
 - **End-to-end** (`npm run test:e2e`) — Playwright (Chromium) driving the live playground in a
-  real browser (68 specs). Covers what jsdom can't: pointer drag/snap, layout-measured slide
-  widths (including variable width), loop/flow motion, and the a11y layer's real keyboard focus
-  flow + `inert` guarding. See
+  real browser (78 specs). Covers what jsdom can't: pointer drag/snap, layout-measured slide
+  widths (including variable width), loop/flow motion, focus containment, and the a11y layer's
+  real keyboard focus flow + `inert` guarding. See
   [`e2e/`](https://github.com/DmitriyBol/lightslide/tree/main/e2e).
 
 ```bash

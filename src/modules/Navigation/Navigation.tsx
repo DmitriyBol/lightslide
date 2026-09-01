@@ -9,8 +9,9 @@ import type {NavigationProps} from './Navigation.types';
  * Critical placement CSS served with the markup: the stylesheet is head-injected only when
  * the JS bundle runs, so server-rendered buttons would otherwise paint as raw in-flow
  * elements until hydration and shift the content below. Absolute positioning takes them
- * out of the flow and `.hidden` (isReady is false on the server) keeps them invisible;
- * both lose to the full stylesheet once it lands. Both axes' placements are included —
+ * out of the flow and `.hidden` (isReady is false on the server) keeps them invisible —
+ * via visibility, so an un-positioned button is not tabbable either; both lose to the
+ * full stylesheet once it lands. Both axes' placements are included —
  * the string is static and the rendered class picks one. Keep in sync with
  * Navigation.module.scss.
  */
@@ -24,7 +25,7 @@ const ssrCss =
 	`{top:8px;left:50%;transform:translateX(-50%)}` +
 	`.${styles.nextVertical},.${styles.slotNextVertical}` +
 	`{bottom:8px;left:50%;transform:translateX(-50%)}` +
-	`.${styles.hidden}{opacity:0}`;
+	`.${styles.hidden}{opacity:0;visibility:hidden}`;
 
 /**
  * Prev/next buttons, shipped as the tree-shakeable `lightslide/navigation` entry — pass to

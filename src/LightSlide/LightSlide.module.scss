@@ -19,9 +19,15 @@
 // that falls through a pointer-events-none loop clone still lands on the carousel (the
 // track's own flex box does not cover its overflowing slides). cursor/user-select inherit
 // down; touch-action on an ancestor governs the whole subtree's touches.
+// clip, not hidden: `overflow: hidden` is a scroll container, so the browser scrolls it to
+// reveal a focused off-screen slide — silently moving the strip behind the transform's back
+// and leaving it offset for the rest of the session. `overflow: clip` clips identically
+// without being scrollable at all. `hidden` stays as the preceding fallback for browsers
+// without clip (Safari < 16), which keep today's behaviour rather than losing the clip.
 .viewport {
 	width: 100%;
 	overflow: hidden;
+	overflow: clip;
 	cursor: grab;
 	user-select: none;
 	touch-action: pan-y;
