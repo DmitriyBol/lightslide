@@ -236,6 +236,50 @@ describe('LightSlide — dir', () => {
 			'dir',
 		);
 	});
+
+	/**
+	 * Vertical order has no reading direction, so axis="y" must neutralise dir="rtl". An upward
+	 * drag on the first slide is a forward drag and tracks the pointer 1:1; had dir leaked into
+	 * the vertical sign, the same gesture would read as backward past the first slide and be
+	 * rubber-banded to a third. The transform's own sign would flip back and hide the
+	 * inversion — the resistance is where it shows.
+	 */
+	it('lets the axis win over dir — a vertical rtl drag is never mirrored', () => {
+		render(
+			<LightSlide label="Vertical" axis="y" dir="rtl">
+				<Slide>
+					<div>Slide 1</div>
+				</Slide>
+				<Slide>
+					<div>Slide 2</div>
+				</Slide>
+				<Slide>
+					<div>Slide 3</div>
+				</Slide>
+			</LightSlide>,
+		);
+		const content = screen.getByText('Slide 1');
+		/**
+		 * jsdom has no PointerEvent and testing-library's fallback drops the coordinates —
+		 * a plain bubbling Event with the fields assigned reaches React's delegated listeners.
+		 */
+		const firePointer = (
+			type: 'pointerdown' | 'pointermove',
+			clientY: number,
+		) => {
+			const event = new Event(type, {bubbles: true, cancelable: true});
+			Object.assign(event, {clientX: 100, clientY, pointerId: 1});
+			act(() => {
+				content.dispatchEvent(event);
+			});
+		};
+
+		firePointer('pointerdown', 300);
+		firePointer('pointermove', 270);
+
+		const track = content.closest('[aria-roledescription="slide"]')?.parentElement;
+		expect(track?.style.transform).toBe('translateY(-30px)');
+	});
 });
 
 describe('LightSlide — loop', () => {
