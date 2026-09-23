@@ -105,11 +105,45 @@ describe('useTrackSnap', () => {
 		const {result, track} = setupTrackSnap();
 		const onComplete = jest.fn();
 		result.current.snapToVisual(3, true, onComplete);
-		/** A drag clearing the transition mid-animation fires transitioncancel, not -end. */
+		/**
+		 * A drag clears the transition first (the gesture hooks' onStart), and moving the track
+		 * then fires transitioncancel, not -end.
+		 */
+		track.style.transition = '';
 		track.dispatchEvent(new Event('transitioncancel'));
 		expect(onComplete).not.toHaveBeenCalled();
 		/** A later, unrelated transition completing must not resurrect the discarded re-snap. */
 		track.dispatchEvent(new Event('transitionend'));
 		expect(onComplete).not.toHaveBeenCalled();
+	});
+
+	it('ignores the cancel echo of the transition it replaced — a mid-wrap press still re-snaps', () => {
+		const {result, track} = setupTrackSnap({isLoop: true, loopOffset: 1});
+		const staleComplete = jest.fn();
+		result.current.snapToVisual(0, true, staleComplete);
+		const onComplete = jest.fn();
+		result.current.snapToVisual(6, true, onComplete);
+		/**
+		 * The browser cancels the replaced transition a frame later — after this snap has
+		 * subscribed, and while its own transition is still set.
+		 */
+		track.dispatchEvent(new Event('transitioncancel'));
+		expect(track.style.transition).toContain('transform');
+		track.dispatchEvent(new Event('transitionend'));
+		expect(onComplete).toHaveBeenCalledTimes(1);
+		expect(staleComplete).not.toHaveBeenCalled();
+	});
+
+	it('ignores transition events bubbling up from slide content', () => {
+		const {result, track} = setupTrackSnap();
+		const content = track.appendChild(document.createElement('div'));
+		const onComplete = jest.fn();
+		result.current.snapToVisual(1, true, onComplete);
+		/** A hover transition on a card inside a slide ends mid-snap. */
+		content.dispatchEvent(new Event('transitionend', {bubbles: true}));
+		expect(onComplete).not.toHaveBeenCalled();
+		expect(track.style.transition).toContain('transform');
+		track.dispatchEvent(new Event('transitionend'));
+		expect(onComplete).toHaveBeenCalledTimes(1);
 	});
 });

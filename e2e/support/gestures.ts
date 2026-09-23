@@ -1,5 +1,7 @@
 import type {Locator, Page} from '@playwright/test';
 
+import {scrollToRest} from './motion';
+
 type DragOptions = {
 	/** Number of intermediate mouse moves. More steps = a smoother, more realistic drag. */
 	steps?: number;
@@ -15,7 +17,8 @@ type DragOptions = {
  * (negative = left = advance), emitting real trusted pointer moves via page.mouse. Chromium
  * synthesises pointerdown/move/up from these, which is exactly what LightSlide's gesture listens
  * to. This is the path the integration tests can't cover: jsdom has no layout, so slideWidth is 0
- * and no snap can ever fire.
+ * and no snap can ever fire. The press point is taken only once the surface has stopped
+ * scrolling into place — a box read mid-scroll puts the press beside the carousel.
  */
 export async function dragX(
 	page: Page,
@@ -23,7 +26,7 @@ export async function dragX(
 	fraction: number,
 	{steps = 12, delayMs = 0}: DragOptions = {},
 ): Promise<void> {
-	await surface.scrollIntoViewIfNeeded();
+	await scrollToRest(surface);
 	const box = await surface.boundingBox();
 	if (!box) throw new Error('dragX: surface has no bounding box');
 
@@ -50,7 +53,7 @@ export async function dragY(
 	fraction: number,
 	{steps = 12, delayMs = 0}: DragOptions = {},
 ): Promise<void> {
-	await surface.scrollIntoViewIfNeeded();
+	await scrollToRest(surface);
 	const box = await surface.boundingBox();
 	if (!box) throw new Error('dragY: surface has no bounding box');
 

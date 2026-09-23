@@ -30,10 +30,11 @@ export function useTrackSnap(
 	storeRef: MutableRefObject<LightSlideStore>,
 ): TrackSnap {
 	/**
-	 * Detaches the transition listeners of the snap currently animating (null when none is).
-	 * A snap can be interrupted before its transitionend — a drag or a non-animated re-snap
-	 * clears `transition`, which fires transitioncancel, not transitionend — so the completion
-	 * must be able to fire on either event and a superseding snap must drop the stale one.
+	 * Detaches the transition listeners of the snap currently animating (null when none is;
+	 * detaching clears it). A snap can be interrupted before its transitionend — a drag or a
+	 * non-animated re-snap clears `transition`, which fires transitioncancel, not
+	 * transitionend — so the completion must be able to fire on either event and a
+	 * superseding snap must drop the stale one.
 	 */
 	const pendingDetach = useRef<(() => void) | null>(null);
 
@@ -44,11 +45,10 @@ export function useTrackSnap(
 
 			/**
 			 * A new snap supersedes any still-pending completion: without this an interrupted
-			 * loop wrap-dance would keep its {once} listener and later fire its silent re-snap
-			 * on an unrelated transitionend, jumping the track off the committed index.
+			 * loop wrap-dance would keep its listener and later fire its silent re-snap on an
+			 * unrelated transitionend, jumping the track off the committed index.
 			 */
 			pendingDetach.current?.();
-			pendingDetach.current = null;
 
 			const offset = trackOffset(visualIndex, storeRef.current);
 			/** Every snap defines a new rest position — free-mode drags start from it. */
@@ -66,23 +66,33 @@ export function useTrackSnap(
 				track.style.transition = `transform ${SNAP_DURATION_MS}ms ${SNAP_EASING}`;
 				track.style.transform = trackTransform(offset, storeRef.current);
 				/**
-				 * Settle on whichever fires first: a real transitionend runs onComplete, a
-				 * transitioncancel (the snap was interrupted) just detaches, so the completion is
-				 * discarded rather than deferred onto a future transition.
+				 * Settle on this snap's own transition only. Slide content's transitions bubble
+				 * up here, and the transition this snap replaced reports its cancel a frame later
+				 * — after these listeners exist — while `transition` is still this snap's: every
+				 * real interruption (a drag, a flow frame, a silent re-snap) clears it first.
+				 * Taking that echo for our own cancel dropped the wrap dance's re-snap and left
+				 * the track parked on the (inert) clones. A real transitionend runs onComplete;
+				 * a real transitioncancel just detaches, so the completion is discarded rather
+				 * than deferred onto a future transition.
 				 */
-				const finish = (event: TransitionEvent) => {
+				const detach = () => {
 					track.removeEventListener('transitionend', finish);
 					track.removeEventListener('transitioncancel', finish);
 					pendingDetach.current = null;
+				};
+				const finish = (event: TransitionEvent) => {
+					if (
+						event.target !== track ||
+						(event.type === 'transitioncancel' && track.style.transition)
+					)
+						return;
+					detach();
 					track.style.transition = '';
 					if (event.type === 'transitionend') onComplete?.();
 				};
-				pendingDetach.current = () => {
-					track.removeEventListener('transitionend', finish);
-					track.removeEventListener('transitioncancel', finish);
-				};
-				track.addEventListener('transitionend', finish, {once: true});
-				track.addEventListener('transitioncancel', finish, {once: true});
+				pendingDetach.current = detach;
+				track.addEventListener('transitionend', finish);
+				track.addEventListener('transitioncancel', finish);
 			} else {
 				track.style.transition = '';
 				track.style.transform = trackTransform(offset, storeRef.current);
