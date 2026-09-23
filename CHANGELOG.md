@@ -8,6 +8,33 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## 1.3.2 — 2026-09-24
+
+### Fixed
+
+- **A press during a loop wrap no longer leaves the track on the clones.** An arrow, a dot,
+  an API call, or an autoplay tick landing in the ~300 ms while the loop was mid-wrap
+  replaced the running snap — and the browser reports the replaced transition's cancel a
+  frame later, after the new snap has subscribed. The new snap took that echo for its own
+  interruption and dropped the wrap's silent re-snap, so the track stayed on the clone
+  strip: identical to look at, but the clones are inert (nothing in them could be clicked or
+  focused) and the next step animated back across the whole strip. A snap now settles on its
+  own transition only, which also stops transitions bubbling up from slide content (a card's
+  hover effect) from ending a wrap early. Core +5 B; no API change.
+
+### Internal
+
+- Test suite hardening: the load-dependent e2e flakes were one class — a fixed sleep between
+  two samples of something moving, or a pointer aimed at a section still smooth-scrolling
+  into place. `e2e/support/motion.ts` now waits for the motion itself (`waitForRest`,
+  `expectMovedFrom`, `scrollToRest`), and `dragX`/`dragY` aim only once the surface is at
+  rest. New coverage: a reduced-motion e2e (no transition runs; a loop wrap still lands on
+  the real slide), the mid-wrap press above, and the rule that `axis="y"` neutralises
+  `dir="rtl"`. 424 unit and 81 e2e tests.
+- Dev dependencies refreshed (the weekly batch, incl. Playwright 1.63, React 19.3, ESLint
+  10.10) plus an `npm audit fix` for new advisories in transitive dev tooling. Runtime
+  dependencies are unchanged — there still are none.
+
 ## 1.3.1 — 2026-09-01
 
 ### Fixed
