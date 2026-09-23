@@ -8,7 +8,7 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
-## 1.3.2 — 2026-09-24
+## [1.3.2] — 2026-09-24
 
 ### Fixed
 
@@ -108,7 +108,7 @@ minors sometimes carried breaking changes, noted per entry below.
   logic itself lives entirely in the opt-in entry, so bundles that never import
   `lightslide/autoheight` pay only that.
 
-## [1.1.2] — 2026-08-06
+## 1.1.2 — 2026-08-06
 
 ### Changed
 
@@ -121,7 +121,7 @@ minors sometimes carried breaking changes, noted per entry below.
   so the new limits document the honest floor. No behaviour change — 402 unit and 65 e2e
   tests pass byte-identically.
 
-## [1.1.1] — 2026-08-06
+## 1.1.1 — 2026-08-06
 
 ### Fixed
 
@@ -132,7 +132,7 @@ minors sometimes carried breaking changes, noted per entry below.
   major: `true` on 19+, `''` on 18. The peer range is unchanged (`>=18`); the repo's own
   test matrix now covers both (unit suite on React 19, e2e playground on 18).
 
-## [1.1.0] — 2026-07-26
+## 1.1.0 — 2026-07-26
 
 ### Added
 
@@ -616,12 +616,10 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.3.0...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.3.2...HEAD
+[1.3.2]: https://github.com/DmitriyBol/lightslide/releases/tag/1.3.2
 [1.3.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.3.0
 [1.2.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.2.0
-[1.1.2]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.2
-[1.1.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.1
-[1.1.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.1.0
 [1.0.1]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.1
 [1.0.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.0.0
 [0.14.1]: https://github.com/DmitriyBol/lightslide/releases/tag/0.14.1
