@@ -1,31 +1,18 @@
-import type {Locator} from '@playwright/test';
 import {expect, test} from '@playwright/test';
 
 import {carousel} from './support/carousel';
-
-/**
- * The playground page keeps moving for a beat after a first jump to a section — reveal
- * transitions and console rows appended above shift the layout — and a carousel that slides
- * out from under a parked pointer gets a genuine pointerleave. Hover tests must aim only
- * after the section's box holds still, or the pause latch is (correctly) released mid-test.
- */
-async function settle(target: Locator): Promise<void> {
-	await target.scrollIntoViewIfNeeded();
-	let prev = await target.boundingBox();
-	for (let i = 0; i < 30; i++) {
-		await target.page().waitForTimeout(200);
-		const cur = await target.boundingBox();
-		if (prev && cur && Math.abs(cur.y - prev.y) < 0.5) return;
-		prev = cur;
-	}
-}
+import {edge, expectMovedFrom, scrollToRest, waitForRest} from './support/motion';
 
 /**
  * APG pause behaviour on #auto-scroll (interval 2000 ms by default): hover, keyboard focus,
  * and the visible pause() button must each hold the auto-advance, and releasing them must let
  * it resume. jsdom can't produce any of this — real hover, real focus traversal, real timers.
  * Every "still paused" check waits longer than one interval; every "resumed" check polls with
- * a timeout comfortably above it.
+ * a timeout comfortably above it. Hover tests aim only once the section has stopped scrolling
+ * into place (a carousel sliding out from under a parked pointer gets a genuine pointerleave,
+ * and the pause latch is — correctly — released mid-test), and read their baseline only once
+ * the page has actually registered the hover, which on a loaded machine lags hover() by a frame
+ * or more.
  */
 test.describe('autoplay pause', () => {
 	test('hovering the carousel pauses auto-scroll; leaving resumes it', async ({
@@ -34,8 +21,11 @@ test.describe('autoplay pause', () => {
 		await page.goto('/');
 		const c = carousel(page, 'auto-scroll');
 
-		await settle(c.root);
+		await scrollToRest(c.root);
 		await c.root.hover();
+		await expect
+			.poll(() => c.root.evaluate(el => el.matches(':hover')))
+			.toBe(true);
 		const before = await c.activeDot.getAttribute('aria-label');
 		await page.waitForTimeout(2600);
 		expect(await c.activeDot.getAttribute('aria-label')).toBe(before);
@@ -94,7 +84,7 @@ test.describe('autoplay pause', () => {
 	}) => {
 		await page.goto('/');
 		const section = page.locator('#flow');
-		await settle(section);
+		await scrollToRest(section);
 		const chip = section.getByText('React', {exact: true}).first();
 
 		/** Aim at the (constant-Y) chip row over the section's horizontal centre. */
@@ -106,18 +96,17 @@ test.describe('autoplay pause', () => {
 			chipBox.y + chipBox.height / 2,
 		);
 
-		const p1 = await chip.boundingBox();
-		await page.waitForTimeout(400);
-		const p2 = await chip.boundingBox();
-		if (!p1 || !p2) throw new Error('flow chip has no bounding box');
-		expect(Math.abs(p2.x - p1.x)).toBeLessThan(2);
+		/**
+		 * The drift comes to rest however late the page registers the hover — sampling right
+		 * after the move could still catch it gliding — and then stays put.
+		 */
+		const x = edge(chip);
+		const rest = await waitForRest(x);
+		await page.waitForTimeout(500);
+		expect(Math.abs((await x()) - rest)).toBeLessThan(1);
 
-		/** Off the carousel the drift picks back up on the next frame. */
+		/** Off the carousel the drift picks back up. */
 		await page.mouse.move(5, 5);
-		const p3 = await chip.boundingBox();
-		await page.waitForTimeout(700);
-		const p4 = await chip.boundingBox();
-		if (!p3 || !p4) throw new Error('flow chip has no bounding box');
-		expect(Math.abs(p4.x - p3.x)).toBeGreaterThan(8);
+		await expectMovedFrom(x, rest, 8);
 	});
 });
