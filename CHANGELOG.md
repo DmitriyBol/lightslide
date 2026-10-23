@@ -8,6 +8,32 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.3.3] — 2026-10-24
+
+Maintenance release: toolchain and CI refresh only. No runtime changes — the package still
+has zero runtime dependencies beyond React — and no API change; nothing to migrate.
+
+### Security
+
+- Dev-dependency chain: `npm audit fix` for the week's advisories — `brace-expansion`
+  5.0.12 (high: quadratic-time rewrite and nested-brace stack-exhaustion DoS,
+  GHSA-q2hr-2g5m-vwhr / GHSA-qhr7-859c-m2p7 / GHSA-6j4f-fj2g-mc7p) and `handlebars`
+  4.7.10 (critical: JavaScript injection via precompiled-template embedding, AST type
+  confusion, and own-property-check bypass, GHSA-xw65-4hp5-5hc7 / GHSA-8r5x-fm3f-whwj /
+  GHSA-p8wg-vrv2-v86f). Both live in transitive dev tooling only; lockfile-only fix. Ten
+  moderate advisories remain in `postcss-selector-parser` (via cssnano ←
+  rollup-plugin-postcss) — fixable only by a breaking downgrade to rollup-plugin-postcss
+  1.x, below the CI `npm audit --audit-level=high` gate and left for the next breaking
+  window.
+
+### Internal
+
+- Dev dependencies: the weekly group batch of 15 packages (incl. Playwright 1.64, ESLint
+  10.13, Jest 30.5.2, Rollup 4.64, Sass 1.105, Stylelint 17.16, React types 19.3.1) and
+  size-limit 13 → 14. The v14 measurer reports the modules a shade smaller; all 12 size
+  budgets pass with no config change.
+- CI: `actions/setup-node` 7.0.0 → 7.1.0, `actions/upload-artifact` 7.0.1 → 7.0.2.
+
 ## [1.3.2] — 2026-09-24
 
 ### Fixed
@@ -616,7 +642,8 @@ use" now covers analytics, autoplay, and breakpoints too.
   `slidesPerView`, infinite loop, continuous flow (ticker), navigation, pagination,
   auto-scroll, typed analytics, loading fallback.
 
-[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.3.2...HEAD
+[Unreleased]: https://github.com/DmitriyBol/lightslide/compare/1.3.3...HEAD
+[1.3.3]: https://github.com/DmitriyBol/lightslide/releases/tag/1.3.3
 [1.3.2]: https://github.com/DmitriyBol/lightslide/releases/tag/1.3.2
 [1.3.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.3.0
 [1.2.0]: https://github.com/DmitriyBol/lightslide/releases/tag/1.2.0
