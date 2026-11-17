@@ -8,6 +8,62 @@ minors sometimes carried breaking changes, noted per entry below.
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-11-18
+
+Feature release: an autoplay-synced countdown ring for the pagination dots, a hardening pass
+that pins the whole loop × slidesPerView × align combination matrix in e2e, and the weekly
+dependency batch. The API only grows; see the autoplay note below for a behaviour refinement.
+
+### Added
+
+- **`<Pagination progress>`** (`lightslide/pagination`, LIG-40) — a countdown ring around the
+  active dot, driven by `<Autoplay>`'s interval: the arc drains clockwise, the slide advances
+  as it empties, every pause (hover / focus / drag / ref `pause()`) freezes the arc in place,
+  and any navigation restarts it. Without an autoplay mounted the dots stay plain: the ring
+  is pure CSS reading the `--ls-autoplay-ms` / `--ls-autoplay-state` custom properties the
+  autoplay module publishes on the container, so the pagination entry never imports the
+  autoplay code and tree-shaking is unaffected. The ring strokes `currentColor` (tint it via
+  the dot's `color`) and hides under `prefers-reduced-motion`. The active dot keeps its
+  `<button aria-current="true">` semantics; the SVG is decorative.
+
+### Changed
+
+- **Autoplay now runs a freeze/resume deadline clock** (`lightslide/autoplay`): a pause
+  freezes the remaining cycle time instead of burning ticks (previously, hovering longer than
+  the interval silently skipped the advance), and navigation from outside the autoplay
+  (button / pagination / drag / API) restarts the cycle from the top — which is also what
+  keeps the countdown ring honest after manual navigation.
+
+### Testing
+
+- **Combo correctness matrix** (LIG-35): `e2e/combo-matrix.spec.ts` verifies, per cell of
+  `loop` × `slidesPerView` (1 / 1.2 / 2 / 3) × `align` (start / center) plus `gap` and
+  `axis: 'y'` combinations, that the active slide rests exactly where its `align` promises,
+  loop wraps in both directions land on the promised position with no missing neighbour or
+  blank gap, and no-loop first/last positions clamp flush — 24 cells, measured from live
+  boxes against the scrolling viewport. Verdict: no geometry defects found — every initial
+  divergence traced back to the test's own expectations (wrap target is the last *position*,
+  not the last slide; containScroll clamps the final centre; the viewport, not the root, is
+  the reference box on the vertical axis). The guarantees are now documented in the README's
+  [Combo guarantees](README.md#combo-guarantees). New `#combo-matrix` playground demo dials
+  every axis live.
+- Playwright `webServer` now binds `127.0.0.1` explicitly: Vite listens IPv6-only (`::1`) by
+  default while `localhost` health checks can resolve to IPv4, so a ready server was
+  sometimes never seen.
+
+### Internal
+
+- Dev dependencies: in-range batch — ESLint 10.15, @typescript-eslint 8.73 (closes the
+  typescript-estree high advisory), Prettier 3.10, Rollup 4.68, Sass 1.108, Playwright 1.65,
+  size-limit 14.3, user-event 14.6.12, globals 17.14, tslib 2.9. Deferred majors stay
+  deferred (TypeScript 7; the stylelint 18 stack needs a coordinated
+  stylelint-config-standard-scss move — dependabot PRs #105/#106 remain red for that reason).
+- CI audit gate switched to `npm audit --omit=dev --audit-level=high`: the runtime tree is
+  clean (0 vulnerabilities — the package has no runtime dependencies beyond React), while
+  the dev tree is currently blocked by advisories with no patched version at all (picomatch
+  GHSA-fc5q-39xc-vjpf, range `*`, cascading over the latest jest/stylelint). Revisit when
+  upstream fixes land.
+
 ## [1.3.3] — 2026-10-24
 
 Maintenance release: toolchain and CI refresh only. No runtime changes — the package still
