@@ -67,7 +67,11 @@ export function AutoScrollExample() {
 					pause button is the APG pause
 					control, wired to <code>ref.pause()</code> / <code>resume()</code>. It
 					loops back to the first slide after the last —{' '}
-					<code>carousel_reached_end</code> never fires on wrap-around.
+					<code>carousel_reached_end</code> never fires on wrap-around. The
+					active dot carries a <code>&lt;Pagination progress&gt;</code>{' '}
+					countdown ring: the arc drains clockwise with the interval, freezes
+					on every pause, and restarts on manual navigation — flip the interval
+					knob to see it retime.
 				</>
 			}>
 			<Controls>
@@ -106,8 +110,13 @@ export function AutoScrollExample() {
 					navigation={<Navigation />}
 					pagination={
 						<Pagination
+							progress={enabled}
 							dotStyle={{background: 'var(--border-strong)'}}
-							activeDotStyle={{background: 'var(--accent)'}}
+							activeDotStyle={{
+								background: 'var(--accent)',
+								/** The ring strokes currentColor — tint it with the dot. */
+								color: 'var(--accent)',
+							}}
 						/>
 					}>
 					{ITEMS.map((item, i) => (

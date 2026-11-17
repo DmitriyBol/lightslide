@@ -3,10 +3,12 @@ import {useAutoplaySeam} from '../../seams/autoplaySeam';
 import {useAutoScroll} from './useAutoScroll';
 
 /**
- * `interval` — ms between automatic slide advances. `pauseOnHover` / `pauseOnFocus`
- * (default true) hold the cycling while the pointer is over the carousel or keyboard focus
- * is inside it, resuming when it leaves — the WAI-ARIA APG carousel behaviour; set to false
- * to opt out.
+ * `interval` — ms between automatic slide advances; a pause now freezes the remaining time
+ * and any manual navigation restarts the cycle. `pauseOnHover` / `pauseOnFocus` (default
+ * true) hold the cycling while the pointer is over the carousel or keyboard focus is inside
+ * it, resuming where it left off — the WAI-ARIA APG carousel behaviour; set to false to opt
+ * out. While running it publishes CSS variables (`--ls-autoplay-ms` / state) on the
+ * container, which `<Pagination progress>` turns into a countdown ring on the active dot.
  */
 export type AutoplayProps = {
 	interval: number;
@@ -36,6 +38,7 @@ export function Autoplay({
 		interval,
 		pauseOnHover,
 		pauseOnFocus,
+		containerRef,
 		storeRef,
 		goToIndex,
 	});

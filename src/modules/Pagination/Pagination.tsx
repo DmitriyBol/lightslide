@@ -22,7 +22,9 @@ const ssrCss =
 /**
  * Pagination dots — one per scrollable position, the active one marked aria-current. Shipped
  * as the tree-shakeable `lightslide/pagination` entry — pass to
- * `<LightSlide pagination={<Pagination />}>`.
+ * `<LightSlide pagination={<Pagination />}>`. With `progress`, the active dot additionally
+ * carries a countdown ring (see Pagination.module.scss): pure CSS driven by the
+ * `--ls-autoplay-*` variables the autoplay module publishes, so this entry never imports it.
  */
 export function Pagination({
 	style,
@@ -31,6 +33,7 @@ export function Pagination({
 	dotClassName,
 	activeDotStyle,
 	activeDotClassName,
+	progress = false,
 }: PaginationProps) {
 	const {currentIndex, maxIndex, isReady, slidesId, goToIndex} =
 		useNavContext();
@@ -71,8 +74,17 @@ export function Pagination({
 							...dotStyle,
 							...(isActive ? activeDotStyle : undefined),
 						}}
-						onClick={() => handleDotClick(i)}
-					/>
+						onClick={() => handleDotClick(i)}>
+						{progress && isActive && (
+							<svg
+								className={styles.ring}
+								viewBox="0 0 12 12"
+								aria-hidden="true">
+								<circle className={styles.ringTrack} cx="6" cy="6" r="5" />
+								<circle className={styles.ringArc} cx="6" cy="6" r="5" />
+							</svg>
+						)}
+					</button>
 				);
 			})}
 		</div>

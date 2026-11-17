@@ -78,4 +78,45 @@ describe('Pagination', () => {
 		);
 		consoleError.mockRestore();
 	});
+
+	describe('progress ring', () => {
+		it('renders a decorative ring only on the active dot when progress is on', () => {
+			renderPagination(makeContext({currentIndex: 1, maxIndex: 3}), {
+				progress: true,
+			});
+			const buttons = screen.getAllByRole('button');
+			expect(buttons[1].querySelector('svg')).not.toBeNull();
+			expect(buttons[0].querySelector('svg')).toBeNull();
+			expect(buttons[2].querySelector('svg')).toBeNull();
+			/** Decorative — the dot's own label stays the accessible name. */
+			expect(buttons[1].querySelector('svg')).toHaveAttribute(
+				'aria-hidden',
+				'true',
+			);
+		});
+
+		it('renders no ring by default', () => {
+			renderPagination(makeContext({currentIndex: 0, maxIndex: 3}));
+			expect(
+				screen.getAllByRole('button').every(b => !b.querySelector('svg')),
+			).toBe(true);
+		});
+
+		it('remounts the ring as the active dot changes (a fresh countdown)', () => {
+			const ctx = makeContext({currentIndex: 0, maxIndex: 2});
+			const {rerender} = renderPagination(ctx, {progress: true});
+			const buttons = screen.getAllByRole('button');
+			expect(buttons[0].querySelector('svg')).not.toBeNull();
+
+			ctx.currentIndex = 2;
+			rerender(
+				<NavContext.Provider value={ctx}>
+					<Pagination progress />
+				</NavContext.Provider>,
+			);
+			const next = screen.getAllByRole('button');
+			expect(next[0].querySelector('svg')).toBeNull();
+			expect(next[2].querySelector('svg')).not.toBeNull();
+		});
+	});
 });
