@@ -26,7 +26,7 @@ tree-shakeable entries — you only pay for what you import.
   [Wheel & trackpad](#wheel--trackpad-lightslidewheel), [Free scrolling](#free-scrolling-lightslidefree),
   [Adaptive height](#adaptive-height-lightslideautoheight), [Fade effect](#fade-effect-lightslidefade)
 - [loop](#loop) · [Lazy slide mounting](#lazy-slide-mounting) · [Loading fallback](#loading-fallback)
-- [slidesPerView & gap](#slidesperview--gap) · [Variable width](#variable-width-slidesperviewauto) · [Center align](#center-align) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
+- [slidesPerView & gap](#slidesperview--gap) · [Variable width](#variable-width-slidesperviewauto) · [Center align](#center-align) · [Combo guarantees](#combo-guarantees) · [Right-to-left](#right-to-left-dirrtl) · [Vertical axis](#vertical-axis-axisy) · [Responsive breakpoints](#responsive-breakpoints-lightslidebreakpoints)
 - [Server-side rendering](#server-side-rendering-nextjs-app-router)
 - [External control](#external-control) — [thumbnails / synced carousels](#thumbnails--synced-carousels)
 - [Analytics](#analytics)
@@ -75,13 +75,16 @@ tree-shakeable entries — you only pay for what you import.
 - **Navigation buttons** (`lightslide/navigation`) — prev/next, fully styleable, or bring your
   own element via `renderPrev`/`renderNext`. Auto-centered on the track, never clipped, dim at
   the edges.
-- **Pagination dots** (`lightslide/pagination`) — dot indicators with active-state styling.
+- **Pagination dots** (`lightslide/pagination`) — dot indicators with active-state styling,
+  plus an optional autoplay-synced countdown ring on the active dot.
 - **External control** — a controlled `index` prop, `onIndexChange`, and a `ref` handle
   (`goTo` / `next` / `prev` / `getIndex`): the building blocks for thumbnails, synced
   carousels, and custom UIs.
-- **Autoplay** (`lightslide/autoplay`) — step cycling at a configurable interval; pauses
-  during drag, on hover, and while keyboard focus is inside (WAI-ARIA APG behaviour, opt-out
-  per prop), plus `pause()`/`resume()` on the ref handle for a visible pause control.
+- **Autoplay** (`lightslide/autoplay`) — step cycling at a configurable interval on a
+  freeze/resume deadline clock (a pause never burns the remaining time; manual navigation
+  restarts the cycle); pauses during drag, on hover, and while keyboard focus is inside
+  (WAI-ARIA APG behaviour, opt-out per prop), plus `pause()`/`resume()` on the ref handle
+  for a visible pause control.
 - **Flow** (`lightslide/flow`) — continuous ticker scroll at a configurable speed; seamless
   with looping; pauses on interaction, hover, and keyboard focus, and resumes after a delay.
 - **Wheel & trackpad** (`lightslide/wheel`) — a horizontal two-finger swipe (or shift+wheel)
@@ -363,8 +366,24 @@ import { Pagination } from "lightslide/pagination";
 Dot count = `maxIndex + 1` (number of scroll positions). The active dot updates on every
 navigation type. Not tracked during a flow (continuous motion has no discrete index).
 
+Pass `progress` to draw a **countdown ring** around the active dot when
+[Autoplay](#autoplay-lightslideautoplay) is running: the arc drains clockwise over the
+interval, freezing whenever the autoplay pauses (hover, focus, drag, or the ref handle's
+`pause()`) and restarting on every slide change. Without an autoplay mounted the dots stay
+plain — the ring is pure CSS reading `--ls-autoplay-*` custom properties that only the
+autoplay module publishes, so this entry never imports it and tree-shaking stays intact. The
+ring strokes `currentColor` — tint it through the dot's `color`, and it hides entirely under
+`prefers-reduced-motion`.
+
+```tsx
+<LightSlide
+  autoplay={<Autoplay interval={4000} />}
+  pagination={<Pagination progress activeDotStyle={{ background: "#4f46e5", color: "#4f46e5" }} />}
+/>
+```
+
 **`PaginationProps`**: `style`, `className`, `dotStyle`, `dotClassName`, `activeDotStyle`,
-`activeDotClassName`.
+`activeDotClassName`, `progress`.
 
 ### Autoplay (`lightslide/autoplay`)
 
@@ -378,6 +397,12 @@ Loops back to 0 after the last slide; pauses during drag; does **not** fire `car
 Presence turns the mode on — pass the node conditionally
 (`autoplay={playing && <Autoplay interval={3000} />}`) to toggle it — `null`, `undefined`,
 and `false` all mean "no module", so the usual JSX conditional idioms work as is.
+
+The cycle runs on a deadline clock: a pause **freezes the remaining time** (a hover longer
+than the interval no longer burns the tick — the slide advances only after the leftover
+elapses once unpaused), and any manual navigation (button, dot, drag, API) restarts the
+cycle from the top. Pair with `<Pagination progress>` to visualise it (see
+[Pagination](#pagination-lightslidepagination)).
 
 By default the cycling also pauses while the pointer hovers the carousel or keyboard focus is
 inside it, and resumes when it leaves — the [WAI-ARIA APG carousel](https://www.w3.org/WAI/ARIA/apg/patterns/carousel/)
@@ -641,6 +666,22 @@ then). Snapping, dragging, free-mode settling, the server-rendered first paint, 
   every position in between is centred. Add `loop` to keep the active slide centred
   everywhere.
 - Ignored while `flow` runs — continuous motion has no resting position.
+
+## Combo guarantees
+
+Stacking the layout knobs is exactly where carousel trackers fill up (loop clones ×
+multi-slide views × centring is the single largest bug cluster of the market leader), so the
+combinations are not just supported — they are **e2e-verified as a matrix**, position by
+position, on both axes:
+
+| Guarantee | Holds for |
+| --- | --- |
+| The active slide rests exactly where `align` promises — flush at the leading edge, or dead centre | `loop` × `slidesPerView` 1 / 1.2 / 2 / 3 × `align` start / center, with and without `gap`, on `x` and `y` |
+| Loop wraps land on the promised position in both directions, no missing neighbour, no blank gap | same matrix |
+| Without `loop` the first position clamps flush, and the last scrolls flush (fractional views included) — never a blank run-out | same matrix |
+
+The matrix runs in CI (`e2e/combo-matrix.spec.ts`) against the live playground's
+`#combo-matrix` demo, where every axis can be dialled by hand.
 
 ## Right-to-left (`dir="rtl"`)
 

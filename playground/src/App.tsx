@@ -13,6 +13,7 @@ import {AutoHeightExample} from './examples/AutoHeightExample';
 import {AutoScrollExample} from './examples/AutoScrollExample';
 import {AutoWidthExample} from './examples/AutoWidthExample';
 import {BasicExample} from './examples/BasicExample';
+import {ComboMatrixExample} from './examples/ComboMatrixExample';
 import {BreakpointsExample} from './examples/BreakpointsExample';
 import {CompareExample} from './examples/CompareExample';
 import {ControlledExample} from './examples/ControlledExample';
@@ -61,6 +62,7 @@ export function App() {
 				<AutoWidthExample />
 				<AutoHeightExample />
 				<AlignExample />
+				<ComboMatrixExample />
 				<BreakpointsExample />
 				<NavigationExample />
 				<PaginationExample />

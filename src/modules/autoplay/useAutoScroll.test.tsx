@@ -23,6 +23,12 @@ type Config = {
 
 function setup(config: Config, overrides: Overrides = {}) {
 	const navigate = jest.fn<ReturnType<NavigateFn>, Parameters<NavigateFn>>();
+	/** Mirrors the core: navigating commits the index to the store the hook samples. */
+	const goToIndex: NavigateFn = (index, source) => {
+		storeRef.current.currentIndex = index;
+		navigate(index, source);
+	};
+	const container = document.createElement('div');
 	const storeRef = {
 		current: createStore({
 			currentIndex: overrides.currentIndex ?? 0,
@@ -34,17 +40,18 @@ function setup(config: Config, overrides: Overrides = {}) {
 			apiPaused: overrides.apiPaused ?? false,
 		}),
 	};
-	renderHook(() =>
+	const {unmount} = renderHook(() =>
 		useAutoScroll({
 			enabled: config.enabled,
 			interval: config.interval,
 			pauseOnHover: config.pauseOnHover ?? true,
 			pauseOnFocus: config.pauseOnFocus ?? true,
+			containerRef: {current: container},
 			storeRef,
-			goToIndex: navigate,
+			goToIndex,
 		}),
 	);
-	return {navigate, storeRef};
+	return {navigate, storeRef, container, unmount};
 }
 
 describe('useAutoScroll', () => {
@@ -102,7 +109,8 @@ describe('useAutoScroll', () => {
 		expect(navigate).not.toHaveBeenCalled();
 
 		storeRef.current.hovered = false;
-		act(() => jest.advanceTimersByTime(1000));
+		/** Resume runs a full cycle from the watcher poll (50 ms) that notices it. */
+		act(() => jest.advanceTimersByTime(1100));
 		expect(navigate).toHaveBeenCalledWith(1, 'auto');
 	});
 
@@ -115,7 +123,7 @@ describe('useAutoScroll', () => {
 		expect(navigate).not.toHaveBeenCalled();
 
 		storeRef.current.focusWithin = false;
-		act(() => jest.advanceTimersByTime(1000));
+		act(() => jest.advanceTimersByTime(1100));
 		expect(navigate).toHaveBeenCalledWith(1, 'auto');
 	});
 
@@ -146,7 +154,67 @@ describe('useAutoScroll', () => {
 		expect(navigate).not.toHaveBeenCalled();
 
 		storeRef.current.apiPaused = false;
-		act(() => jest.advanceTimersByTime(1000));
+		act(() => jest.advanceTimersByTime(1100));
 		expect(navigate).toHaveBeenCalledWith(1, 'auto');
+	});
+
+	it('freezes the remaining time when a pause starts mid-cycle', () => {
+		const {navigate, storeRef} = setup({enabled: true, interval: 1000});
+		act(() => jest.advanceTimersByTime(600));
+		expect(navigate).not.toHaveBeenCalled();
+
+		storeRef.current.hovered = true;
+		/** The watcher notices within one poll (50 ms) and freezes the remainder. */
+		act(() => jest.advanceTimersByTime(3000));
+		expect(navigate).not.toHaveBeenCalled();
+
+		storeRef.current.hovered = false;
+		/**
+		 * ~400 ms were left when the pause froze the cycle (600 elapsed of 1000), so the
+		 * advance fires shortly after resuming — a burned-tick implementation would still be
+		 * waiting for a full fresh interval.
+		 */
+		act(() => jest.advanceTimersByTime(500));
+		expect(navigate).toHaveBeenCalledTimes(1);
+		expect(navigate).toHaveBeenCalledWith(1, 'auto');
+	});
+
+	it('restarts the cycle when navigation comes from outside the hook', () => {
+		const {navigate, storeRef} = setup({enabled: true, interval: 1000});
+		act(() => jest.advanceTimersByTime(600));
+
+		/** A pagination click / drag settles — the store index jumps without this hook. */
+		storeRef.current.currentIndex = 2;
+		act(() => jest.advanceTimersByTime(50));
+
+		/**
+		 * The old deadline (t=1000) is void — the cycle restarted from the watcher poll
+		 * (t=650), so a full interval must elapse again before the advance fires.
+		 */
+		act(() => jest.advanceTimersByTime(950));
+		expect(navigate).not.toHaveBeenCalled();
+		act(() => jest.advanceTimersByTime(60));
+		expect(navigate).toHaveBeenCalledWith(3, 'auto');
+	});
+
+	it('publishes the countdown ring variables and cleans them up', () => {
+		const {container, storeRef, unmount} = setup(
+			{enabled: true, interval: 2500},
+			{hovered: true},
+		);
+		expect(container.style.getPropertyValue('--ls-autoplay-ms')).toBe('2500ms');
+		expect(container.style.getPropertyValue('--ls-autoplay-state')).toBe(
+			'paused',
+		);
+
+		storeRef.current.hovered = false;
+		act(() => jest.advanceTimersByTime(50));
+		expect(container.style.getPropertyValue('--ls-autoplay-state')).toBe(
+			'running',
+		);
+
+		unmount();
+		expect(container.style.getPropertyValue('--ls-autoplay-ms')).toBe('');
+		expect(container.style.getPropertyValue('--ls-autoplay-state')).toBe('');
 	});
 });
